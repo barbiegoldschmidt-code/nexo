@@ -68,7 +68,7 @@ const CATEGORIAS = [
   { id:"mascotas", nombre:"Mascotas", icon:"🐾", color:"rgba(212,74,120,0.08)",
     subs:[{icon:"🐾",n:"Paseador de perros"},{icon:"🐶",n:"Peluquero canino"},{icon:"🐱",n:"Veterinario a domicilio"},{icon:"🛁",n:"Baño y peluquería canina"},{icon:"🏠",n:"Guardería de mascotas"},{icon:"🐕",n:"Adiestramiento canino"}]},
   { id:"bienestar", nombre:"Belleza & Bienestar", icon:"✨", color:"rgba(212,74,180,0.08)",
-    subs:[{icon:"🧘",n:"Profesor de yoga"},{icon:"🏋️",n:"Personal trainer"},{icon:"💆",n:"Masajista"},{icon:"🌸",n:"Cosmiatra"},{icon:"💅",n:"Manicura y pedicura"},{icon:"💇",n:"Peluquero a domicilio"},{icon:"🪷",n:"Esteticista"},{icon:"🧖",n:"Depilación a domicilio"},{icon:"💄",n:"Maquilladora profesional"},{icon:"🌿",n:"Aromaterapia & relajación"}]},
+    subs:[{icon:"🧘",n:"Instructora de yoga"},{icon:"🏋️",n:"Personal trainer"},{icon:"🌸",n:"Cosmiatra"},{icon:"💅",n:"Manicura y pedicura"},{icon:"💇",n:"Peluquera a domicilio"},{icon:"🪷",n:"Esteticista"},{icon:"🧖",n:"Depilación a domicilio"},{icon:"💄",n:"Maquilladora profesional"},{icon:"💆",n:"Masajista"},{icon:"🌿",n:"Spa & relajación"}]},
   { id:"logistica", nombre:"Logística & Mudanzas", icon:"🚚", color:"rgba(74,120,212,0.08)",
     subs:[{icon:"🚚",n:"Mudanzas"},{icon:"🛻",n:"Fletes"},{icon:"🏍️",n:"Mensajería en moto"},{icon:"🛠️",n:"Armado muebles"},{icon:"📦",n:"Guardamuebles"},{icon:"🚗",n:"Remis & traslados"}]},
 ];
