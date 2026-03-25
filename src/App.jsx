@@ -174,6 +174,10 @@ const Nav = ({ setVista, noLeidas }) => (
       </button>
       <button onClick={()=>window.open("https://wa.me/5491161906655?text=Hola!%20Tengo%20una%20consulta%20sobre%20Nexo","_blank")} style={{ background:"rgba(37,211,102,0.12)", border:"1px solid rgba(37,211,102,0.3)", color:"#25d366", padding:"7px 12px", borderRadius:8, fontFamily:F.sans, fontSize:13, cursor:"pointer" }}>💬</button>
       <button onClick={()=>setVista("planes")} style={{ background:"transparent", border:`1px solid ${C.border}`, color:"#ffffff", padding:"7px 14px", borderRadius:8, fontFamily:F.sans, fontSize:13, cursor:"pointer" }}>Planes</button>
+      {clienteData
+        ? <button onClick={()=>setClienteData(null)} style={{ background:"rgba(248,113,113,0.12)", border:"1px solid rgba(248,113,113,0.3)", color:C.red, padding:"7px 12px", borderRadius:8, fontFamily:F.sans, fontSize:12, cursor:"pointer" }}>Cerrar sesión</button>
+        : <button onClick={()=>setShowRegCliente(true)} style={{ background:"rgba(74,143,212,0.12)", border:`1px solid ${C.border}`, color:C.blueLight, padding:"7px 12px", borderRadius:8, fontFamily:F.sans, fontSize:12, cursor:"pointer" }}>Iniciar sesión</button>
+      }
       <button onClick={()=>setVista("admin")} style={{ background:"rgba(74,143,212,0.1)", border:`1px solid ${C.border}`, color:C.blue, padding:"7px 12px", borderRadius:8, fontFamily:F.sans, fontSize:13, cursor:"pointer" }}>⚙️</button>
     </div>
   </nav>
@@ -453,6 +457,7 @@ export default function App() {
   const [catAbierta,  setCatAbierta] = useState(null);
   const [busqueda,    setBusqueda]   = useState("");
   const [oficio,      setOficio]     = useState("");
+  const [urgencia,    setUrgencia]   = useState(0);
 
   const [pros,        setPros]       = useState(PROFESIONALES);
   const [adminTab,    setAdminTab]   = useState("verificaciones");
@@ -638,11 +643,6 @@ export default function App() {
             <button onClick={()=>setShowPanel(true)} style={{ marginTop:16, background:"none", border:"none", color:C.blue, fontSize:13, cursor:"pointer", fontFamily:F.sans, textDecoration:"underline" }}>
               Tengo cuenta de profesional → Mi panel
             </button>
-            {clienteData && (
-              <button onClick={()=>setClienteData(null)} style={{ marginTop:8, background:"none", border:"none", color:C.red, fontSize:12, cursor:"pointer", fontFamily:F.sans }}>
-                Cerrar sesión · {clienteData.nombre.split(" ")[0]}
-              </button>
-            )}
             <div className="fu4" style={{ display:"flex", marginTop:48, width:"100%", borderTop:`1px solid ${C.border}`, paddingTop:32 }}>
               {[["2.400+","PROFESIONALES"],["80+","OFICIOS"],["4.9★","CALIFICACIÓN"]].map(([v,l])=>(
                 <div key={l} style={{ flex:1, textAlign:"center" }}>
@@ -777,7 +777,8 @@ export default function App() {
               <Lbl>URGENCIA</Lbl>
               <div style={{ display:"flex", gap:8, marginTop:8 }}>
                 {["Urgente (hoy)","Esta semana","Sin apuro"].map((u,i)=>(
-                  <button key={u} style={{ flex:1, padding:"10px 4px", background:i===0?"rgba(74,143,212,0.15)":C.bgCard, border:`1px solid ${i===0?C.blue:C.border}`, borderRadius:8, color:i===0?C.blueLight:"#ffffff", fontSize:11, fontFamily:F.sans, cursor:"pointer" }}>{u}</button>
+                  <button key={u} onClick={()=>setUrgencia(i)}
+                    style={{ flex:1, padding:"10px 4px", background:urgencia===i?"rgba(74,143,212,0.15)":C.bgCard, border:`1px solid ${urgencia===i?C.blue:C.border}`, borderRadius:8, color:urgencia===i?C.blueLight:"#ffffff", fontSize:11, fontFamily:F.sans, cursor:"pointer" }}>{u}</button>
                 ))}
               </div>
             </div>
