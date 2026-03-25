@@ -638,6 +638,11 @@ export default function App() {
             <button onClick={()=>setShowPanel(true)} style={{ marginTop:16, background:"none", border:"none", color:C.blue, fontSize:13, cursor:"pointer", fontFamily:F.sans, textDecoration:"underline" }}>
               Tengo cuenta de profesional → Mi panel
             </button>
+            {clienteData && (
+              <button onClick={()=>setClienteData(null)} style={{ marginTop:8, background:"none", border:"none", color:C.red, fontSize:12, cursor:"pointer", fontFamily:F.sans }}>
+                Cerrar sesión · {clienteData.nombre.split(" ")[0]}
+              </button>
+            )}
             <div className="fu4" style={{ display:"flex", marginTop:48, width:"100%", borderTop:`1px solid ${C.border}`, paddingTop:32 }}>
               {[["2.400+","PROFESIONALES"],["80+","OFICIOS"],["4.9★","CALIFICACIÓN"]].map(([v,l])=>(
                 <div key={l} style={{ flex:1, textAlign:"center" }}>
