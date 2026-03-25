@@ -65,8 +65,10 @@ const CATEGORIAS = [
     subs:[{icon:"📐",n:"Agrimensor"},{icon:"🏛️",n:"Arquitecto"},{icon:"🏗️",n:"Ingeniero civil"},{icon:"⚡",n:"Electricista matriculado"},{icon:"🔥",n:"Técnico en gas mat."},{icon:"🧮",n:"Contador"},{icon:"⚖️",n:"Abogado"},{icon:"📦",n:"Despachante de aduana"},{icon:"🏢",n:"Escribano"},{icon:"🩺",n:"Médico a domicilio"}]},
   { id:"tramites", nombre:"Gestores & Trámites", icon:"📋", color:"rgba(100,200,150,0.08)",
     subs:[{icon:"🚗",n:"Gestor de autos"},{icon:"🛂",n:"Gestor de ciudadanía"},{icon:"✈️",n:"Gestor de visas"},{icon:"🏠",n:"Gestor inmobiliario"},{icon:"📄",n:"Gestor de herencias"},{icon:"🏛️",n:"Trámites judiciales"},{icon:"💼",n:"Gestor comercial"},{icon:"🌐",n:"Apostillas & legalizaciones"},{icon:"📋",n:"Trámites ANSES / AFIP"},{icon:"🎓",n:"Reconocimiento de títulos"}]},
-  { id:"mascotas", nombre:"Mascotas & Salud", icon:"🐾", color:"rgba(212,74,120,0.08)",
-    subs:[{icon:"🐾",n:"Paseador de perros"},{icon:"🐶",n:"Peluquero canino"},{icon:"🐱",n:"Veterinario a domicilio"},{icon:"💊",n:"Enfermero a domicilio"},{icon:"🤸",n:"Kinesiólogo a domicilio"},{icon:"🩺",n:"Médico a domicilio"},{icon:"🏋️",n:"Personal trainer"}]},
+  { id:"mascotas", nombre:"Mascotas", icon:"🐾", color:"rgba(212,74,120,0.08)",
+    subs:[{icon:"🐾",n:"Paseador de perros"},{icon:"🐶",n:"Peluquero canino"},{icon:"🐱",n:"Veterinario a domicilio"},{icon:"🛁",n:"Baño y peluquería canina"},{icon:"🏠",n:"Guardería de mascotas"},{icon:"🐕",n:"Adiestramiento canino"}]},
+  { id:"bienestar", nombre:"Belleza & Bienestar", icon:"✨", color:"rgba(212,74,180,0.08)",
+    subs:[{icon:"🧘",n:"Profesor de yoga"},{icon:"🏋️",n:"Personal trainer"},{icon:"💆",n:"Masajista"},{icon:"🌸",n:"Cosmiatra"},{icon:"💅",n:"Manicura y pedicura"},{icon:"💇",n:"Peluquero a domicilio"},{icon:"🪷",n:"Esteticista"},{icon:"🧖",n:"Depilación a domicilio"},{icon:"💄",n:"Maquilladora profesional"},{icon:"🌿",n:"Aromaterapia & relajación"}]},
   { id:"logistica", nombre:"Logística & Mudanzas", icon:"🚚", color:"rgba(74,120,212,0.08)",
     subs:[{icon:"🚚",n:"Mudanzas"},{icon:"🛻",n:"Fletes"},{icon:"🏍️",n:"Mensajería en moto"},{icon:"🛠️",n:"Armado muebles"},{icon:"📦",n:"Guardamuebles"},{icon:"🚗",n:"Remis & traslados"}]},
 ];
