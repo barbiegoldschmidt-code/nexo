@@ -1,629 +1,1031 @@
-import { useState, useEffect } from "react";
-import { supabase } from "./supabase";
+import { useState, useRef, useEffect } from "react";
 
-const OFICIOS = ["Plomero","Electricista","Gasista","Pintor","Albañil","Carpintero","Cerrajero","Climatización","Herrería","Jardinero"];
-const ZONAS = ["Pilar Centro","Del Viso","Villa Rosa","Escobar","Tigre","San Isidro","Palermo","Belgrano","CABA","Córdoba","Rosario"];
+// ─────────────────────────────────────────
+// TEMA
+// ─────────────────────────────────────────
+const C = {
+  bg:          "#060d1a",
+  bgCard:      "#0d1f35",
+  bgCardHover: "#102540",
+  nav:         "rgba(6,13,26,0.92)",
+  blue:        "#4a8fd4",
+  blueLight:   "#6cb3f5",
+  blueDark:    "#1a3a5c",
+  blueBtn:     "#1e4d82",
+  white:       "#ffffff",
+  gray:        "#8a9bb0",
+  grayLight:   "#b0c4d8",
+  border:      "rgba(74,143,212,0.15)",
+  green:       "#4ade80",
+  red:         "#f87171",
+  yellow:      "#fbbf24",
+};
 
-const TERMINOS = `TÉRMINOS Y CONDICIONES — NEXO
+const F = {
+  serif: "'Playfair Display', Georgia, serif",
+  sans:  "'DM Sans', 'Segoe UI', sans-serif",
+};
 
-1. OBJETO
-NEXO es una plataforma digital que conecta a personas que necesitan servicios del hogar ("Clientes") con profesionales independientes ("Profesionales"). NEXO no presta servicios directamente ni es empleador de los Profesionales.
+const GS = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    background: #060d1a;
+    color: #fff;
+    font-family: 'DM Sans', 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #060d1a; }
+  ::-webkit-scrollbar-thumb { background: #1a3a5c; border-radius: 2px; }
+  select, input, textarea { outline: none; }
+  select option { background: #0d1f35; color: #fff; }
 
-2. RESPONSABILIDAD
-NEXO actúa como intermediario. No se responsabiliza por la calidad, resultado o incumplimiento de los trabajos realizados. Cada Profesional es responsable de su trabajo de forma independiente.
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+  @keyframes pulse    { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+  @keyframes slideUp  { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes slideLeft{ from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
 
-3. REGISTRO Y VERIFICACIÓN
-Los Profesionales deben verificar su identidad con DNI y foto. NEXO se reserva el derecho de rechazar o dar de baja perfiles que no cumplan los requisitos o que reciban denuncias.
+  .fu   { animation: fadeUp  .5s        ease both; }
+  .fu1  { animation: fadeUp  .5s  .08s  ease both; }
+  .fu2  { animation: fadeUp  .5s  .16s  ease both; }
+  .fu3  { animation: fadeUp  .5s  .24s  ease both; }
+  .fu4  { animation: fadeUp  .5s  .32s  ease both; }
+  .page { animation: fadeUp  .35s       ease both; }
+  .ov   { animation: fadeIn  .2s        ease both; }
+  .mod  { animation: slideUp .25s       ease both; }
+  .chat { animation: slideLeft .3s      ease both; }
+`;
 
-4. DATOS PERSONALES
-Los datos son tratados conforme a la Ley 25.326 de Protección de Datos Personales de Argentina. No se comparten con terceros salvo requerimiento judicial.
+// ─────────────────────────────────────────
+// DATA MOCK
+// ─────────────────────────────────────────
+const CATEGORIAS = [
+  { id:"hogar", nombre:"Hogar & Limpieza", icon:"🏠", color:"rgba(74,143,212,0.12)",
+    subs:[{icon:"🧹",n:"Limpieza por hora"},{icon:"👩‍🍳",n:"Empleada doméstica"},{icon:"🪣",n:"Limpieza post obra"},{icon:"🪟",n:"Limpieza de vidrios"},{icon:"🛋️",n:"Limpieza de alfombras"},{icon:"👶",n:"Niñera"},{icon:"👴",n:"Cuidador adultos mayores"},{icon:"🍳",n:"Cocinera a domicilio"},{icon:"👗",n:"Planchado y lavado"}]},
+  { id:"construccion", nombre:"Construcción & Refacciones", icon:"🏗️", color:"rgba(180,120,60,0.1)",
+    subs:[{icon:"🧱",n:"Albañil"},{icon:"🪨",n:"Yesero"},{icon:"🏚️",n:"Techadista"},{icon:"💧",n:"Impermeabilizador"},{icon:"🟫",n:"Colocador de pisos"},{icon:"🔲",n:"Colocador de cerámicos"},{icon:"🧩",n:"Durlock / Yeso"},{icon:"🔩",n:"Soldador"},{icon:"⚙️",n:"Herrería & Rejas"},{icon:"🚪",n:"Portones automáticos"}]},
+  { id:"instalaciones", nombre:"Instalaciones", icon:"⚡", color:"rgba(255,200,50,0.08)",
+    subs:[{icon:"🔧",n:"Plomero"},{icon:"⚡",n:"Electricista"},{icon:"🔥",n:"Gasista matriculado"},{icon:"❄️",n:"Aire acondicionado"},{icon:"🌡️",n:"Calefacción"},{icon:"🚨",n:"Instalador de alarmas"},{icon:"📹",n:"Cámaras de seguridad"},{icon:"📡",n:"Antenas & Internet"},{icon:"🚿",n:"Termotanque"}]},
+  { id:"terminaciones", nombre:"Terminaciones & Acabados", icon:"🎨", color:"rgba(180,74,212,0.08)",
+    subs:[{icon:"🎨",n:"Pintor"},{icon:"🪵",n:"Carpintero"},{icon:"✨",n:"Lustrador de pisos"},{icon:"🪞",n:"Vidriero"},{icon:"🔒",n:"Cerrajero"},{icon:"🛋️",n:"Tapicero"},{icon:"🪜",n:"Colocador de cortinas"},{icon:"🔨",n:"Herrería fina"},{icon:"🖼️",n:"Decorador de interiores"}]},
+  { id:"exteriores", nombre:"Exteriores & Jardín", icon:"🌿", color:"rgba(74,212,120,0.08)",
+    subs:[{icon:"🌿",n:"Jardinero"},{icon:"🐛",n:"Fumigador"},{icon:"🦠",n:"Desinfección"},{icon:"🏊",n:"Mantenimiento de pileta"},{icon:"🌲",n:"Podador de árboles"},{icon:"🪵",n:"Colocador de deck"},{icon:"💧",n:"Sistema de riego"},{icon:"🏕️",n:"Paisajismo"}]},
+  { id:"tecnicos", nombre:"Servicios Técnicos", icon:"🔧", color:"rgba(74,180,212,0.08)",
+    subs:[{icon:"💻",n:"Técnico PC & notebooks"},{icon:"📱",n:"Reparación de celulares"},{icon:"🍳",n:"Técnico electrodomésticos"},{icon:"🚗",n:"Mecánico a domicilio"},{icon:"📺",n:"TV & electrónica"},{icon:"🖨️",n:"Impresoras & equipos"}]},
+  { id:"profesionales", nombre:"Profesionales Matriculados", icon:"📐", color:"rgba(212,180,74,0.08)",
+    subs:[{icon:"📐",n:"Agrimensor"},{icon:"🏛️",n:"Arquitecto"},{icon:"🏗️",n:"Ingeniero civil"},{icon:"⚡",n:"Electricista matriculado"},{icon:"🔥",n:"Técnico en gas mat."},{icon:"🧮",n:"Contador"},{icon:"⚖️",n:"Abogado"},{icon:"📦",n:"Despachante de aduana"}]},
+  { id:"mascotas", nombre:"Mascotas & Salud", icon:"🐾", color:"rgba(212,74,120,0.08)",
+    subs:[{icon:"🐾",n:"Paseador de perros"},{icon:"🐶",n:"Peluquero canino"},{icon:"🐱",n:"Veterinario a domicilio"},{icon:"💊",n:"Enfermero a domicilio"},{icon:"🤸",n:"Kinesiólogo a domicilio"},{icon:"🩺",n:"Médico a domicilio"},{icon:"🏋️",n:"Personal trainer"}]},
+  { id:"logistica", nombre:"Logística & Mudanzas", icon:"🚚", color:"rgba(74,120,212,0.08)",
+    subs:[{icon:"🚚",n:"Mudanzas"},{icon:"🛻",n:"Fletes"},{icon:"🏍️",n:"Mensajería en moto"},{icon:"🛠️",n:"Armado muebles"},{icon:"📦",n:"Guardamuebles"},{icon:"🚗",n:"Remis & traslados"}]},
+];
 
-5. COTIZACIONES Y PAGOS
-Las cotizaciones son acuerdos directos entre Cliente y Profesional. NEXO cobra una suscripción mensual al Profesional por el uso de la plataforma. El precio del trabajo lo define el Profesional libremente.
+const PROFESIONALES = [
+  { id:1, nombre:"Carlos M.", oficio:"Electricista", zona:"Palermo",     rating:4.9, trabajos:87,  verificado:true,  estado:"activo",    img:"⚡", email:"carlos@mail.com", tel:"+54 11 4444-1111", dni:"28.333.444", fecha:"10/03/2025" },
+  { id:2, nombre:"Ana R.",    oficio:"Pintora",      zona:"Belgrano",    rating:5.0, trabajos:134, verificado:true,  estado:"activo",    img:"🎨", email:"ana@mail.com",    tel:"+54 11 5555-2222", dni:"32.111.222", fecha:"08/03/2025" },
+  { id:3, nombre:"Marcos T.", oficio:"Plomero",      zona:"Caballito",   rating:4.8, trabajos:62,  verificado:false, estado:"pendiente", img:"🔧", email:"marcos@mail.com", tel:"+54 11 6666-3333", dni:"35.777.888", fecha:"15/03/2025" },
+  { id:4, nombre:"Laura G.",  oficio:"Limpieza",     zona:"Villa Crespo",rating:4.9, trabajos:210, verificado:false, estado:"pendiente", img:"🧹", email:"laura@mail.com",  tel:"+54 11 7777-4444", dni:"29.555.666", fecha:"16/03/2025" },
+  { id:5, nombre:"Diego F.",  oficio:"Gasista",      zona:"Flores",      rating:0,   trabajos:0,   verificado:false, estado:"rechazado", img:"🔥", email:"diego@mail.com",  tel:"+54 11 8888-5555", dni:"40.123.456", fecha:"12/03/2025" },
+];
 
-6. PROHIBICIONES
-Está prohibido publicar información falsa, contactar usuarios fuera de la plataforma para evadir comisiones, o usar la plataforma para actividades ilegales.
+const NOTIFICACIONES = [
+  { id:1, tipo:"urgente", titulo:"Nuevo pedido: Electricista en Palermo", desc:"Un vecino necesita revisión del tablero hoy. Presupuesto estimado $8.000", tiempo:"hace 5 min",  rubro:"Electricista" },
+  { id:2, tipo:"normal",  titulo:"Pedido: Instalación de luces LED",       desc:"Departamento en Belgrano. Flexible en horario.",                          tiempo:"hace 1 hora", rubro:"Electricista" },
+  { id:3, tipo:"normal",  titulo:"Pedido: Reparación tomacorriente",        desc:"Casa en Villa Urquiza. 3 tomacorrientes quemados.",                       tiempo:"hace 3 horas",rubro:"Electricista" },
+];
 
-7. CANCELACIÓN
-NEXO puede suspender o eliminar cuentas que violen estos términos, sin previo aviso ni reembolso.
+const PEDIDOS_ADMIN = [
+  { id:1, cliente:"Martín L.",  oficio:"Plomero",      zona:"Palermo",  desc:"Pérdida en baño urgente",      fecha:"hoy 10:30", estado:"activo"  },
+  { id:2, cliente:"Sofía P.",   oficio:"Electricista", zona:"Belgrano", desc:"Tablero sin luz en cocina",     fecha:"hoy 09:15", estado:"activo"  },
+  { id:3, cliente:"Roberto K.", oficio:"Pintor",        zona:"Caballito",desc:"3 ambientes a pintar",         fecha:"ayer",      estado:"cerrado" },
+];
 
-8. JURISDICCIÓN
-Ante cualquier conflicto, las partes se someten a los tribunales ordinarios de la Ciudad Autónoma de Buenos Aires, renunciando a cualquier otro fuero.`;
+const CHAT_INIT = {
+  1: [
+    { id:1, de:"pro",    texto:"Hola! Vi tu pedido. ¿Para qué día necesitás la revisión del tablero?", hora:"10:32" },
+    { id:2, de:"cliente",texto:"Buenas! Idealmente hoy a la tarde, si podés.",                          hora:"10:35" },
+    { id:3, de:"pro",    texto:"A las 17hs te queda bien? ¿Cuál es la dirección?",                      hora:"10:36" },
+  ],
+  2: [{ id:1, de:"pro", texto:"Hola, te contacto por el trabajo de luces LED.", hora:"09:15" }],
+};
 
-export default function App() {
-  const [vista, setVista] = useState("inicio");
-  const [pedidos, setPedidos] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(null);
-  const [profesional, setProfesional] = useState(null);
-  const [form, setForm] = useState({ tipo:"Plomero", descripcion:"", zona:"Pilar Centro", nombre:"", urgente:false });
-  const [regProf, setRegProf] = useState({ nombre:"", oficio:"Plomero", zona:"Pilar Centro", telefono:"", dni:"", descripcion:"" });
-  const [mostrarTerminos, setMostrarTerminos] = useState(true);
-  const [terminosAceptados, setTerminosAceptados] = useState(false);
-  const [cotizaciones, setCotizaciones] = useState([]);
-  const [modalCotizar, setModalCotizar] = useState(null);
-  const [cotForm, setCotForm] = useState({ monto:"", mensaje:"" });
-  const [misCotz, setMisCotz] = useState([]);
-  const [fotoFile, setFotoFile] = useState(null);
-  const [fotoPreview, setFotoPreview] = useState(null);
-  const [dniFiles, setDniFiles] = useState({ frente:null, dorso:null, selfie:null });
-  const [subiendoFoto, setSubiendoFoto] = useState(false);
-  const [profesionales, setProfesionales] = useState([]);
+const RESPUESTAS = [
+  "Perfecto, te confirmo enseguida.",
+  "Dale, sin problema!",
+  "¿Me podés mandar la dirección exacta?",
+  "Listo, quedamos así entonces.",
+  "Anotado, hasta el miércoles!",
+];
 
-  const F = { h:"'Cormorant Garamond', serif", b:"'Jost', sans-serif" };
-  const inp = { padding:"12px 14px", background:"#070d1c", border:"1px solid #1a4a8a", borderRadius:"9px", color:"#e8edf5", fontSize:"14px", width:"100%", boxSizing:"border-box", fontFamily:F.b };
-  const btn = { padding:"15px", background:"#0f2d5e", color:"#fff", border:"1px solid #1a4a8a", borderRadius:"12px", fontSize:"15px", cursor:"pointer", fontWeight:"600", width:"100%", fontFamily:F.b };
+// ─────────────────────────────────────────
+// COMPONENTES REUTILIZABLES
+// ─────────────────────────────────────────
+const PrimaryBtn = ({ children, onClick, disabled = false, style = {} }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    style={{
+      background: `linear-gradient(135deg,${C.blue},${C.blueBtn})`,
+      border: "none", color: C.white,
+      padding: "16px 24px", borderRadius: 13,
+      fontFamily: F.sans, fontSize: 15, fontWeight: 600,
+      cursor: disabled ? "not-allowed" : "pointer",
+      width: "100%",
+      boxShadow: "0 8px 32px rgba(74,143,212,0.25)",
+      transition: "all .22s",
+      opacity: disabled ? 0.5 : 1,
+      ...style,
+    }}
+    onMouseEnter={e => { if (!disabled) e.currentTarget.style.transform = "translateY(-2px)"; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; }}
+  >{children}</button>
+);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        cargarProfesional(session.user.id);
-        verificarTerminos(session.user.id);
-      }
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        cargarProfesional(session.user.id);
-        verificarTerminos(session.user.id);
-      } else setProfesional(null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+const GhostBtn = ({ children, onClick, style = {} }) => (
+  <button
+    onClick={onClick}
+    style={{
+      background: "rgba(74,143,212,0.08)",
+      border: "1px solid rgba(74,143,212,0.3)",
+      color: C.blueLight, padding: "16px 24px", borderRadius: 13,
+      fontFamily: F.sans, fontSize: 15, fontWeight: 500,
+      cursor: "pointer", width: "100%", transition: "all .22s",
+      ...style,
+    }}
+    onMouseEnter={e => e.currentTarget.style.background = "rgba(74,143,212,0.15)"}
+    onMouseLeave={e => e.currentTarget.style.background = "rgba(74,143,212,0.08)"}
+  >{children}</button>
+);
 
-  useEffect(() => {
-    if (vista === "explorar" || vista === "pedidos-prof") cargarPedidos();
-    if (vista === "mis-cotizaciones") cargarMisCotizaciones();
-    if (vista === "admin") cargarProfesionales();
-  }, [vista]);
+const BackBtn = ({ onClick }) => (
+  <button onClick={onClick} style={{ background:"none", border:"none", color:C.blue, fontSize:14, cursor:"pointer", marginBottom:22, fontFamily:F.sans }}>
+    ← Volver
+  </button>
+);
 
-  const verificarTerminos = (uid) => {
-    const key = `terminos_aceptados_${uid}`;
-    const yaAcepto = localStorage.getItem(key);
-    if (!yaAcepto) setMostrarTerminos(true);
-  };
+const Lbl = ({ children }) => (
+  <label style={{ fontSize:11, color:C.gray, letterSpacing:1.5, fontWeight:600 }}>{children}</label>
+);
 
-  const cargarProfesional = async (uid) => {
-    const { data } = await supabase
-  .from("profesionales")
-  .select("*")
-  .eq("id", uid)
-  .maybeSingle();
-    setProfesional(data);
-    if (data?.foto_url) setFotoPreview(data.foto_url);
-  };
+const Inp = ({ placeholder, type="text", value, onChange, err, style={} }) => (
+  <>
+    <input
+      type={type} placeholder={placeholder} value={value} onChange={onChange}
+      style={{ width:"100%", marginTop:8, background:C.bgCard, border:`1px solid ${err?C.red:C.border}`, color:C.white, padding:"13px 15px", borderRadius:10, fontFamily:F.sans, fontSize:14, ...style }}
+    />
+    {err && <p style={{ color:C.red, fontSize:12, marginTop:4 }}>{err}</p>}
+  </>
+);
 
-  const cargarProfesionales = async () => {
-    const { data } = await supabase.from("profesionales").select("*").order("created_at", { ascending: false });
-    if (data) setProfesionales(data);
-  };
+const Sel = ({ value, onChange, children, style={} }) => (
+  <select value={value} onChange={onChange}
+    style={{ width:"100%", marginTop:8, background:C.bgCard, border:`1px solid ${C.border}`, color:C.white, padding:"13px 15px", borderRadius:10, fontFamily:F.sans, fontSize:14, ...style }}
+  >{children}</select>
+);
 
-  const loginGoogle = async () => {
-    await supabase.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: window.location.origin } });
-  };
+// ─────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────
+const Nav = ({ setVista, noLeidas }) => (
+  <nav style={{
+    position:"sticky", top:0, zIndex:100,
+    background:C.nav, backdropFilter:"blur(12px)",
+    borderBottom:`1px solid ${C.border}`,
+    display:"flex", alignItems:"center", justifyContent:"space-between",
+    padding:"14px 20px",
+  }}>
+    <div onClick={()=>setVista("inicio")} style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
+      <div style={{ width:36, height:36, borderRadius:8, background:`linear-gradient(135deg,${C.blue},${C.blueDark})`, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:F.serif, fontWeight:800, fontSize:18 }}>N</div>
+      <span style={{ fontFamily:F.serif, fontWeight:700, fontSize:20, letterSpacing:3 }}>NEX<span style={{color:C.blue}}>O</span></span>
+    </div>
+    <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+      <button onClick={()=>setVista("notificaciones")} style={{ position:"relative", background:"none", border:"none", cursor:"pointer", fontSize:20, padding:"4px" }}>
+        🔔
+        {noLeidas > 0 && (
+          <span style={{ position:"absolute", top:0, right:0, width:16, height:16, borderRadius:"50%", background:C.red, fontSize:10, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff" }}>
+            {noLeidas}
+          </span>
+        )}
+      </button>
+      <button onClick={()=>setVista("planes")} style={{ background:"transparent", border:`1px solid ${C.border}`, color:C.grayLight, padding:"7px 14px", borderRadius:8, fontFamily:F.sans, fontSize:13, cursor:"pointer" }}>Planes</button>
+      <button onClick={()=>setVista("admin")} style={{ background:"rgba(74,143,212,0.1)", border:`1px solid ${C.border}`, color:C.blue, padding:"7px 12px", borderRadius:8, fontFamily:F.sans, fontSize:13, cursor:"pointer" }}>⚙️</button>
+    </div>
+  </nav>
+);
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setVista("inicio");
-    setProfesional(null);
-    setFotoPreview(null);
-  };
+// ─────────────────────────────────────────
+// POPUP T&C — FIX: onAccept recibe callback para continuar
+// ─────────────────────────────────────────
+const TyCPopup = ({ onAccept, onClose }) => (
+  <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+    <div className="mod" style={{ background:C.bgCard, borderRadius:"20px 20px 0 0", padding:"28px 24px 36px", maxWidth:480, width:"100%", border:`1px solid ${C.border}`, maxHeight:"85vh", display:"flex", flexDirection:"column" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+        <h3 style={{ fontFamily:F.serif, fontSize:22, fontWeight:700 }}>Términos y Condiciones</h3>
+        <button onClick={onClose} style={{ background:"none", border:"none", color:C.gray, fontSize:22, cursor:"pointer" }}>×</button>
+      </div>
+      <div style={{ overflowY:"auto", flex:1, paddingRight:4, marginBottom:20 }}>
+        {[
+          ["1. Uso de la plataforma",       "Nexo es una plataforma de conexión entre clientes y profesionales. No somos empleadores ni garantizamos la relación laboral entre las partes."],
+          ["2. Verificación de identidad",   "Para operar como profesional en Nexo, debés completar el proceso de verificación de identidad (DNI) y aceptar que nuestro equipo valide tus datos manualmente."],
+          ["3. Responsabilidad del profesional","Sos responsable de la calidad, puntualidad y resultados de los trabajos que ofrecés. Nexo no asume responsabilidad por daños ocasionados durante la prestación del servicio."],
+          ["4. Comisiones y pagos",          "Durante el período de lanzamiento, Nexo es gratuito. Los planes de suscripción se activarán conforme se comunique con anticipación por mail."],
+          ["5. Notificaciones",              "Al registrarte, aceptás recibir notificaciones push y correos electrónicos sobre pedidos en tu rubro, novedades de la plataforma y comunicaciones operativas."],
+          ["6. Calificaciones y reputación", "Los clientes podrán calificarte luego de cada servicio. Las calificaciones son públicas y no pueden ser eliminadas salvo por razones justificadas ante el equipo de Nexo."],
+          ["7. Cancelación de cuenta",       "Nexo se reserva el derecho de suspender o cancelar cuentas que violen estos términos, reciban reiteradas calificaciones negativas o incurran en conductas fraudulentas."],
+          ["8. Privacidad",                  "Tus datos personales serán tratados conforme a nuestra Política de Privacidad y la Ley 25.326 de Protección de Datos Personales de Argentina."],
+        ].map(([t, c]) => (
+          <div key={t} style={{ marginBottom:16 }}>
+            <div style={{ fontWeight:600, fontSize:13, color:C.blueLight, marginBottom:4 }}>{t}</div>
+            <p style={{ fontSize:13, color:C.grayLight, lineHeight:1.65, fontWeight:300 }}>{c}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{ display:"flex", gap:10 }}>
+        <button onClick={onClose} style={{ flex:1, background:"transparent", border:`1px solid ${C.border}`, color:C.gray, padding:14, borderRadius:10, fontFamily:F.sans, fontSize:14, cursor:"pointer" }}>Cancelar</button>
+        {/* ✅ FIX: onAccept() directamente continúa el registro */}
+        <button onClick={onAccept} style={{ flex:2, background:`linear-gradient(135deg,${C.blue},${C.blueBtn})`, border:"none", color:C.white, padding:14, borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer", boxShadow:"0 6px 20px rgba(74,143,212,0.3)" }}>
+          Acepto los términos ✓
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
-  const cargarPedidos = async () => {
-    setLoading(true);
-    const { data, error } = await supabase.from("pedidos").select("*").order("created_at", { ascending: false });
-    if (!error) setPedidos(data);
-    setLoading(false);
-  };
+// ─────────────────────────────────────────
+// POPUP CALIFICAR
+// ─────────────────────────────────────────
+const CalificarPopup = ({ nombre, onClose }) => {
+  const [stars, setStars]       = useState(0);
+  const [hover, setHover]       = useState(0);
+  const [comentario, setCom]    = useState("");
+  const [enviado, setEnviado]   = useState(false);
 
-  const cargarMisCotizaciones = async () => {
-    if (!user) return;
-    setLoading(true);
-    const { data } = await supabase
-      .from("cotizaciones")
-      .select("*, pedidos(*)")
-      .eq("profesional_id", user.id)
-      .order("created_at", { ascending: false });
-    if (data) setMisCotz(data);
-    setLoading(false);
-  };
-
-  const aceptarTerminos = () => {
-    if (!terminosAceptados) { alert("Tenés que aceptar los términos para continuar."); return; }
-    localStorage.setItem(`terminos_aceptados_${user.id}`, "true");
-    setMostrarTerminos(true);
-  };
-
-  const subirFotoPerfil = async (file) => {
-    if (!file || !user) return null;
-    setSubiendoFoto(true);
-    const ext = file.name.split(".").pop();
-    const path = `${user.id}/avatar.${ext}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
-    if (error) { alert("Error al subir foto: " + error.message); setSubiendoFoto(false); return null; }
-    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-    await supabase.from("profesionales").update({ foto_url: data.publicUrl }).eq("id", user.id);
-    setSubiendoFoto(false);
-    return data.publicUrl;
-  };
-
-  const publicar = async () => {
-    if (!form.descripcion.trim() || !form.nombre.trim()) { alert("Completá todos los campos"); return; }
-    const clienteId = user?.id ?? null;
-    const clienteEmail = user?.email ?? null;
-    const { error } = await supabase.from("pedidos").insert([{
-      tipo: form.tipo,
-      descripcion: form.descripcion,
-      zona: form.zona,
-      urgente: form.urgente,
-      estado: "activo",
-      cliente_id: clienteId,
-      cliente_email: clienteEmail,
-      terminos_aceptados: true
-    }]);
-    if (!error) {
-      alert("¡Pedido publicado!");
-      setForm({ tipo:"Plomero", descripcion:"", zona:"Pilar Centro", nombre:"", urgente:false });
-      setVista("explorar");
-    } else alert("Error: " + error.message);
-  };
-
-  const enviarCotizacion = async () => {
-    if (!cotForm.monto || !cotForm.mensaje.trim()) { alert("Completá monto y mensaje"); return; }
-    const { error } = await supabase.from("cotizaciones").insert([{
-      pedido_id: modalCotizar.id,
-      profesional_id: user.id,
-      monto: parseFloat(cotForm.monto),
-      mensaje: cotForm.mensaje,
-      estado: "pendiente"
-    }]);
-    if (!error) {
-      alert("¡Cotización enviada!");
-      setModalCotizar(null);
-      setCotForm({ monto:"", mensaje:"" });
-    } else alert("Error: " + error.message);
-  };
-
-  const aprobarProfesional = async (id) => {
-    await supabase.from("profesionales").update({ verificado: true }).eq("id", id);
-    cargarProfesionales();
-  };
-
-  const rechazarProfesional = async (id) => {
-    await supabase.from("profesionales").update({ verificado: false }).eq("id", id);
-    cargarProfesionales();
-  };
-
-  const registrarProfesional = async () => {
-    if (!regProf.nombre || !regProf.dni || !regProf.telefono) { alert("Completá todos los campos"); return; }
-    let fotoUrl = null;
-    if (fotoFile) fotoUrl = await subirFotoPerfil(fotoFile);
-    const { error } = await supabase.from("profesionales").insert([{
-      id: user.id,
-      nombre: regProf.nombre,
-      oficio: regProf.oficio,
-      zona: regProf.zona,
-      telefono: regProf.telefono,
-      dni: regProf.dni,
-      descripcion: regProf.descripcion,
-      verificado: false,
-      terminos_aceptados: true,
-      foto_url: fotoUrl
-    }]);
-    if (!error) {
-      await cargarProfesional(user.id);
-      setVista("pendiente-prof");
-    } else alert("Error: " + error.message);
-  };
-
-  const irProfesional = () => {
-    if (!user) { setVista("login-prof"); return; }
-    if (!profesional) { setVista("registro-prof"); return; }
-    if (!profesional.verificado) { setVista("pendiente-prof"); return; }
-    setVista("pedidos-prof");
-  };
-
-  const planes = [
-    { nombre:"Prueba", precio:"Gratis", subprecio:"30 días", color:"#1a4a8a", destacado:false, features:["✓ 2 cotizaciones incluidas","✓ Verificación de identidad obligatoria","✓ Perfil básico visible","✓ Al vencer: mail de aviso + 7 días extra","✗ Sin renovación automática"] },
-    { nombre:"Pro", precio:"$2.500", subprecio:"por mes", color:"#4a8fd4", destacado:true, features:["✓ Cotizaciones ilimitadas","✓ Verificación de identidad incluida","✓ Perfil destacado en búsquedas","✓ Badge verificado en tu perfil","✓ Soporte por WhatsApp"] },
-    { nombre:"Business", precio:"$5.000", subprecio:"por mes", color:"#6b9fd4", destacado:false, features:["✓ Todo lo de Pro","✓ Hasta 3 oficios distintos","✓ Panel de analytics","✓ Soporte prioritario 24hs","✓ Aparecés primero en tu zona"] },
-  ];
+  if (enviado) return (
+    <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 24px" }}>
+      <div className="mod" style={{ background:C.bgCard, borderRadius:20, padding:"40px 28px", maxWidth:380, width:"100%", textAlign:"center", border:`1px solid ${C.border}` }}>
+        <div style={{ fontSize:52, marginBottom:16 }}>⭐</div>
+        <h3 style={{ fontFamily:F.serif, fontSize:24, marginBottom:8 }}>¡Gracias por calificar!</h3>
+        <p style={{ color:C.gray, fontSize:14, marginBottom:24, fontWeight:300 }}>Tu opinión ayuda a toda la comunidad Nexo.</p>
+        <PrimaryBtn onClick={onClose}>Cerrar</PrimaryBtn>
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{ minHeight:"100vh", background:"#040810", color:"#e8edf5", fontFamily:F.b }}>
+    <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+      <div className="mod" style={{ background:C.bgCard, borderRadius:"20px 20px 0 0", padding:"28px 24px 36px", maxWidth:480, width:"100%", border:`1px solid ${C.border}` }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+          <h3 style={{ fontFamily:F.serif, fontSize:22 }}>Calificar a {nombre}</h3>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:C.gray, fontSize:22, cursor:"pointer" }}>×</button>
+        </div>
+        <p style={{ color:C.gray, fontSize:14, marginBottom:20, fontWeight:300 }}>¿Cómo fue tu experiencia?</p>
+        <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:16 }}>
+          {[1,2,3,4,5].map(n => (
+            <button key={n} onClick={()=>setStars(n)} onMouseEnter={()=>setHover(n)} onMouseLeave={()=>setHover(0)}
+              style={{ background:"none", border:"none", fontSize:40, cursor:"pointer", transition:"transform .15s", transform:(hover||stars)>=n?"scale(1.2)":"scale(1)", filter:(hover||stars)>=n?"brightness(1)":"brightness(0.3)" }}>★</button>
+          ))}
+        </div>
+        {stars > 0 && <div style={{ textAlign:"center", color:C.blueLight, fontSize:13, marginBottom:16, fontWeight:500 }}>{["","Malo","Regular","Bien","Muy bien","¡Excelente!"][stars]}</div>}
+        <div style={{ marginBottom:20 }}>
+          <Lbl>COMENTARIO (OPCIONAL)</Lbl>
+          <textarea value={comentario} onChange={e=>setCom(e.target.value)} placeholder="Contá cómo fue el trabajo..."
+            style={{ width:"100%", marginTop:8, background:C.bg, border:`1px solid ${C.border}`, color:C.white, padding:"13px 16px", borderRadius:10, fontFamily:F.sans, fontSize:14, resize:"none", minHeight:80, lineHeight:1.6 }} />
+        </div>
+        <PrimaryBtn onClick={()=>stars>0&&setEnviado(true)} style={{ opacity:stars===0?0.4:1 }}>Enviar calificación</PrimaryBtn>
+      </div>
+    </div>
+  );
+};
 
-      {/* MODAL TÉRMINOS Y CONDICIONES */}
-      {true && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}>
-          <div style={{ background:"#070d1c", border:"1px solid #1a4a8a", borderRadius:"16px", width:"100%", maxWidth:"520px", maxHeight:"85vh", display:"flex", flexDirection:"column" }}>
-            <div style={{ padding:"24px 28px 0" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"20px" }}>
-                <div style={{ width:"42px", height:"42px", background:"#0f2d5e", borderRadius:"10px", display:"flex", alignItems:"center", justifyContent:"center", border:"1px solid #1a4a8a" }}>
-                  <span style={{ fontFamily:F.h, fontSize:"22px", fontWeight:"700" }}>N</span>
-                </div>
+// ─────────────────────────────────────────
+// POPUP NOTIFICACIÓN (PROFESIONAL)
+// ─────────────────────────────────────────
+const NotifPopup = ({ notif, onClose, onPostular }) => (
+  <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 24px" }}>
+    <div className="mod" style={{ background:C.bgCard, borderRadius:20, padding:"28px 24px", maxWidth:400, width:"100%", border:`1px solid ${notif.tipo==="urgente"?"rgba(248,113,113,0.4)":C.border}` }}>
+      {notif.tipo==="urgente" && (
+        <div style={{ background:"rgba(248,113,113,0.15)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:8, padding:"8px 14px", marginBottom:16, display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ animation:"pulse 1s infinite", fontSize:14 }}>🔴</span>
+          <span style={{ fontSize:12, color:C.red, fontWeight:600, letterSpacing:1 }}>PEDIDO URGENTE</span>
+        </div>
+      )}
+      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+        <div style={{ width:40, height:40, borderRadius:10, background:"rgba(74,143,212,0.12)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, border:`1px solid ${C.border}` }}>👷</div>
+        <div>
+          <div style={{ fontSize:11, color:C.gray, letterSpacing:1, fontWeight:600 }}>PEDIDO PARA VOS</div>
+          <div style={{ fontSize:12, color:C.blue, marginTop:2 }}>{notif.rubro}</div>
+        </div>
+      </div>
+      <h3 style={{ fontFamily:F.serif, fontSize:20, marginBottom:8 }}>{notif.titulo}</h3>
+      <p style={{ color:C.grayLight, fontSize:14, lineHeight:1.6, marginBottom:18, fontWeight:300 }}>{notif.desc}</p>
+      <div style={{ background:"rgba(74,143,212,0.06)", border:`1px solid ${C.border}`, borderRadius:10, padding:"11px 14px", marginBottom:20, fontSize:13, color:C.gray }}>
+        💡 Al postularte, el cliente verá tu perfil y podrá contactarte por chat.
+      </div>
+      <div style={{ display:"flex", gap:10 }}>
+        <button onClick={onClose} style={{ flex:1, background:"transparent", border:`1px solid ${C.border}`, color:C.gray, padding:"13px", borderRadius:10, fontFamily:F.sans, fontSize:14, cursor:"pointer" }}>Ignorar</button>
+        <button onClick={onPostular} style={{ flex:2, background:`linear-gradient(135deg,${C.blue},${C.blueBtn})`, border:"none", color:C.white, padding:"13px", borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer" }}>Postularme →</button>
+      </div>
+    </div>
+  </div>
+);
+
+// ─────────────────────────────────────────
+// CHAT
+// ─────────────────────────────────────────
+const ChatView = ({ pro, initMsgs, onClose }) => {
+  const [msgs, setMsgs]         = useState(initMsgs || []);
+  const [texto, setTexto]       = useState("");
+  const [typing, setTyping]     = useState(false);
+  const bottomRef               = useRef(null);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs, typing]);
+
+  const send = () => {
+    if (!texto.trim()) return;
+    const hora = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+    setMsgs(p => [...p, { id:Date.now(), de:"cliente", texto:texto.trim(), hora }]);
+    setTexto("");
+    setTyping(true);
+    setTimeout(() => {
+      setTyping(false);
+      setMsgs(p => [...p, {
+        id: Date.now()+1, de:"pro",
+        texto: RESPUESTAS[Math.floor(Math.random()*RESPUESTAS.length)],
+        hora: new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),
+      }]);
+    }, 1800);
+  };
+
+  return (
+    <div className="chat" style={{ position:"fixed", inset:0, background:C.bg, zIndex:200, display:"flex", flexDirection:"column", maxWidth:480, margin:"0 auto" }}>
+      <div style={{ background:C.nav, backdropFilter:"blur(12px)", borderBottom:`1px solid ${C.border}`, padding:"14px 20px", display:"flex", alignItems:"center", gap:14 }}>
+        <button onClick={onClose} style={{ background:"none", border:"none", color:C.blue, fontSize:22, cursor:"pointer", lineHeight:1 }}>←</button>
+        <div style={{ width:40, height:40, borderRadius:10, fontSize:20, background:"rgba(74,143,212,0.12)", display:"flex", alignItems:"center", justifyContent:"center", border:`1px solid ${C.border}` }}>{pro.img}</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontWeight:600, fontSize:15, display:"flex", alignItems:"center", gap:6 }}>
+            {pro.nombre}
+            {pro.verificado && <span style={{ fontSize:10, color:C.blue, background:"rgba(74,143,212,0.12)", padding:"2px 6px", borderRadius:20 }}>✓</span>}
+          </div>
+          <div style={{ fontSize:12, color:C.green, marginTop:2, display:"flex", alignItems:"center", gap:4 }}>
+            <span style={{ width:6, height:6, borderRadius:"50%", background:C.green, display:"inline-block" }} />
+            En línea · {pro.oficio}
+          </div>
+        </div>
+        <div style={{ textAlign:"right" }}>
+          <div style={{ fontSize:12, color:C.blue }}>★ {pro.rating}</div>
+          <div style={{ fontSize:11, color:C.gray }}>{pro.trabajos} trabajos</div>
+        </div>
+      </div>
+      <div style={{ flex:1, overflowY:"auto", padding:"20px 16px", display:"flex", flexDirection:"column", gap:10 }}>
+        <div style={{ textAlign:"center", marginBottom:8 }}>
+          <span style={{ fontSize:11, color:C.gray, background:C.bgCard, padding:"6px 14px", borderRadius:20, border:`1px solid ${C.border}` }}>
+            Chat con {pro.nombre} · {pro.oficio}
+          </span>
+        </div>
+        {msgs.map(m => (
+          <div key={m.id} style={{ display:"flex", flexDirection:"column", alignItems:m.de==="cliente"?"flex-end":"flex-start" }}>
+            <div style={{
+              maxWidth:"78%", padding:"11px 14px",
+              borderRadius: m.de==="cliente"?"16px 16px 4px 16px":"16px 16px 16px 4px",
+              background: m.de==="cliente"?`linear-gradient(135deg,${C.blue},${C.blueBtn})`:C.bgCard,
+              border: m.de==="pro"?`1px solid ${C.border}`:"none",
+              fontSize:14, lineHeight:1.55, color:C.white,
+            }}>{m.texto}</div>
+            <span style={{ fontSize:10, color:C.gray, marginTop:4, paddingLeft:4, paddingRight:4 }}>{m.hora}</span>
+          </div>
+        ))}
+        {typing && (
+          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+            <div style={{ background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:"16px 16px 16px 4px", padding:"12px 16px", display:"flex", gap:4 }}>
+              {[0,1,2].map(i=><span key={i} style={{ width:6, height:6, borderRadius:"50%", background:C.gray, display:"inline-block", animation:`pulse 1s ${i*.2}s infinite` }}/>)}
+            </div>
+            <span style={{ fontSize:11, color:C.gray }}>escribiendo...</span>
+          </div>
+        )}
+        <div ref={bottomRef}/>
+      </div>
+      <div style={{ background:C.nav, backdropFilter:"blur(12px)", borderTop:`1px solid ${C.border}`, padding:"14px 16px", display:"flex", gap:10, alignItems:"flex-end" }}>
+        <textarea
+          value={texto} onChange={e=>setTexto(e.target.value)}
+          onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); send(); }}}
+          placeholder="Escribí un mensaje..." rows={1}
+          style={{ flex:1, background:C.bgCard, border:`1px solid ${C.border}`, color:C.white, padding:"12px 16px", borderRadius:12, fontFamily:F.sans, fontSize:14, resize:"none", lineHeight:1.5, maxHeight:100, overflowY:"auto" }}
+        />
+        <button onClick={send} disabled={!texto.trim()} style={{ width:46, height:46, borderRadius:12, background:texto.trim()?`linear-gradient(135deg,${C.blue},${C.blueBtn})`:"rgba(74,143,212,0.1)", border:"none", cursor:texto.trim()?"pointer":"default", fontSize:20, flexShrink:0, transition:"all .2s" }}>
+          ➤
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────
+// APP PRINCIPAL
+// ─────────────────────────────────────────
+export default function App() {
+
+  const [vista,       setVista]       = useState("inicio");
+  const [catAbierta,  setCatAbierta]  = useState(null);
+  const [busqueda,    setBusqueda]    = useState("");
+  const [oficio,      setOficio]      = useState("");
+
+  const [pros,        setPros]        = useState(PROFESIONALES);
+  const [adminTab,    setAdminTab]    = useState("verificaciones");
+  const [adminSearch, setAdminSearch] = useState("");
+  const [adminMsg,    setAdminMsg]    = useState({});
+
+  const [leidas,      setLeidas]      = useState([]);
+  const [postulados,  setPostulados]  = useState([]);
+  const [showNotif,   setShowNotif]   = useState(false);
+  const [notifActiva, setNotifActiva] = useState(null);
+
+  const [showTyC,     setShowTyC]     = useState(false);
+  const [tycOk,       setTycOk]       = useState(false);
+  const [showCalif,   setShowCalif]   = useState(false);
+
+  const [chat,        setChat]        = useState(null);
+
+  const [rNombre, setRNombre] = useState("");
+  const [rEmail,  setREmail]  = useState("");
+  const [rTel,    setRTel]    = useState("");
+  const [rZona,   setRZona]   = useState("");
+  const [rCat,    setRCat]    = useState(0);
+  const [rErr,    setRErr]    = useState({});
+
+  const activos    = pros.filter(p => p.estado === "activo");
+  const pendientes = pros.filter(p => p.estado === "pendiente");
+  const noLeidas   = NOTIFICACIONES.filter(n => !leidas.includes(n.id)).length;
+
+  const catsFiltradas = busqueda.trim()
+    ? CATEGORIAS.map(c => ({ ...c, subs: c.subs.filter(s => s.n.toLowerCase().includes(busqueda.toLowerCase())) })).filter(c => c.subs.length > 0)
+    : CATEGORIAS;
+
+  const prosFiltrados = adminSearch.trim()
+    ? pros.filter(p => p.nombre.toLowerCase().includes(adminSearch.toLowerCase()) || p.oficio.toLowerCase().includes(adminSearch.toLowerCase()))
+    : pros;
+
+  const elegirOficio = nombre => { setOficio(nombre); setVista("buscar"); setCatAbierta(null); };
+
+  const abrirNotif = n => {
+    setNotifActiva(n);
+    setShowNotif(true);
+    setLeidas(p => p.includes(n.id) ? p : [...p, n.id]);
+  };
+
+  const postular = () => {
+    setPostulados(p => [...p, notifActiva.id]);
+    setShowNotif(false);
+    setNotifActiva(null);
+  };
+
+  const verificarPro = id => setPros(p => p.map(x => x.id===id ? {...x, verificado:true,  estado:"activo"}    : x));
+  const rechazarPro  = id => setPros(p => p.map(x => x.id===id ? {...x, verificado:false, estado:"rechazado"} : x));
+
+  const validarRegistro = () => {
+    const e = {};
+    if (!rNombre.trim()) e.nombre = "Campo requerido";
+    if (!rEmail.trim() || !rEmail.includes("@")) e.email = "Email inválido";
+    if (!rTel.trim()) e.tel = "Campo requerido";
+    if (!rZona.trim()) e.zona = "Seleccioná una zona";
+    setRErr(e);
+    return Object.keys(e).length === 0;
+  };
+
+  // ✅ FIX PRINCIPAL: Al aceptar T&C, validar y continuar directo si el form está OK
+  const handleAceptarTyC = () => {
+    setTycOk(true);
+    setShowTyC(false);
+    // Intentar continuar el registro si el formulario ya está completo
+    const e = {};
+    if (!rNombre.trim()) e.nombre = "Campo requerido";
+    if (!rEmail.trim() || !rEmail.includes("@")) e.email = "Email inválido";
+    if (!rTel.trim()) e.tel = "Campo requerido";
+    if (!rZona.trim()) e.zona = "Seleccioná una zona";
+    setRErr(e);
+    if (Object.keys(e).length === 0) {
+      // Form completo → avanzar a planes directamente
+      setVista("planes");
+    }
+    // Si hay errores, el popup cierra y se muestran los errores en el form
+  };
+
+  const handleRegistro = () => {
+    if (!tycOk) {
+      setShowTyC(true);
+      return;
+    }
+    if (validarRegistro()) setVista("planes");
+  };
+
+  if (chat) {
+    return (
+      <>
+        <style>{GS}</style>
+        <ChatView pro={chat} initMsgs={CHAT_INIT[chat.id] || []} onClose={() => setChat(null)} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <style>{GS}</style>
+      <div style={{ minHeight:"100vh", background:C.bg, maxWidth:480, margin:"0 auto" }}>
+
+        <Nav setVista={setVista} noLeidas={noLeidas} />
+
+        {/* ══════════════════ INICIO ══════════════════ */}
+        {vista === "inicio" && (
+          <div>
+            <div style={{ minHeight:"88vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 28px 60px", background:"radial-gradient(ellipse at 50% 0%, rgba(74,143,212,0.12) 0%, transparent 65%)" }}>
+              <div className="fu" style={{ display:"inline-flex", alignItems:"center", gap:8, border:`1px solid ${C.border}`, borderRadius:20, padding:"8px 18px", marginBottom:36, background:"rgba(74,143,212,0.06)" }}>
+                <span style={{ width:7, height:7, borderRadius:"50%", background:C.blue, display:"inline-block", animation:"pulse 2s infinite" }}/>
+                <span style={{ fontSize:11, letterSpacing:2, color:C.grayLight, fontWeight:500 }}>ARGENTINA · ZONA NORTE · CABA</span>
+              </div>
+              <h1 className="fu1" style={{ fontFamily:F.serif, fontSize:"clamp(40px,8vw,60px)", fontWeight:700, lineHeight:1.12, textAlign:"center", marginBottom:20 }}>
+                El oficio que<br/>necesitás, <em style={{color:C.blueLight,fontStyle:"italic"}}>hoy.</em>
+              </h1>
+              <p className="fu2" style={{ textAlign:"center", color:C.gray, fontSize:16, lineHeight:1.7, marginBottom:40, maxWidth:340, fontWeight:300 }}>
+                Conectamos vecinos con profesionales de confianza.<br/>Publicás tu pedido y ellos cotizan. Vos elegís.
+              </p>
+              <div className="fu3" style={{ display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:360 }}>
+                <PrimaryBtn onClick={() => setVista("categorias")}>Necesito un servicio</PrimaryBtn>
+                <GhostBtn   onClick={() => setVista("registro-pro")}>Soy profesional</GhostBtn>
+              </div>
+              <div className="fu4" style={{ display:"flex", marginTop:56, width:"100%", borderTop:`1px solid ${C.border}`, paddingTop:32 }}>
+                {[["2.400+","PROFESIONALES"],["75+","OFICIOS"],["4.9★","CALIFICACIÓN"]].map(([v,l]) => (
+                  <div key={l} style={{ flex:1, textAlign:"center" }}>
+                    <div style={{ fontFamily:F.serif, fontSize:28, fontWeight:600, color:C.blue }}>{v}</div>
+                    <div style={{ fontSize:10, letterSpacing:1.5, color:C.gray, marginTop:4, fontWeight:500 }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ padding:"0 24px 40px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
                 <div>
-                  <h2 style={{ fontFamily:F.h, fontSize:"24px", margin:0, fontWeight:"600" }}>Términos y Condiciones</h2>
-                  <p style={{ color:"#6b7fa0", fontSize:"12px", margin:0, fontWeight:"300" }}>Leé y aceptá para continuar</p>
+                  <h2 style={{ fontFamily:F.serif, fontSize:24 }}>¿Qué necesitás?</h2>
+                  <p style={{ color:C.gray, fontSize:13, marginTop:4, fontWeight:300 }}>9 categorías · 75+ oficios</p>
                 </div>
+                <button onClick={()=>setVista("categorias")} style={{ background:"none", border:`1px solid ${C.border}`, color:C.blue, padding:"7px 14px", borderRadius:8, fontSize:13, cursor:"pointer", fontFamily:F.sans }}>Ver todas →</button>
               </div>
-            </div>
-            <div style={{ overflowY:"auto", padding:"0 28px", flex:1 }}>
-              <pre style={{ whiteSpace:"pre-wrap", fontSize:"12px", color:"#b8c8d8", lineHeight:"1.8", fontFamily:F.b, fontWeight:"300" }}>{TERMINOS}</pre>
-            </div>
-            <div style={{ padding:"20px 28px 24px", borderTop:"1px solid rgba(255,255,255,0.06)", marginTop:"12px" }}>
-              <label style={{ display:"flex", alignItems:"center", gap:"10px", cursor:"pointer", marginBottom:"16px" }}>
-                <input type="checkbox" checked={terminosAceptados} onChange={e => setTerminosAceptados(e.target.checked)} style={{ width:"16px", height:"16px" }} />
-                <span style={{ fontSize:"13px", color:"#b8c8d8" }}>Leí y acepto los Términos y Condiciones de NEXO</span>
-              </label>
-              <button onClick={aceptarTerminos} style={{ ...btn, opacity: terminosAceptados ? 1 : 0.5 }}>Continuar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL COTIZAR */}
-      {modalCotizar && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:"20px" }}>
-          <div style={{ background:"#070d1c", border:"1px solid #1a4a8a", borderRadius:"16px", width:"100%", maxWidth:"460px", padding:"28px" }}>
-            <h3 style={{ fontFamily:F.h, fontSize:"28px", fontWeight:"600", marginBottom:"8px" }}>Enviar cotización</h3>
-            <p style={{ color:"#6b7fa0", fontSize:"13px", marginBottom:"20px", fontWeight:"300" }}>{modalCotizar.tipo} · {modalCotizar.zona}</p>
-            <div style={{ background:"rgba(74,143,212,0.06)", border:"1px solid rgba(74,143,212,0.15)", borderRadius:"10px", padding:"14px", marginBottom:"20px" }}>
-              <p style={{ fontSize:"13px", color:"#b8c8d8", margin:0, fontWeight:"300", lineHeight:"1.7" }}>{modalCotizar.descripcion}</p>
-            </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:"12px", marginBottom:"20px" }}>
-              <input placeholder="Monto de tu cotización ($)" type="number" value={cotForm.monto} onChange={e => setCotForm({...cotForm, monto:e.target.value})} style={inp} />
-              <textarea placeholder="Mensaje para el cliente (experiencia, disponibilidad, etc.)" value={cotForm.mensaje} onChange={e => setCotForm({...cotForm, mensaje:e.target.value})} style={{ ...inp, minHeight:"90px", resize:"vertical" }} />
-            </div>
-            <div style={{ display:"flex", gap:"10px" }}>
-              <button onClick={() => setModalCotizar(null)} style={{ ...btn, background:"transparent", color:"#6b7fa0", borderColor:"rgba(255,255,255,0.1)", flex:1 }}>Cancelar</button>
-              <button onClick={enviarCotizacion} style={{ ...btn, flex:2 }}>Enviar cotización</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* NAV */}
-      <nav style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 28px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>
-        <div onClick={() => setVista("inicio")} style={{ display:"flex", alignItems:"center", gap:"12px", cursor:"pointer" }}>
-          <div style={{ width:"42px", height:"42px", background:"#0f2d5e", borderRadius:"10px", display:"flex", alignItems:"center", justifyContent:"center", border:"1px solid #1a4a8a" }}>
-            <span style={{ fontFamily:F.h, fontSize:"22px", fontWeight:"700", color:"#e8edf5" }}>N</span>
-          </div>
-          <span style={{ fontFamily:F.h, fontSize:"24px", fontWeight:"600", letterSpacing:"3px" }}>NEX<span style={{ color:"#4a8fd4" }}>O</span></span>
-        </div>
-        <div style={{ display:"flex", alignItems:"center", gap:"4px" }}>
-          <button onClick={() => setVista("planes")} style={{ background:"none", border:"none", color:"#b8c8d8", cursor:"pointer", fontSize:"14px", fontFamily:F.b, fontWeight:"500", padding:"8px 16px" }}>Planes</button>
-          {user && profesional?.verificado && (
-            <button onClick={() => setVista("mis-cotizaciones")} style={{ background:"none", border:"none", color:"#b8c8d8", cursor:"pointer", fontSize:"14px", fontFamily:F.b, fontWeight:"500", padding:"8px 16px" }}>Mis cotizaciones</button>
-          )}
-          {user && user.email === "tu-email-nexoprofesional26@gmail.com" && (
-            <button onClick={() => setVista("admin")} style={{ background:"none", border:"none", color:"#f08080", cursor:"pointer", fontSize:"14px", fontFamily:F.b, fontWeight:"500", padding:"8px 16px" }}>Admin</button>
-          )}
-          <div style={{ width:"1px", height:"20px", background:"rgba(255,255,255,0.15)", margin:"0 4px" }}></div>
-          {user ? (
-            <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-              {fotoPreview && <img src={fotoPreview} alt="perfil" style={{ width:"32px", height:"32px", borderRadius:"50%", objectFit:"cover", border:"2px solid #1a4a8a" }} />}
-              <button onClick={logout} style={{ background:"none", border:"none", color:"#6b7fa0", cursor:"pointer", fontSize:"14px", fontFamily:F.b, padding:"8px 12px" }}>Salir</button>
-            </div>
-          ) : (
-            <button onClick={loginGoogle} style={{ background:"none", border:"none", color:"#6b7fa0", cursor:"pointer", fontSize:"14px", fontFamily:F.b, padding:"8px 16px" }}>Ingresar</button>
-          )}
-        </div>
-      </nav>
-
-      {/* INICIO */}
-      {vista === "inicio" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"60px 24px 40px", textAlign:"center" }}>
-          <div style={{ display:"inline-flex", alignItems:"center", gap:"8px", background:"rgba(15,45,94,0.5)", border:"1px solid rgba(74,143,212,0.25)", borderRadius:"8px", padding:"10px 24px", marginBottom:"44px" }}>
-            <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#4a8fd4", display:"inline-block" }}></span>
-            <span style={{ fontSize:"11px", letterSpacing:"3px", color:"#4a8fd4", fontWeight:"500" }}>ARGENTINA · ZONA NORTE · CABA</span>
-          </div>
-          <h1 style={{ fontFamily:F.h, fontSize:"clamp(52px, 8vw, 84px)", fontWeight:"600", lineHeight:"1.1", margin:"0 0 28px", maxWidth:"700px", color:"#e8edf5" }}>
-            El oficio que<br />necesitás,{" "}
-            <em style={{ color:"#4a8fd4", fontStyle:"italic" }}>hoy.</em>
-          </h1>
-          <p style={{ color:"#6b7fa0", fontSize:"16px", fontWeight:"300", lineHeight:"1.9", maxWidth:"480px", margin:"0 0 52px" }}>
-            Conectamos vecinos con profesionales de confianza.<br />Publicás tu pedido y ellos cotizan. Vos elegís.
-          </p>
-          <div style={{ display:"flex", flexDirection:"column", gap:"12px", width:"100%", maxWidth:"420px", marginBottom:"64px" }}>
-            <button onClick={() => setVista("publicar")} style={btn}>Necesito un servicio</button>
-            <button onClick={irProfesional} style={{ ...btn, background:"rgba(15,45,94,0.4)", color:"#4a8fd4", border:"1px solid rgba(74,143,212,0.25)" }}>Soy profesional</button>
-          </div>
-          <div style={{ display:"flex", justifyContent:"center", gap:"56px", borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:"40px", width:"100%", maxWidth:"500px" }}>
-            {[["2.400+","PROFESIONALES"],["14","OFICIOS"],["4.9★","CALIFICACIÓN"]].map(([n,l]) => (
-              <div key={l} style={{ textAlign:"center" }}>
-                <div style={{ fontSize:"30px", fontWeight:"600", color:"#4a8fd4", fontFamily:F.h }}>{n}</div>
-                <div style={{ fontSize:"10px", color:"#6b7fa0", marginTop:"6px", letterSpacing:"2px" }}>{l}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* LOGIN PROF */}
-      {vista === "login-prof" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"70vh", padding:"40px 24px", textAlign:"center" }}>
-          <div style={{ width:"100%", maxWidth:"400px" }}>
-            <button onClick={() => setVista("inicio")} style={{ background:"none", border:"none", color:"#6b7fa0", cursor:"pointer", marginBottom:"32px", fontSize:"14px", fontFamily:F.b, display:"block" }}>← Volver</button>
-            <div style={{ width:"56px", height:"56px", background:"#0f2d5e", borderRadius:"14px", display:"flex", alignItems:"center", justifyContent:"center", border:"1px solid #1a4a8a", margin:"0 auto 24px" }}>
-              <span style={{ fontFamily:F.h, fontSize:"28px", fontWeight:"700" }}>N</span>
-            </div>
-            <h2 style={{ fontFamily:F.h, fontSize:"34px", fontWeight:"600", marginBottom:"8px" }}>Área profesional</h2>
-            <p style={{ color:"#6b7fa0", fontWeight:"300", marginBottom:"36px", fontSize:"15px" }}>Ingresá con Google para acceder a los pedidos de tu zona.</p>
-            <button onClick={loginGoogle} style={{ ...btn, background:"#fff", color:"#333", border:"1px solid #ddd", display:"flex", alignItems:"center", justifyContent:"center", gap:"10px" }}>
-              <span style={{ fontSize:"16px", fontWeight:"700" }}>G</span> Continuar con Google
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* REGISTRO PROF */}
-      {vista === "registro-prof" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"40px 24px 60px" }}>
-          <div style={{ width:"100%", maxWidth:"500px" }}>
-            <button onClick={() => setVista("inicio")} style={{ background:"none", border:"none", color:"#6b7fa0", cursor:"pointer", marginBottom:"24px", fontSize:"14px", fontFamily:F.b }}>← Volver</button>
-            <h2 style={{ fontFamily:F.h, fontSize:"36px", fontWeight:"600", marginBottom:"8px" }}>Registrate como profesional</h2>
-            <p style={{ color:"#6b7fa0", fontWeight:"300", marginBottom:"28px", fontSize:"14px" }}>Tu identidad será verificada antes de poder cotizar.</p>
-
-            {/* FOTO DE PERFIL */}
-            <div style={{ display:"flex", alignItems:"center", gap:"20px", marginBottom:"24px", padding:"20px", background:"#070d1c", border:"1px solid #1a4a8a", borderRadius:"12px" }}>
-              <div style={{ position:"relative" }}>
-                {fotoPreview ? (
-                  <img src={fotoPreview} alt="perfil" style={{ width:"72px", height:"72px", borderRadius:"50%", objectFit:"cover", border:"2px solid #1a4a8a" }} />
-                ) : (
-                  <div style={{ width:"72px", height:"72px", borderRadius:"50%", background:"#0f2d5e", border:"2px dashed #1a4a8a", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                    <span style={{ fontSize:"28px" }}>👤</span>
-                  </div>
-                )}
-              </div>
-              <div style={{ flex:1 }}>
-                <p style={{ fontSize:"13px", color:"#b8c8d8", margin:"0 0 8px", fontWeight:"500" }}>Foto de perfil</p>
-                <p style={{ fontSize:"11px", color:"#6b7fa0", margin:"0 0 12px", fontWeight:"300" }}>Aparece en tus cotizaciones. Da más confianza al cliente.</p>
-                <label style={{ display:"inline-flex", alignItems:"center", gap:"6px", background:"#0f2d5e", border:"1px solid #1a4a8a", borderRadius:"8px", padding:"8px 14px", cursor:"pointer", fontSize:"12px", color:"#4a8fd4" }}>
-                  📷 Subir foto
-                  <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => {
-                    const file = e.target.files[0];
-                    if (file) { setFotoFile(file); setFotoPreview(URL.createObjectURL(file)); }
-                  }} />
-                </label>
-              </div>
-            </div>
-
-            <div style={{ background:"rgba(74,143,212,0.06)", border:"1px solid rgba(74,143,212,0.2)", borderRadius:"10px", padding:"14px 18px", marginBottom:"24px" }}>
-              <p style={{ fontSize:"12px", color:"#4a8fd4", margin:"0", lineHeight:"1.7" }}>🔒 <strong>Verificación obligatoria:</strong> Necesitamos foto de tu DNI (frente y dorso) y una selfie.</p>
-            </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
-              <input placeholder="Nombre completo" value={regProf.nombre} onChange={e => setRegProf({...regProf, nombre:e.target.value})} style={inp} />
-              <input placeholder="Número de DNI" value={regProf.dni} onChange={e => setRegProf({...regProf, dni:e.target.value})} style={inp} />
-              <input placeholder="Teléfono / WhatsApp" value={regProf.telefono} onChange={e => setRegProf({...regProf, telefono:e.target.value})} style={inp} />
-              <select value={regProf.oficio} onChange={e => setRegProf({...regProf, oficio:e.target.value})} style={inp}>{OFICIOS.map(o => <option key={o}>{o}</option>)}</select>
-              <select value={regProf.zona} onChange={e => setRegProf({...regProf, zona:e.target.value})} style={inp}>{ZONAS.map(z => <option key={z}>{z}</option>)}</select>
-              <textarea placeholder="Contá tu experiencia brevemente..." value={regProf.descripcion} onChange={e => setRegProf({...regProf, descripcion:e.target.value})} style={{ ...inp, minHeight:"80px", resize:"vertical" }} />
-              <div style={{ background:"#070d1c", border:"1px solid #1a4a8a", borderRadius:"9px", padding:"16px" }}>
-                <p style={{ fontSize:"13px", color:"#6b7fa0", margin:"0 0 12px", fontWeight:"300" }}>📎 Documentación requerida</p>
-                <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
-                  {[["frente","DNI frente"],["dorso","DNI dorso"],["selfie","Selfie con DNI en mano"]].map(([key, doc]) => (
-                    <label key={key} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", background: dniFiles[key] ? "rgba(74,143,212,0.08)" : "rgba(255,255,255,0.03)", borderRadius:"7px", cursor:"pointer", border: dniFiles[key] ? "1px solid rgba(74,143,212,0.4)" : "1px dashed rgba(74,143,212,0.3)" }}>
-                      <span style={{ fontSize:"13px", color:"#b8c8d8" }}>{doc}</span>
-                      <span style={{ fontSize:"11px", color: dniFiles[key] ? "#4adf94" : "#4a8fd4" }}>{dniFiles[key] ? "✓ Subido" : "Subir foto →"}</span>
-                      <input type="file" accept="image/*" style={{ display:"none" }} onChange={e => {
-                        if (e.target.files[0]) setDniFiles(prev => ({...prev, [key]: e.target.files[0]}));
-                      }} />
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <button onClick={registrarProfesional} style={{ ...btn, opacity: subiendoFoto ? 0.6 : 1 }} disabled={subiendoFoto}>
-                {subiendoFoto ? "Subiendo..." : "Enviar solicitud de verificación"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* PENDIENTE */}
-      {vista === "pendiente-prof" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"70vh", padding:"40px 24px", textAlign:"center" }}>
-          <div style={{ width:"100%", maxWidth:"420px" }}>
-            <div style={{ fontSize:"48px", marginBottom:"20px" }}>⏳</div>
-            <h2 style={{ fontFamily:F.h, fontSize:"34px", fontWeight:"600", marginBottom:"12px" }}>Solicitud enviada</h2>
-            <p style={{ color:"#6b7fa0", fontWeight:"300", lineHeight:"1.8", marginBottom:"32px" }}>Estamos revisando tu documentación. En las próximas <strong style={{ color:"#e8edf5" }}>24 a 48 horas</strong> recibirás un mail con el resultado.</p>
-            <button onClick={() => setVista("inicio")} style={{ ...btn, background:"transparent", color:"#4a8fd4", borderColor:"rgba(74,143,212,0.3)" }}>Volver al inicio</button>
-          </div>
-        </div>
-      )}
-
-      {/* PEDIDOS PROF */}
-      {vista === "pedidos-prof" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"40px 24px" }}>
-          <div style={{ width:"100%", maxWidth:"600px" }}>
-            {/* Perfil del profesional */}
-            {profesional && (
-              <div style={{ display:"flex", alignItems:"center", gap:"16px", background:"#070d1c", border:"1px solid #1a4a8a", borderRadius:"14px", padding:"20px", marginBottom:"28px" }}>
-                {profesional.foto_url ? (
-                  <img src={profesional.foto_url} alt="perfil" style={{ width:"64px", height:"64px", borderRadius:"50%", objectFit:"cover", border:"2px solid #1a4a8a" }} />
-                ) : (
-                  <div style={{ width:"64px", height:"64px", borderRadius:"50%", background:"#0f2d5e", border:"2px dashed #1a4a8a", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"24px" }}>👤</div>
-                )}
-                <div style={{ flex:1 }}>
-                  <div style={{ fontFamily:F.h, fontSize:"20px", fontWeight:"600" }}>{profesional.nombre}</div>
-                  <div style={{ color:"#6b7fa0", fontSize:"13px", fontWeight:"300" }}>{profesional.oficio} · {profesional.zona}</div>
-                </div>
-                <div style={{ display:"flex", alignItems:"center", gap:"6px", background:"rgba(74,143,212,0.08)", border:"1px solid rgba(74,143,212,0.2)", borderRadius:"100px", padding:"5px 14px" }}>
-                  <span style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#4a8fd4", display:"inline-block" }}></span>
-                  <span style={{ fontSize:"11px", color:"#4a8fd4", letterSpacing:"1px" }}>VERIFICADO</span>
-                </div>
-              </div>
-            )}
-
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px" }}>
-              <h2 style={{ fontFamily:F.h, fontSize:"32px", fontWeight:"600", margin:"0" }}>Pedidos disponibles</h2>
-            </div>
-
-            {loading && <p style={{ color:"#6b7fa0" }}>Cargando...</p>}
-            {!loading && pedidos.length === 0 && <p style={{ color:"#6b7fa0", fontWeight:"300" }}>No hay pedidos en tu zona todavía.</p>}
-            {pedidos.map(p => (
-              <div key={p.id} style={{ background:"#070d1c", border:"1px solid #1a4a8a", borderRadius:"14px", padding:"18px 22px", marginBottom:"12px" }}>
-                <div style={{ display:"flex", gap:"8px", marginBottom:"10px", flexWrap:"wrap" }}>
-                  <span style={{ background:"#0f2d5e", color:"#4a8fd4", padding:"3px 10px", borderRadius:"5px", fontSize:"11px", fontWeight:"600", letterSpacing:"1px" }}>{p.tipo}</span>
-                  <span style={{ background:"rgba(255,255,255,0.04)", color:"#6b7fa0", padding:"3px 10px", borderRadius:"5px", fontSize:"11px" }}>{p.zona}</span>
-                  {p.urgente && <span style={{ background:"rgba(224,85,85,0.1)", color:"#f08080", padding:"3px 10px", borderRadius:"5px", fontSize:"11px", fontWeight:"600" }}>Urgente</span>}
-                </div>
-                <p style={{ fontSize:"14px", color:"#b8c8d8", lineHeight:"1.7", margin:"0 0 14px", fontWeight:"300" }}>{p.descripcion}</p>
-                <button onClick={() => setModalCotizar(p)} style={{ ...btn, padding:"10px", fontSize:"13px", width:"auto", paddingLeft:"20px", paddingRight:"20px" }}>Enviar cotización</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* MIS COTIZACIONES */}
-      {vista === "mis-cotizaciones" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"40px 24px" }}>
-          <div style={{ width:"100%", maxWidth:"600px" }}>
-            <button onClick={() => setVista("pedidos-prof")} style={{ background:"none", border:"none", color:"#6b7fa0", cursor:"pointer", marginBottom:"24px", fontSize:"14px", fontFamily:F.b }}>← Volver</button>
-            <h2 style={{ fontFamily:F.h, fontSize:"36px", fontWeight:"600", marginBottom:"24px" }}>Mis cotizaciones</h2>
-            {loading && <p style={{ color:"#6b7fa0" }}>Cargando...</p>}
-            {!loading && misCotz.length === 0 && <p style={{ color:"#6b7fa0", fontWeight:"300" }}>Todavía no enviaste cotizaciones.</p>}
-            {misCotz.map(c => (
-              <div key={c.id} style={{ background:"#070d1c", border:"1px solid #1a4a8a", borderRadius:"14px", padding:"18px 22px", marginBottom:"12px" }}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"10px" }}>
-                  <div>
-                    <span style={{ background:"#0f2d5e", color:"#4a8fd4", padding:"3px 10px", borderRadius:"5px", fontSize:"11px", fontWeight:"600" }}>{c.pedidos?.tipo}</span>
-                    <span style={{ color:"#6b7fa0", fontSize:"12px", marginLeft:"10px" }}>{c.pedidos?.zona}</span>
-                  </div>
-                  <span style={{ color: c.estado === "aceptada" ? "#4adf94" : c.estado === "rechazada" ? "#f08080" : "#6b7fa0", fontSize:"12px", fontWeight:"600", letterSpacing:"1px" }}>
-                    {c.estado.toUpperCase()}
-                  </span>
-                </div>
-                <p style={{ fontSize:"13px", color:"#b8c8d8", margin:"0 0 8px", fontWeight:"300" }}>{c.pedidos?.descripcion}</p>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <span style={{ color:"#4a8fd4", fontSize:"18px", fontWeight:"700", fontFamily:F.h }}>${c.monto.toLocaleString()}</span>
-                  <span style={{ color:"#6b7fa0", fontSize:"12px" }}>{new Date(c.created_at).toLocaleDateString("es-AR")}</span>
-                </div>
-                {c.mensaje && <p style={{ fontSize:"12px", color:"#6b7fa0", margin:"8px 0 0", fontWeight:"300", fontStyle:"italic" }}>"{c.mensaje}"</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* PUBLICAR */}
-      {vista === "publicar" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"40px 24px" }}>
-          <div style={{ width:"100%", maxWidth:"480px" }}>
-            <button onClick={() => setVista("inicio")} style={{ background:"none", border:"none", color:"#6b7fa0", cursor:"pointer", marginBottom:"24px", fontSize:"14px", fontFamily:F.b }}>← Volver</button>
-            <h2 style={{ fontFamily:F.h, fontSize:"38px", fontWeight:"600", marginBottom:"28px" }}>Publicar pedido</h2>
-            <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
-              <select value={form.tipo} onChange={e => setForm({...form, tipo:e.target.value})} style={inp}>{OFICIOS.map(o => <option key={o}>{o}</option>)}</select>
-              <select value={form.zona} onChange={e => setForm({...form, zona:e.target.value})} style={inp}>{ZONAS.map(z => <option key={z}>{z}</option>)}</select>
-              <input placeholder="Tu nombre" value={form.nombre} onChange={e => setForm({...form, nombre:e.target.value})} style={inp} />
-              <textarea placeholder="Describí el trabajo..." value={form.descripcion} onChange={e => setForm({...form, descripcion:e.target.value})} style={{ ...inp, minHeight:"100px", resize:"vertical" }} />
-              <label style={{ display:"flex", alignItems:"center", gap:"8px", color:"#f08080", fontSize:"13px", cursor:"pointer" }}>
-                <input type="checkbox" checked={form.urgente} onChange={e => setForm({...form, urgente:e.target.checked})} />
-                Es urgente
-              </label>
-              <button onClick={publicar} style={btn}>Publicar pedido</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* EXPLORAR */}
-      {vista === "explorar" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"40px 24px" }}>
-          <div style={{ width:"100%", maxWidth:"560px" }}>
-            <button onClick={() => setVista("inicio")} style={{ background:"none", border:"none", color:"#6b7fa0", cursor:"pointer", marginBottom:"24px", fontSize:"14px", fontFamily:F.b }}>← Volver</button>
-            <h2 style={{ fontFamily:F.h, fontSize:"38px", fontWeight:"600", marginBottom:"24px" }}>Pedidos disponibles</h2>
-            {loading && <p style={{ color:"#6b7fa0" }}>Cargando...</p>}
-            {!loading && pedidos.length === 0 && <p style={{ color:"#6b7fa0", fontWeight:"300" }}>No hay pedidos todavía.</p>}
-            {pedidos.map(p => (
-              <div key={p.id} style={{ background:"#070d1c", border:"1px solid #1a4a8a", borderRadius:"14px", padding:"18px 22px", marginBottom:"12px" }}>
-                <div style={{ display:"flex", gap:"8px", marginBottom:"10px", flexWrap:"wrap" }}>
-                  <span style={{ background:"#0f2d5e", color:"#4a8fd4", padding:"3px 10px", borderRadius:"5px", fontSize:"11px", fontWeight:"600", letterSpacing:"1px" }}>{p.tipo}</span>
-                  <span style={{ background:"rgba(255,255,255,0.04)", color:"#6b7fa0", padding:"3px 10px", borderRadius:"5px", fontSize:"11px" }}>{p.zona}</span>
-                  {p.urgente && <span style={{ background:"rgba(224,85,85,0.1)", color:"#f08080", padding:"3px 10px", borderRadius:"5px", fontSize:"11px", fontWeight:"600" }}>Urgente</span>}
-                </div>
-                <p style={{ fontSize:"14px", color:"#b8c8d8", lineHeight:"1.7", margin:"0", fontWeight:"300" }}>{p.descripcion}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* PLANES */}
-      {vista === "planes" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"40px 24px 60px" }}>
-          <div style={{ width:"100%", maxWidth:"640px" }}>
-            <button onClick={() => setVista("inicio")} style={{ background:"none", border:"none", color:"#6b7fa0", cursor:"pointer", marginBottom:"32px", fontSize:"14px", fontFamily:F.b, display:"block" }}>← Volver</button>
-            <div style={{ textAlign:"center", marginBottom:"48px" }}>
-              <h2 style={{ fontFamily:F.h, fontSize:"44px", fontWeight:"600", marginBottom:"8px" }}>Planes</h2>
-              <p style={{ color:"#6b7fa0", fontWeight:"300" }}>Empezá con el período de prueba. Sin tarjeta requerida.</p>
-            </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:"16px" }}>
-              {planes.map(p => (
-                <div key={p.nombre} style={{ background: p.destacado ? "rgba(74,143,212,0.07)" : "#070d1c", border:`1px solid ${p.color}`, borderRadius:"16px", padding:"28px", position:"relative" }}>
-                  {p.destacado && <span style={{ position:"absolute", top:"-13px", right:"24px", background:"#4a8fd4", color:"#fff", fontSize:"10px", padding:"4px 14px", borderRadius:"100px", letterSpacing:"1px" }}>RECOMENDADO</span>}
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"20px" }}>
-                    <div>
-                      <div style={{ fontFamily:F.h, fontSize:"26px", fontWeight:"600", marginBottom:"2px" }}>{p.nombre}</div>
-                      <div style={{ fontSize:"11px", color:"#6b7fa0", letterSpacing:"1px" }}>{p.subprecio}</div>
-                    </div>
-                    <div style={{ color:"#4a8fd4", fontSize:"22px", fontWeight:"700", fontFamily:F.h }}>{p.precio}</div>
-                  </div>
-                  <div style={{ display:"flex", flexDirection:"column", gap:"8px", marginBottom:"20px" }}>
-                    {p.features.map(f => (
-                      <div key={f} style={{ fontSize:"13px", color: f.startsWith("✓") ? "#b8c8d8" : "#4a5568", fontWeight:"300" }}>{f}</div>
-                    ))}
-                  </div>
-                  <button style={{ ...btn, background: p.destacado ? "#0f2d5e" : "transparent", color: p.destacado ? "#fff" : "#4a8fd4", borderColor: p.color, padding:"12px" }}>
-                    {p.nombre === "Prueba" ? "Comenzar prueba gratuita" : `Suscribirse a ${p.nombre}`}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
+                {CATEGORIAS.map(cat => (
+                  <button key={cat.id} onClick={()=>{ setVista("categorias"); setCatAbierta(cat.id); }}
+                    style={{ background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:12, padding:"16px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:7, cursor:"pointer", transition:"all .2s" }}
+                    onMouseEnter={e=>{ e.currentTarget.style.background=C.bgCardHover; e.currentTarget.style.borderColor="rgba(74,143,212,0.35)"; e.currentTarget.style.transform="translateY(-2px)"; }}
+                    onMouseLeave={e=>{ e.currentTarget.style.background=C.bgCard; e.currentTarget.style.borderColor=C.border; e.currentTarget.style.transform="translateY(0)"; }}
+                  >
+                    <span style={{ fontSize:24 }}>{cat.icon}</span>
+                    <span style={{ fontSize:10, color:C.grayLight, fontWeight:500, textAlign:"center", lineHeight:1.3 }}>{cat.nombre.split("&")[0].trim()}</span>
                   </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ padding:"0 24px 60px" }}>
+              <h2 style={{ fontFamily:F.serif, fontSize:24, marginBottom:6 }}>Profesionales top</h2>
+              <p style={{ color:C.gray, fontSize:13, marginBottom:20, fontWeight:300 }}>Los mejor calificados esta semana</p>
+              {activos.map(p => (
+                <div key={p.id} onClick={()=>setVista("perfil")}
+                  style={{ background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:14, padding:"14px 16px", display:"flex", alignItems:"center", gap:14, cursor:"pointer", transition:"all .2s", marginBottom:10 }}
+                  onMouseEnter={e=>{ e.currentTarget.style.background=C.bgCardHover; e.currentTarget.style.borderColor="rgba(74,143,212,0.3)"; }}
+                  onMouseLeave={e=>{ e.currentTarget.style.background=C.bgCard; e.currentTarget.style.borderColor=C.border; }}
+                >
+                  <div style={{ width:46, height:46, borderRadius:12, fontSize:22, background:"rgba(74,143,212,0.1)", display:"flex", alignItems:"center", justifyContent:"center", border:`1px solid ${C.border}`, flexShrink:0 }}>{p.img}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:600, fontSize:15, display:"flex", alignItems:"center", gap:6 }}>
+                      {p.nombre}
+                      {p.verificado && <span style={{ fontSize:11, color:C.blue, background:"rgba(74,143,212,0.12)", padding:"2px 7px", borderRadius:20 }}>✓</span>}
+                    </div>
+                    <div style={{ color:C.gray, fontSize:12, marginTop:2 }}>{p.oficio} · {p.zona}</div>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ color:C.blue, fontWeight:600 }}>★ {p.rating}</div>
+                    <div style={{ color:C.gray, fontSize:11, marginTop:2 }}>{p.trabajos} trabajos</div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ADMIN */}
-      {vista === "admin" && (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", padding:"40px 24px" }}>
-          <div style={{ width:"100%", maxWidth:"700px" }}>
-            <button onClick={() => setVista("inicio")} style={{ background:"none", border:"none", color:"#6b7fa0", cursor:"pointer", marginBottom:"24px", fontSize:"14px", fontFamily:F.b }}>← Volver</button>
-            <h2 style={{ fontFamily:F.h, fontSize:"36px", fontWeight:"600", marginBottom:"8px" }}>Panel Admin</h2>
-            <p style={{ color:"#6b7fa0", fontSize:"14px", marginBottom:"28px", fontWeight:"300" }}>Verificación de profesionales</p>
-            {profesionales.length === 0 && <p style={{ color:"#6b7fa0" }}>No hay solicitudes pendientes.</p>}
-            {profesionales.map(p => (
-              <div key={p.id} style={{ background:"#070d1c", border:`1px solid ${p.verificado ? "rgba(74,223,148,0.3)" : "#1a4a8a"}`, borderRadius:"14px", padding:"20px", marginBottom:"12px" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:"14px", marginBottom:"14px" }}>
-                  {p.foto_url ? (
-                    <img src={p.foto_url} alt="perfil" style={{ width:"52px", height:"52px", borderRadius:"50%", objectFit:"cover", border:"2px solid #1a4a8a" }} />
-                  ) : (
-                    <div style={{ width:"52px", height:"52px", borderRadius:"50%", background:"#0f2d5e", border:"2px dashed #1a4a8a", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"20px" }}>👤</div>
+        {/* ══════════════════ CATEGORÍAS ══════════════════ */}
+        {vista === "categorias" && (
+          <div className="page" style={{ padding:"24px 20px 60px" }}>
+            <BackBtn onClick={()=>setVista("inicio")}/>
+            <h2 style={{ fontFamily:F.serif, fontSize:28, marginBottom:4 }}>Todos los oficios</h2>
+            <p style={{ color:C.gray, fontSize:13, marginBottom:20, fontWeight:300 }}>9 categorías · 75+ profesiones</p>
+            <div style={{ position:"relative", marginBottom:22 }}>
+              <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", color:C.gray }}>🔍</span>
+              <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Buscar oficio..."
+                style={{ width:"100%", background:C.bgCard, border:`1px solid ${C.border}`, color:C.white, padding:"13px 40px 13px 42px", borderRadius:12, fontFamily:F.sans, fontSize:15 }}
+              />
+              {busqueda && <button onClick={()=>setBusqueda("")} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:C.gray, cursor:"pointer", fontSize:20 }}>×</button>}
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {catsFiltradas.map(cat => (
+                <div key={cat.id} style={{ borderRadius:14, overflow:"hidden", border:`1px solid ${catAbierta===cat.id?"rgba(74,143,212,0.4)":C.border}`, transition:"border .2s" }}>
+                  <button onClick={()=>setCatAbierta(p=>p===cat.id?null:cat.id)}
+                    style={{ width:"100%", background:catAbierta===cat.id?"rgba(74,143,212,0.1)":C.bgCard, border:"none", padding:"16px 18px", display:"flex", alignItems:"center", gap:14, cursor:"pointer" }}>
+                    <div style={{ width:42, height:42, borderRadius:10, fontSize:20, background:cat.color, display:"flex", alignItems:"center", justifyContent:"center", border:`1px solid ${C.border}`, flexShrink:0 }}>{cat.icon}</div>
+                    <div style={{ flex:1, textAlign:"left" }}>
+                      <div style={{ fontWeight:600, fontSize:15 }}>{cat.nombre}</div>
+                      <div style={{ fontSize:12, color:C.gray, marginTop:2 }}>{cat.subs.length} servicios</div>
+                    </div>
+                    <span style={{ color:C.blue, fontSize:20, transition:"transform .25s", transform:catAbierta===cat.id?"rotate(180deg)":"rotate(0deg)", display:"inline-block", lineHeight:1 }}>⌄</span>
+                  </button>
+                  {(catAbierta===cat.id || busqueda) && (
+                    <div style={{ background:"rgba(6,13,26,0.7)", borderTop:`1px solid ${C.border}`, display:"grid", gridTemplateColumns:"repeat(3,1fr)", animation:"fadeUp .3s ease" }}>
+                      {cat.subs.map((sub,idx) => (
+                        <button key={sub.n} onClick={()=>elegirOficio(sub.n)}
+                          style={{ background:"transparent", border:"none", borderRight:idx%3!==2?`1px solid ${C.border}`:"none", borderBottom:idx<cat.subs.length-3?`1px solid ${C.border}`:"none", padding:"15px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:6, cursor:"pointer", transition:"background .15s" }}
+                          onMouseEnter={e=>e.currentTarget.style.background="rgba(74,143,212,0.1)"}
+                          onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+                        >
+                          <span style={{ fontSize:22 }}>{sub.icon}</span>
+                          <span style={{ fontSize:10, color:C.grayLight, textAlign:"center", lineHeight:1.3, fontWeight:500 }}>{sub.n}</span>
+                        </button>
+                      ))}
+                    </div>
                   )}
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:"600", fontSize:"16px" }}>{p.nombre}</div>
-                    <div style={{ color:"#6b7fa0", fontSize:"13px" }}>{p.oficio} · {p.zona} · DNI: {p.dni}</div>
-                    <div style={{ color:"#6b7fa0", fontSize:"12px" }}>Tel: {p.telefono}</div>
-                  </div>
-                  <span style={{ fontSize:"12px", fontWeight:"600", color: p.verificado ? "#4adf94" : "#f08080", letterSpacing:"1px" }}>
-                    {p.verificado ? "✓ VERIFICADO" : "PENDIENTE"}
-                  </span>
                 </div>
-                {p.descripcion && <p style={{ fontSize:"13px", color:"#b8c8d8", margin:"0 0 14px", fontWeight:"300" }}>{p.descripcion}</p>}
-                {!p.verificado && (
-                  <div style={{ display:"flex", gap:"10px" }}>
-                    <button onClick={() => aprobarProfesional(p.id)} style={{ ...btn, padding:"10px", fontSize:"13px", background:"rgba(74,223,148,0.1)", color:"#4adf94", borderColor:"rgba(74,223,148,0.3)", flex:1 }}>✓ Aprobar</button>
-                    <button onClick={() => rechazarProfesional(p.id)} style={{ ...btn, padding:"10px", fontSize:"13px", background:"rgba(240,128,128,0.1)", color:"#f08080", borderColor:"rgba(240,128,128,0.3)", flex:1 }}>✗ Rechazar</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════ BUSCAR ══════════════════ */}
+        {vista === "buscar" && (
+          <div className="page" style={{ padding:"32px 24px 60px" }}>
+            <BackBtn onClick={()=>setVista("categorias")}/>
+            <h2 style={{ fontFamily:F.serif, fontSize:28, marginBottom:6 }}>{oficio || "Publicar pedido"}</h2>
+            <p style={{ color:C.gray, fontSize:14, marginBottom:28, fontWeight:300 }}>Los profesionales te cotizan en minutos</p>
+            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+              <div>
+                <Lbl>SERVICIO</Lbl>
+                <div onClick={()=>setVista("categorias")} style={{ marginTop:8, background:C.bgCard, border:`1px solid ${C.blue}`, borderRadius:10, padding:"14px 16px", color:C.blueLight, fontSize:15, fontWeight:500, cursor:"pointer" }}>
+                  {oficio} <span style={{ color:C.gray, fontWeight:300, fontSize:13 }}>· cambiar</span>
+                </div>
+              </div>
+              <div>
+                <Lbl>ZONA</Lbl>
+                <Sel value="" onChange={()=>{}}>
+                  {["CABA - Palermo","CABA - Belgrano","CABA - Caballito","CABA - Villa Crespo","GBA - Zona Norte","GBA - Zona Oeste","GBA - Zona Sur"].map(z=><option key={z}>{z}</option>)}
+                </Sel>
+              </div>
+              <div>
+                <Lbl>TU NOMBRE</Lbl>
+                <Inp placeholder="Ej: Martín López" value="" onChange={()=>{}}/>
+              </div>
+              <div>
+                <Lbl>DESCRIBÍ EL TRABAJO</Lbl>
+                <textarea placeholder="Ej: Tengo una pérdida en el baño, urgente..."
+                  style={{ width:"100%", marginTop:8, background:C.bgCard, border:`1px solid ${C.border}`, color:C.white, padding:"14px 16px", borderRadius:10, fontFamily:F.sans, fontSize:14, resize:"none", minHeight:100, lineHeight:1.6 }}
+                />
+              </div>
+              <div>
+                <Lbl>URGENCIA</Lbl>
+                <div style={{ display:"flex", gap:8, marginTop:8 }}>
+                  {["Urgente (hoy)","Esta semana","Sin apuro"].map((u,i)=>(
+                    <button key={u} style={{ flex:1, padding:"10px 4px", background:i===0?"rgba(74,143,212,0.15)":C.bgCard, border:`1px solid ${i===0?C.blue:C.border}`, borderRadius:8, color:i===0?C.blueLight:C.gray, fontSize:11, fontFamily:F.sans, cursor:"pointer", fontWeight:500 }}>{u}</button>
+                  ))}
+                </div>
+              </div>
+              <PrimaryBtn onClick={()=>setVista("cotizaciones")} style={{ marginTop:4 }}>Publicar pedido →</PrimaryBtn>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════ COTIZACIONES ══════════════════ */}
+        {vista === "cotizaciones" && (
+          <div className="page" style={{ padding:"32px 24px 60px" }}>
+            <BackBtn onClick={()=>setVista("buscar")}/>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+              <span style={{ width:8, height:8, borderRadius:"50%", background:C.green, display:"inline-block", animation:"pulse 2s infinite" }}/>
+              <span style={{ fontSize:12, color:C.green, fontWeight:500 }}>3 profesionales disponibles ahora</span>
+            </div>
+            <h2 style={{ fontFamily:F.serif, fontSize:28, marginBottom:24 }}>Cotizaciones</h2>
+            {activos.slice(0,3).map((p,i) => (
+              <div key={p.id} style={{ background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:14, padding:"18px", marginBottom:12 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
+                  <div style={{ width:46, height:46, borderRadius:10, fontSize:22, background:"rgba(74,143,212,0.1)", display:"flex", alignItems:"center", justifyContent:"center" }}>{p.img}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:600, fontSize:15 }}>{p.nombre} {p.verificado&&<span style={{color:C.blue}}>✓</span>}</div>
+                    <div style={{ color:C.gray, fontSize:12 }}>{p.oficio} · ★ {p.rating}</div>
                   </div>
-                )}
+                  <div style={{ fontFamily:F.serif, fontSize:22, fontWeight:700, color:C.blue }}>${[8000,12000,6500][i].toLocaleString()}</div>
+                </div>
+                <div style={{ display:"flex", gap:8 }}>
+                  <button onClick={()=>setVista("perfil")} style={{ flex:1, background:`linear-gradient(135deg,${C.blue},${C.blueBtn})`, border:"none", color:C.white, padding:"11px", borderRadius:10, fontFamily:F.sans, fontSize:13, fontWeight:600, cursor:"pointer" }}>Ver perfil</button>
+                  <button onClick={()=>setChat(p)} style={{ flex:1, background:"rgba(74,143,212,0.08)", border:"1px solid rgba(74,143,212,0.3)", color:C.blueLight, padding:"11px", borderRadius:10, fontFamily:F.sans, fontSize:13, fontWeight:600, cursor:"pointer" }}>💬 Chat</button>
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-    </div>
+        {/* ══════════════════ PERFIL ══════════════════ */}
+        {vista === "perfil" && (
+          <div className="page">
+            <div style={{ background:"linear-gradient(180deg,rgba(74,143,212,0.15) 0%,transparent 100%)", padding:"32px 24px 24px" }}>
+              <BackBtn onClick={()=>setVista("cotizaciones")}/>
+              <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+                <div style={{ width:72, height:72, borderRadius:18, fontSize:36, background:"rgba(74,143,212,0.15)", display:"flex", alignItems:"center", justifyContent:"center", border:`2px solid ${C.blue}` }}>⚡</div>
+                <div>
+                  <div style={{ fontFamily:F.serif, fontSize:24, fontWeight:700 }}>Carlos M. <span style={{color:C.blue,fontSize:16}}>✓</span></div>
+                  <div style={{ color:C.gray, fontSize:14 }}>Electricista · Palermo</div>
+                  <div style={{ color:C.blue, fontSize:14, marginTop:4 }}>★ 4.9 · 87 trabajos</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ padding:"0 24px 60px" }}>
+              <div style={{ display:"flex", gap:8, marginBottom:20, marginTop:8, flexWrap:"wrap" }}>
+                {["Instalaciones","Reparaciones","Urgencias 24hs","Matriculado"].map(tag=>(
+                  <span key={tag} style={{ fontSize:11, color:C.blueLight, background:"rgba(74,143,212,0.1)", padding:"4px 10px", borderRadius:20, border:"1px solid rgba(74,143,212,0.2)" }}>{tag}</span>
+                ))}
+              </div>
+              <p style={{ color:C.grayLight, fontSize:14, lineHeight:1.7, marginBottom:28, fontWeight:300 }}>Electricista matriculado con 12 años de experiencia. Instalaciones domiciliarias, tableros y urgencias. Garantía escrita en todos los trabajos.</p>
+              <div style={{ display:"flex", gap:8 }}>
+                <PrimaryBtn style={{ flex:2 }} onClick={()=>setChat(activos[0])}>💬 Chatear con Carlos</PrimaryBtn>
+                <button onClick={()=>setShowCalif(true)} style={{ flex:1, background:"transparent", border:`1px solid ${C.border}`, color:C.grayLight, padding:"14px", borderRadius:13, fontFamily:F.sans, fontSize:14, cursor:"pointer" }}>★ Calificar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════ REGISTRO PROFESIONAL ══════════════════ */}
+        {vista === "registro-pro" && (
+          <div className="page" style={{ padding:"32px 24px 60px" }}>
+            <BackBtn onClick={()=>setVista("inicio")}/>
+            <h2 style={{ fontFamily:F.serif, fontSize:30, marginBottom:8 }}>Sumate como<br/><em style={{color:C.blueLight}}>profesional</em></h2>
+            <p style={{ color:C.gray, fontSize:14, marginBottom:24, fontWeight:300 }}>Empezá gratis. Recibí pedidos en tu zona.</p>
+
+            {tycOk && (
+              <div style={{ background:"rgba(74,212,120,0.08)", border:"1px solid rgba(74,212,120,0.3)", borderRadius:10, padding:"10px 14px", marginBottom:20, display:"flex", alignItems:"center", gap:8 }}>
+                <span style={{color:C.green}}>✓</span>
+                <span style={{ fontSize:13, color:C.green }}>Términos y condiciones aceptados</span>
+              </div>
+            )}
+
+            <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+              <div>
+                <Lbl>NOMBRE COMPLETO</Lbl>
+                <Inp placeholder="Ej: Carlos Martínez" value={rNombre} onChange={e=>setRNombre(e.target.value)} err={rErr.nombre}/>
+              </div>
+              <div>
+                <Lbl>EMAIL</Lbl>
+                <Inp type="email" placeholder="tu@mail.com" value={rEmail} onChange={e=>setREmail(e.target.value)} err={rErr.email}/>
+                {!tycOk && (
+                  <button onClick={()=>setShowTyC(true)} style={{ marginTop:8, background:"none", border:"none", color:C.blue, fontSize:13, cursor:"pointer", padding:0, textDecoration:"underline", fontFamily:F.sans }}>
+                    Leer y aceptar Términos y Condiciones →
+                  </button>
+                )}
+              </div>
+              <div>
+                <Lbl>TELÉFONO</Lbl>
+                <Inp placeholder="+54 11 1234-5678" value={rTel} onChange={e=>setRTel(e.target.value)} err={rErr.tel}/>
+              </div>
+              <div>
+                <Lbl>ZONA DE TRABAJO</Lbl>
+                <Sel value={rZona} onChange={e=>setRZona(e.target.value)} style={{ color:rZona?C.white:C.gray, border:`1px solid ${rErr.zona?C.red:C.border}` }}>
+                  <option value="">Seleccioná tu zona...</option>
+                  {["CABA - Palermo","CABA - Belgrano","CABA - Caballito","CABA - Villa Crespo","CABA - Flores","CABA - Villa Urquiza","GBA - Zona Norte","GBA - Zona Oeste","GBA - Zona Sur"].map(z=><option key={z} value={z}>{z}</option>)}
+                </Sel>
+                {rErr.zona && <p style={{ color:C.red, fontSize:12, marginTop:4 }}>{rErr.zona}</p>}
+              </div>
+              <div>
+                <Lbl>CATEGORÍA</Lbl>
+                <Sel value={rCat} onChange={e=>setRCat(Number(e.target.value))}>
+                  {CATEGORIAS.map((c,i)=><option key={c.id} value={i}>{c.icon} {c.nombre}</option>)}
+                </Sel>
+              </div>
+              <div>
+                <Lbl>OFICIO PRINCIPAL</Lbl>
+                <Sel value="" onChange={()=>{}}>
+                  {CATEGORIAS[rCat].subs.map(s=><option key={s.n} value={s.n}>{s.icon} {s.n}</option>)}
+                </Sel>
+              </div>
+              <PrimaryBtn onClick={handleRegistro} style={{ marginTop:4, opacity:tycOk?1:0.7 }}>
+                {tycOk ? "Ver planes →" : "Aceptar T&C para continuar"}
+              </PrimaryBtn>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════ NOTIFICACIONES ══════════════════ */}
+        {vista === "notificaciones" && (
+          <div className="page" style={{ padding:"24px 20px 60px" }}>
+            <BackBtn onClick={()=>setVista("inicio")}/>
+            <h2 style={{ fontFamily:F.serif, fontSize:28, marginBottom:4 }}>Mis pedidos</h2>
+            <p style={{ color:C.gray, fontSize:13, marginBottom:8, fontWeight:300 }}>Pedidos nuevos en tu rubro</p>
+            <div style={{ display:"inline-flex", alignItems:"center", gap:6, background:"rgba(74,212,120,0.08)", border:"1px solid rgba(74,212,120,0.2)", borderRadius:20, padding:"6px 14px", marginBottom:20 }}>
+              <span style={{ fontSize:12 }}>👷</span>
+              <span style={{ fontSize:12, color:C.green, fontWeight:600 }}>Modo profesional</span>
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {NOTIFICACIONES.map(n => {
+                const postulado = postulados.includes(n.id);
+                return (
+                  <div key={n.id} onClick={()=>!postulado && abrirNotif(n)}
+                    style={{ background:leidas.includes(n.id)?C.bgCard:"rgba(74,143,212,0.08)", border:`1px solid ${n.tipo==="urgente"&&!leidas.includes(n.id)?"rgba(248,113,113,0.35)":leidas.includes(n.id)?C.border:"rgba(74,143,212,0.3)"}`, borderRadius:14, padding:"16px 18px", cursor:postulado?"default":"pointer", transition:"all .2s" }}
+                  >
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:6 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                        {n.tipo==="urgente" && !leidas.includes(n.id) && <span style={{ fontSize:10, color:C.red, background:"rgba(248,113,113,0.15)", padding:"2px 8px", borderRadius:20, fontWeight:600, letterSpacing:.5 }}>URGENTE</span>}
+                        {!leidas.includes(n.id) && !postulado && <span style={{ width:7, height:7, borderRadius:"50%", background:C.blue, display:"inline-block" }}/>}
+                        {postulado && <span style={{ fontSize:10, color:C.green, background:"rgba(74,212,120,0.12)", padding:"2px 8px", borderRadius:20, fontWeight:600 }}>✓ POSTULADO</span>}
+                      </div>
+                      <span style={{ fontSize:12, color:C.gray }}>{n.tiempo}</span>
+                    </div>
+                    <div style={{ fontWeight:600, fontSize:14, marginBottom:4 }}>{n.titulo}</div>
+                    <div style={{ color:C.gray, fontSize:13, fontWeight:300, lineHeight:1.5 }}>{n.desc}</div>
+                    {postulado && (
+                      <div style={{ marginTop:10, fontSize:12, color:C.grayLight, background:"rgba(74,143,212,0.06)", border:`1px solid ${C.border}`, borderRadius:8, padding:"8px 12px" }}>
+                        El cliente verá tu perfil y podrá contactarte
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ marginTop:32, background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:14, padding:20 }}>
+              <h3 style={{ fontSize:16, fontWeight:600, marginBottom:16 }}>Configurar alertas</h3>
+              {[{label:"Pedidos urgentes",sub:"Notificación inmediata",on:true},{label:"Pedidos nuevos",sub:"Todos los pedidos de tu rubro",on:true},{label:"Novedades de Nexo",sub:"Actualizaciones y noticias",on:false}].map(item=>(
+                <div key={item.label} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", paddingBottom:14, marginBottom:14, borderBottom:`1px solid ${C.border}` }}>
+                  <div>
+                    <div style={{ fontSize:14, fontWeight:500 }}>{item.label}</div>
+                    <div style={{ fontSize:12, color:C.gray, marginTop:2 }}>{item.sub}</div>
+                  </div>
+                  <div style={{ width:44, height:24, borderRadius:12, background:item.on?C.blue:C.blueDark, position:"relative", cursor:"pointer" }}>
+                    <div style={{ width:18, height:18, borderRadius:"50%", background:C.white, position:"absolute", top:3, left:item.on?23:3, transition:"left .2s" }}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════ PLANES ══════════════════ */}
+        {vista === "planes" && (
+          <div className="page" style={{ padding:"32px 24px 60px" }}>
+            <BackBtn onClick={()=>setVista("inicio")}/>
+            <h2 style={{ fontFamily:F.serif, fontSize:32, marginBottom:6 }}>Elegí tu plan</h2>
+            <p style={{ color:C.gray, fontSize:14, marginBottom:36, fontWeight:300 }}>Empezá gratis, crecé cuando estés listo</p>
+            {[
+              { nombre:"Prueba",      precio:"Gratis",   sub:"7 días sin costo", dest:false, features:["3 contactos por mes","Perfil básico","Sin verificación"] },
+              { nombre:"Profesional", precio:"$6.500",   sub:"por mes",          dest:true,  features:["Contactos ilimitados","Perfil verificado ✓","Badge destacado","Chat con clientes","Soporte prioritario"] },
+              { nombre:"Elite",       precio:"$12.000",  sub:"por mes",          dest:false, features:["Todo Profesional","Primero en búsquedas","Estadísticas avanzadas","Gestión de agenda"] },
+            ].map(p => (
+              <div key={p.nombre} style={{ background:p.dest?"linear-gradient(135deg,rgba(74,143,212,0.18),rgba(30,77,130,0.18))":C.bgCard, border:`1px solid ${p.dest?C.blue:C.border}`, borderRadius:16, padding:24, position:"relative", boxShadow:p.dest?"0 0 40px rgba(74,143,212,0.15)":"none", marginBottom:16 }}>
+                {p.dest && <div style={{ position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", background:C.blue, color:C.white, fontSize:11, fontWeight:600, padding:"4px 16px", borderRadius:20, letterSpacing:1, whiteSpace:"nowrap" }}>MÁS POPULAR</div>}
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:16 }}>
+                  <div>
+                    <div style={{ fontFamily:F.serif, fontSize:22, fontWeight:700 }}>{p.nombre}</div>
+                    <div style={{ color:C.gray, fontSize:12, marginTop:2 }}>{p.sub}</div>
+                  </div>
+                  <div style={{ fontFamily:F.serif, fontSize:28, fontWeight:800, color:p.dest?C.blueLight:C.white }}>{p.precio}</div>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:20 }}>
+                  {p.features.map(f=><div key={f} style={{ display:"flex", alignItems:"center", gap:8, fontSize:13, color:C.grayLight }}><span style={{color:p.dest?C.blue:C.gray}}>✓</span> {f}</div>)}
+                </div>
+                <button style={{ width:"100%", background:p.dest?`linear-gradient(135deg,${C.blue},${C.blueBtn})`:"transparent", border:p.dest?"none":`1px solid ${C.border}`, color:p.dest?C.white:C.grayLight, padding:14, borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer" }}>
+                  {p.nombre==="Prueba"?"Comenzar prueba gratuita":`Elegir ${p.nombre}`}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ══════════════════ ADMIN ══════════════════ */}
+        {vista === "admin" && (
+          <div className="page" style={{ padding:"24px 20px 60px" }}>
+            <BackBtn onClick={()=>setVista("inicio")}/>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
+              <h2 style={{ fontFamily:F.serif, fontSize:26 }}>Panel Admin</h2>
+              <span style={{ fontSize:11, background:"rgba(74,143,212,0.15)", color:C.blue, padding:"3px 10px", borderRadius:20, fontWeight:600 }}>NEXO HQ</span>
+            </div>
+            <p style={{ color:C.gray, fontSize:13, marginBottom:24, fontWeight:300 }}>Gestión de verificaciones, pedidos y profesionales</p>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:24 }}>
+              {[
+                { val:activos.length,                               label:"Activos",    color:C.green  },
+                { val:pendientes.length,                            label:"Pendientes", color:C.yellow },
+                { val:PEDIDOS_ADMIN.filter(p=>p.estado==="activo").length, label:"Pedidos",   color:C.blue   },
+                { val:pros.filter(p=>p.estado==="rechazado").length, label:"Rechazados",color:C.red    },
+              ].map(s=>(
+                <div key={s.label} style={{ background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:12, padding:"12px 8px", textAlign:"center" }}>
+                  <div style={{ fontFamily:F.serif, fontSize:22, fontWeight:700, color:s.color }}>{s.val}</div>
+                  <div style={{ fontSize:10, color:C.gray, marginTop:4, fontWeight:500 }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display:"flex", gap:6, marginBottom:20, background:C.bgCard, padding:4, borderRadius:10, border:`1px solid ${C.border}` }}>
+              {[{id:"verificaciones",label:"Verificaciones"},{id:"profesionales",label:"Profesionales"},{id:"pedidos",label:"Pedidos"}].map(tab=>(
+                <button key={tab.id} onClick={()=>setAdminTab(tab.id)}
+                  style={{ flex:1, padding:"9px 6px", borderRadius:8, border:"none", background:adminTab===tab.id?`linear-gradient(135deg,${C.blue},${C.blueBtn})`:"transparent", color:adminTab===tab.id?C.white:C.gray, fontFamily:F.sans, fontSize:12, fontWeight:600, cursor:"pointer", transition:"all .2s", whiteSpace:"nowrap" }}>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {adminTab === "verificaciones" && (
+              <div>
+                {pendientes.length === 0 ? (
+                  <div style={{ textAlign:"center", padding:"40px 0", color:C.gray }}>
+                    <div style={{ fontSize:36, marginBottom:10 }}>✅</div>
+                    <div>No hay verificaciones pendientes</div>
+                  </div>
+                ) : pendientes.map(p=>(
+                  <div key={p.id} style={{ background:C.bgCard, border:`1px solid ${C.yellow}33`, borderRadius:14, padding:18, marginBottom:12 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
+                      <div style={{ width:46, height:46, borderRadius:10, fontSize:22, background:"rgba(74,143,212,0.1)", display:"flex", alignItems:"center", justifyContent:"center" }}>{p.img}</div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontWeight:600, fontSize:15, display:"flex", alignItems:"center", gap:8 }}>
+                          {p.nombre}
+                          <span style={{ fontSize:10, color:C.yellow, background:"rgba(251,191,36,0.12)", padding:"2px 8px", borderRadius:20 }}>PENDIENTE</span>
+                        </div>
+                        <div style={{ color:C.gray, fontSize:12, marginTop:2 }}>{p.oficio} · {p.zona}</div>
+                      </div>
+                    </div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14, fontSize:12, color:C.grayLight }}>
+                      <div><span style={{color:C.gray}}>Email: </span>{p.email}</div>
+                      <div><span style={{color:C.gray}}>Tel: </span>{p.tel}</div>
+                      <div><span style={{color:C.gray}}>DNI: </span>{p.dni}</div>
+                      <div><span style={{color:C.gray}}>Solicitud: </span>{p.fecha}</div>
+                    </div>
+                    <div style={{ marginBottom:12 }}>
+                      <Lbl>MENSAJE AL PROFESIONAL</Lbl>
+                      <textarea value={adminMsg[p.id]||""} onChange={e=>setAdminMsg(prev=>({...prev,[p.id]:e.target.value}))} placeholder="Mensaje opcional..."
+                        style={{ width:"100%", marginTop:8, background:C.bg, border:`1px solid ${C.border}`, color:C.white, padding:"11px 14px", borderRadius:10, fontFamily:F.sans, fontSize:13, resize:"none", minHeight:56, lineHeight:1.5 }}/>
+                    </div>
+                    <div style={{ display:"flex", gap:8 }}>
+                      <button onClick={()=>rechazarPro(p.id)}  style={{ flex:1, background:"rgba(248,113,113,0.1)",  border:"1px solid rgba(248,113,113,0.3)",  color:C.red,   padding:12, borderRadius:10, fontFamily:F.sans, fontSize:13, fontWeight:600, cursor:"pointer" }}>✗ Rechazar</button>
+                      <button onClick={()=>verificarPro(p.id)} style={{ flex:2, background:"linear-gradient(135deg,rgba(74,212,120,0.3),rgba(74,212,120,0.15))", border:"1px solid rgba(74,212,120,0.4)", color:C.green, padding:12, borderRadius:10, fontFamily:F.sans, fontSize:13, fontWeight:600, cursor:"pointer" }}>✓ Verificar y activar</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {adminTab === "profesionales" && (
+              <div>
+                <div style={{ position:"relative", marginBottom:14 }}>
+                  <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:C.gray, fontSize:14 }}>🔍</span>
+                  <input value={adminSearch} onChange={e=>setAdminSearch(e.target.value)} placeholder="Buscar por nombre u oficio..."
+                    style={{ width:"100%", background:C.bgCard, border:`1px solid ${C.border}`, color:C.white, padding:"12px 12px 12px 36px", borderRadius:10, fontFamily:F.sans, fontSize:13 }}/>
+                  {adminSearch && <button onClick={()=>setAdminSearch("")} style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:C.gray, cursor:"pointer", fontSize:18 }}>×</button>}
+                </div>
+                {prosFiltrados.map(p=>(
+                  <div key={p.id} style={{ background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:14, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"center", gap:12 }}>
+                    <div style={{ width:42, height:42, borderRadius:10, fontSize:20, background:"rgba(74,143,212,0.1)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{p.img}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:600, fontSize:14 }}>{p.nombre}</div>
+                      <div style={{ color:C.gray, fontSize:12 }}>{p.oficio} · {p.zona}</div>
+                    </div>
+                    <span style={{ fontSize:11, padding:"3px 10px", borderRadius:20, fontWeight:600, background:p.estado==="activo"?"rgba(74,212,120,0.1)":p.estado==="pendiente"?"rgba(251,191,36,0.1)":"rgba(248,113,113,0.1)", color:p.estado==="activo"?C.green:p.estado==="pendiente"?C.yellow:C.red, border:`1px solid ${p.estado==="activo"?"rgba(74,212,120,0.3)":p.estado==="pendiente"?"rgba(251,191,36,0.3)":"rgba(248,113,113,0.3)"}` }}>{p.estado}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {adminTab === "pedidos" && (
+              <div>
+                {PEDIDOS_ADMIN.map(p=>(
+                  <div key={p.id} style={{ background:C.bgCard, border:`1px solid ${C.border}`, borderRadius:14, padding:16, marginBottom:10 }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
+                      <div>
+                        <div style={{ fontWeight:600, fontSize:14 }}>{p.cliente}</div>
+                        <div style={{ color:C.blue, fontSize:12, marginTop:2 }}>{p.oficio} · {p.zona}</div>
+                      </div>
+                      <span style={{ fontSize:11, padding:"3px 10px", borderRadius:20, fontWeight:600, background:p.estado==="activo"?"rgba(74,212,120,0.1)":"rgba(74,143,212,0.1)", color:p.estado==="activo"?C.green:C.blue, border:`1px solid ${p.estado==="activo"?"rgba(74,212,120,0.3)":"rgba(74,143,212,0.3)"}` }}>{p.estado}</span>
+                    </div>
+                    <div style={{ color:C.grayLight, fontSize:13, marginBottom:8, fontWeight:300 }}>{p.desc}</div>
+                    <div style={{ color:C.gray, fontSize:11 }}>{p.fecha}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════ POPUPS ══════════════════ */}
+        {showTyC && (
+          <TyCPopup
+            onAccept={handleAceptarTyC}
+            onClose={()=>setShowTyC(false)}
+          />
+        )}
+        {showCalif && (
+          <CalificarPopup nombre="Carlos M." onClose={()=>setShowCalif(false)}/>
+        )}
+        {showNotif && notifActiva && (
+          <NotifPopup
+            notif={notifActiva}
+            onClose={()=>{ setShowNotif(false); setNotifActiva(null); }}
+            onPostular={postular}
+          />
+        )}
+
+      </div>
+    </>
   );
 }
