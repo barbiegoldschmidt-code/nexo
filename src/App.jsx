@@ -512,12 +512,10 @@ export default function App() {
   };
 
   const onClienteRegistrado = async data => {
-    // Guardar cliente en Supabase tabla Usuarios
-    await supabase.from('Usuarios').insert([{
+    await supabase.from('clientes').insert([{
       nombre: data.nombre,
       email: data.email,
       telefono: data.telefono,
-      rol: 'cliente',
     }]);
     setClienteData(data);
     setShowRegCliente(false);
@@ -568,7 +566,7 @@ export default function App() {
     if (!tycOk) { setShowTyC(true); return; }
     if (!validarRegistro()) return;
     const { error } = await supabase
-      .from('Profesionales')
+      .from('profesionales')
       .insert([{
         nombre: rNombre,
         email: rEmail,
