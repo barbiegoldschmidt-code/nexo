@@ -172,6 +172,7 @@ const Nav = ({ setVista, noLeidas }) => (
         🔔
         {noLeidas>0 && <span style={{ position:"absolute", top:0, right:0, width:16, height:16, borderRadius:"50%", background:C.red, fontSize:10, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff" }}>{noLeidas}</span>}
       </button>
+      <button onClick={()=>window.open("https://wa.me/5491161906655?text=Hola!%20Tengo%20una%20consulta%20sobre%20Nexo","_blank")} style={{ background:"rgba(37,211,102,0.12)", border:"1px solid rgba(37,211,102,0.3)", color:"#25d366", padding:"7px 12px", borderRadius:8, fontFamily:F.sans, fontSize:13, cursor:"pointer" }}>💬</button>
       <button onClick={()=>setVista("planes")} style={{ background:"transparent", border:`1px solid ${C.border}`, color:"#ffffff", padding:"7px 14px", borderRadius:8, fontFamily:F.sans, fontSize:13, cursor:"pointer" }}>Planes</button>
       <button onClick={()=>setVista("admin")} style={{ background:"rgba(74,143,212,0.1)", border:`1px solid ${C.border}`, color:C.blue, padding:"7px 12px", borderRadius:8, fontFamily:F.sans, fontSize:13, cursor:"pointer" }}>⚙️</button>
     </div>
@@ -510,7 +511,14 @@ export default function App() {
     else setVista(destino);
   };
 
-  const onClienteRegistrado = data => {
+  const onClienteRegistrado = async data => {
+    // Guardar cliente en Supabase tabla Usuarios
+    await supabase.from('Usuarios').insert([{
+      nombre: data.nombre,
+      email: data.email,
+      telefono: data.telefono,
+      rol: 'cliente',
+    }]);
     setClienteData(data);
     setShowRegCliente(false);
     if (pendingNav) { setVista(pendingNav); setPendingNav(null); }
@@ -949,7 +957,7 @@ export default function App() {
               <button
                 onClick={()=>{
                   if (p.nombre==="Inicio") { setVista("inicio"); return; }
-                  if (p.nombre==="Empresa") { window.open("https://wa.me/5491100000000?text=Hola!%20Quiero%20info%20sobre%20el%20plan%20Empresa%20de%20Nexo","_blank"); return; }
+                  if (p.nombre==="Empresa") { window.open("https://wa.me/5491161906655?text=Hola!%20Quiero%20info%20sobre%20el%20plan%20Empresa%20de%20Nexo","_blank"); return; }
                   window.open(`https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=NEXO_PLAN_${p.mp}`,"_blank");
                 }}
                 style={{ width:"100%", background:p.dest?`linear-gradient(135deg,${C.blue},${C.blueBtn})`:p.nombre==="Empresa"?"rgba(212,180,74,0.15)":"rgba(74,143,212,0.08)", border:p.dest?"none":p.nombre==="Empresa"?"1px solid rgba(212,180,74,0.4)":`1px solid ${C.border}`, color:p.dest?"#ffffff":p.nombre==="Empresa"?C.yellow:C.blueLight, padding:14, borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer" }}>
