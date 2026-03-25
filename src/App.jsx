@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { supabase } from './supabase';
 
 const C = {
   bg:          "#060d1a",
@@ -437,9 +438,22 @@ export default function App() {
     if (Object.keys(e).length===0) setVista("planes");
   };
 
-  const handleRegistro = () => {
+  const handleRegistro =`async () => {`
     if (!tycOk) { setShowTyC(true); return; }
-    if (validarRegistro()) setVista("planes");
+    if (!validarRegistro()) return;
+  const { error } = await supabase
+    .from('Profesionales')
+    .insert([{
+      nombre: rNombre,
+      email: rEmail,
+      telefono: rTel,
+      zona: rZona,
+      oficio: CATEGORIAS[rCat].subs[0].n,
+      verificado: false,
+      estado: 'pendiente'
+    }]);
+  if (error) { alert('Error al registrar. Intentá de nuevo.'); return; }
+  setVista('planes');
   };
 
   if (chat) return (
