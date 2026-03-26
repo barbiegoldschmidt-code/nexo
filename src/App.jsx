@@ -4,682 +4,587 @@ import { supabase } from './supabase';
 const ADMIN_PIN = "4567";
 
 const C = {
-  bg:          "#060d1a",
-  bgCard:      "#0d1f35",
-  bgCardHover: "#102540",
-  nav:         "rgba(6,13,26,0.92)",
-  blue:        "#4a8fd4",
-  blueLight:   "#6cb3f5",
-  blueDark:    "#1a3a5c",
-  blueBtn:     "#1e4d82",
-  white:       "#ffffff",
-  gray:        "#8a9bb0",
-  grayLight:   "#b0c4d8",
-  border:      "rgba(74,143,212,0.15)",
-  green:       "#4ade80",
-  red:         "#f87171",
-  yellow:      "#fbbf24",
+  bg:       "#060d1a",
+  bgCard:   "#0d1f35",
+  bgHover:  "#102540",
+  nav:      "rgba(6,13,26,0.92)",
+  blue:     "#4a8fd4",
+  blueL:    "#6cb3f5",
+  blueD:    "#1a3a5c",
+  blueBtn:  "#1e4d82",
+  white:    "#ffffff",
+  gray:     "#8a9bb0",
+  grayL:    "#b0c4d8",
+  border:   "rgba(74,143,212,0.15)",
+  green:    "#4ade80",
+  red:      "#f87171",
+  yellow:   "#fbbf24",
 };
-
-const F = {
-  serif: "'Playfair Display', Georgia, serif",
-  sans:  "'DM Sans', 'Segoe UI', sans-serif",
-};
+const F = { serif:"'Playfair Display',Georgia,serif", sans:"'DM Sans','Segoe UI',sans-serif" };
 
 const GS = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@200;300;400;500;600&display=swap');
-  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-  html, body { background: #060d1a; color: #ffffff; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: #060d1a; }
-  ::-webkit-scrollbar-thumb { background: #1a3a5c; border-radius: 2px; }
-  select, input, textarea { outline: none; color: #ffffff; }
-  select option { background: #0d1f35; color: #fff; }
-  @keyframes fadeUp   { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
-  @keyframes pulse    { 0%,100% { opacity:1; } 50% { opacity:.4; } }
-  @keyframes slideUp  { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes slideLeft{ from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
-  .fu   { animation: fadeUp  .5s        ease both; }
-  .fu1  { animation: fadeUp  .5s  .08s  ease both; }
-  .fu2  { animation: fadeUp  .5s  .16s  ease both; }
-  .fu3  { animation: fadeUp  .5s  .24s  ease both; }
-  .fu4  { animation: fadeUp  .5s  .32s  ease both; }
-  .page { animation: fadeUp  .35s       ease both; }
-  .ov   { animation: fadeIn  .2s        ease both; }
-  .mod  { animation: slideUp .25s       ease both; }
-  .chat { animation: slideLeft .3s      ease both; }
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  html,body{background:#060d1a;color:#fff;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;}
+  ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:#060d1a;}::-webkit-scrollbar-thumb{background:#1a3a5c;border-radius:2px;}
+  select,input,textarea{outline:none;color:#fff;} select option{background:#0d1f35;color:#fff;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes slideLeft{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+  .fu{animation:fadeUp .5s ease both}.fu1{animation:fadeUp .5s .08s ease both}.fu2{animation:fadeUp .5s .16s ease both}
+  .fu3{animation:fadeUp .5s .24s ease both}.fu4{animation:fadeUp .5s .32s ease both}
+  .page{animation:fadeUp .35s ease both}.ov{animation:fadeIn .2s ease both}
+  .mod{animation:slideUp .25s ease both}.chat{animation:slideLeft .3s ease both}
 `;
 
-const CATEGORIAS = [
-  { id:"hogar", nombre:"Hogar & Limpieza", icon:"🏠", color:"rgba(74,143,212,0.12)",
-    subs:[{icon:"🧹",n:"Limpieza por hora"},{icon:"👩‍🍳",n:"Empleada doméstica"},{icon:"🪣",n:"Limpieza post obra"},{icon:"🪟",n:"Limpieza de vidrios"},{icon:"🛋️",n:"Limpieza de alfombras"},{icon:"👶",n:"Niñera"},{icon:"👴",n:"Cuidador adultos mayores"},{icon:"🍳",n:"Cocinera a domicilio"},{icon:"👗",n:"Planchado y lavado"}]},
-  { id:"construccion", nombre:"Construcción & Refacciones", icon:"🏗️", color:"rgba(180,120,60,0.1)",
-    subs:[{icon:"🧱",n:"Albañil"},{icon:"🪨",n:"Yesero"},{icon:"🏚️",n:"Techista"},{icon:"💧",n:"Impermeabilizador"},{icon:"🟫",n:"Colocador de pisos"},{icon:"🔲",n:"Colocador de cerámicos"},{icon:"🧩",n:"Durlock / Yeso"},{icon:"🔩",n:"Soldador"},{icon:"⚙️",n:"Herrería & Rejas"},{icon:"🚪",n:"Portones automáticos"}]},
-  { id:"instalaciones", nombre:"Instalaciones", icon:"⚡", color:"rgba(255,200,50,0.08)",
-    subs:[{icon:"🔧",n:"Plomero"},{icon:"⚡",n:"Electricista"},{icon:"🔥",n:"Gasista matriculado"},{icon:"❄️",n:"Aire acondicionado"},{icon:"🌡️",n:"Calefacción"},{icon:"🚨",n:"Instalador de alarmas"},{icon:"📹",n:"Cámaras de seguridad"},{icon:"📡",n:"Antenas & Internet"},{icon:"🚿",n:"Termotanque"}]},
-  { id:"terminaciones", nombre:"Terminaciones & Acabados", icon:"🎨", color:"rgba(180,74,212,0.08)",
-    subs:[{icon:"🎨",n:"Pintor"},{icon:"🪵",n:"Carpintero"},{icon:"✨",n:"Lustrador de pisos"},{icon:"🪞",n:"Vidriero"},{icon:"🔒",n:"Cerrajero"},{icon:"🛋️",n:"Tapicero"},{icon:"🪜",n:"Colocador de cortinas"},{icon:"🔨",n:"Herrería fina"},{icon:"🖼️",n:"Decorador de interiores"}]},
-  { id:"exteriores", nombre:"Exteriores & Jardín", icon:"🌿", color:"rgba(74,212,120,0.08)",
-    subs:[{icon:"🌿",n:"Jardinero"},{icon:"🐛",n:"Fumigador"},{icon:"🦠",n:"Desinfección"},{icon:"🏊",n:"Mantenimiento de pileta"},{icon:"🌲",n:"Podador de árboles"},{icon:"🪵",n:"Colocador de deck"},{icon:"💧",n:"Sistema de riego"},{icon:"🏕️",n:"Paisajismo"}]},
-  { id:"tecnicos", nombre:"Servicios Técnicos", icon:"🔧", color:"rgba(74,180,212,0.08)",
-    subs:[{icon:"💻",n:"Técnico PC & notebooks"},{icon:"📱",n:"Reparación de celulares"},{icon:"🍳",n:"Técnico electrodomésticos"},{icon:"🚗",n:"Mecánico a domicilio"},{icon:"📺",n:"TV & electrónica"},{icon:"🖨️",n:"Impresoras & equipos"}]},
-  { id:"profesionales", nombre:"Profesionales Matriculados", icon:"📐", color:"rgba(212,180,74,0.08)",
-    subs:[{icon:"📐",n:"Agrimensor"},{icon:"🏛️",n:"Arquitecto"},{icon:"🏗️",n:"Ingeniero civil"},{icon:"⚡",n:"Electricista matriculado"},{icon:"🔥",n:"Técnico en gas mat."},{icon:"🧮",n:"Contador"},{icon:"⚖️",n:"Abogado"},{icon:"📦",n:"Despachante de aduana"},{icon:"🏢",n:"Escribano"},{icon:"🩺",n:"Médico a domicilio"}]},
-  { id:"tramites", nombre:"Gestores & Trámites", icon:"📋", color:"rgba(100,200,150,0.08)",
-    subs:[{icon:"🚗",n:"Gestor de autos"},{icon:"🛂",n:"Gestor de ciudadanía"},{icon:"✈️",n:"Gestor de visas"},{icon:"🏠",n:"Gestor inmobiliario"},{icon:"🏛️",n:"Trámites judiciales"},{icon:"📋",n:"Trámites ANSES / AFIP"},{icon:"🎓",n:"Reconocimiento de títulos"}]},
-  { id:"digital", nombre:"Diseño & Digital", icon:"💻", color:"rgba(130,100,255,0.08)",
-    subs:[{icon:"🎨",n:"Diseñador gráfico"},{icon:"🌐",n:"Diseño web"},{icon:"📱",n:"Diseño de app"},{icon:"📱",n:"Community manager"},{icon:"📸",n:"Fotógrafo profesional"},{icon:"🎬",n:"Editor de video"},{icon:"✍️",n:"Redactor & copywriter"},{icon:"📊",n:"Marketing digital"},{icon:"🤖",n:"Automatizaciones & IA"}]},
-  { id:"mascotas", nombre:"Mascotas", icon:"🐾", color:"rgba(212,74,120,0.08)",
-    subs:[{icon:"🐾",n:"Paseador de perros"},{icon:"🐶",n:"Peluquero canino"},{icon:"🐱",n:"Veterinario a domicilio"},{icon:"🛁",n:"Baño y peluquería canina"},{icon:"🏠",n:"Guardería de mascotas"},{icon:"🐕",n:"Adiestramiento canino"}]},
-  { id:"bienestar", nombre:"Belleza & Bienestar", icon:"✨", color:"rgba(212,74,180,0.08)",
-    subs:[{icon:"🧘",n:"Instructora de yoga"},{icon:"🏋️",n:"Personal trainer"},{icon:"🌸",n:"Cosmiatra"},{icon:"💅",n:"Manicura y pedicura"},{icon:"💇",n:"Peluquera a domicilio"},{icon:"🪷",n:"Esteticista"},{icon:"🧖",n:"Depilación a domicilio"},{icon:"💄",n:"Maquilladora profesional"},{icon:"💆",n:"Masajista"},{icon:"🌿",n:"Spa & relajación"}]},
-  { id:"logistica", nombre:"Logística & Mudanzas", icon:"🚚", color:"rgba(74,120,212,0.08)",
-    subs:[{icon:"🚚",n:"Mudanzas"},{icon:"🛻",n:"Fletes"},{icon:"🏍️",n:"Mensajería en moto"},{icon:"🛠️",n:"Armado muebles"},{icon:"📦",n:"Guardamuebles"},{icon:"🚗",n:"Remis & traslados"}]},
+const CATS = [
+  {id:"hogar",nombre:"Hogar & Limpieza",icon:"🏠",color:"rgba(74,143,212,0.1)",subs:[{icon:"🧹",n:"Limpieza por hora"},{icon:"👩‍🍳",n:"Empleada doméstica"},{icon:"🪣",n:"Limpieza post obra"},{icon:"🪟",n:"Limpieza de vidrios"},{icon:"🛋️",n:"Limpieza de alfombras"},{icon:"👶",n:"Niñera"},{icon:"👴",n:"Cuidador adultos mayores"},{icon:"🍳",n:"Cocinera a domicilio"},{icon:"👗",n:"Planchado y lavado"}]},
+  {id:"construccion",nombre:"Construcción",icon:"🏗️",color:"rgba(180,120,60,0.1)",subs:[{icon:"🧱",n:"Albañil"},{icon:"🪨",n:"Yesero"},{icon:"🏚️",n:"Techista"},{icon:"💧",n:"Impermeabilizador"},{icon:"🟫",n:"Colocador de pisos"},{icon:"🔲",n:"Colocador de cerámicos"},{icon:"🧩",n:"Durlock / Yeso"},{icon:"🔩",n:"Soldador"},{icon:"⚙️",n:"Herrería & Rejas"},{icon:"🚪",n:"Portones automáticos"}]},
+  {id:"instalaciones",nombre:"Instalaciones",icon:"⚡",color:"rgba(255,200,50,0.08)",subs:[{icon:"🔧",n:"Plomero"},{icon:"⚡",n:"Electricista"},{icon:"🔥",n:"Gasista matriculado"},{icon:"❄️",n:"Aire acondicionado"},{icon:"🌡️",n:"Calefacción"},{icon:"🚨",n:"Instalador de alarmas"},{icon:"📹",n:"Cámaras de seguridad"},{icon:"📡",n:"Antenas & Internet"},{icon:"🚿",n:"Termotanque"}]},
+  {id:"terminaciones",nombre:"Terminaciones",icon:"🎨",color:"rgba(180,74,212,0.08)",subs:[{icon:"🎨",n:"Pintor"},{icon:"🪵",n:"Carpintero"},{icon:"✨",n:"Lustrador de pisos"},{icon:"🪞",n:"Vidriero"},{icon:"🔒",n:"Cerrajero"},{icon:"🛋️",n:"Tapicero"},{icon:"🪜",n:"Colocador de cortinas"},{icon:"🔨",n:"Herrería fina"},{icon:"🖼️",n:"Decorador de interiores"}]},
+  {id:"exteriores",nombre:"Exteriores & Jardín",icon:"🌿",color:"rgba(74,212,120,0.08)",subs:[{icon:"🌿",n:"Jardinero"},{icon:"🐛",n:"Fumigador"},{icon:"🦠",n:"Desinfección"},{icon:"🏊",n:"Mantenimiento de pileta"},{icon:"🌲",n:"Podador de árboles"},{icon:"🪵",n:"Colocador de deck"},{icon:"💧",n:"Sistema de riego"},{icon:"🏕️",n:"Paisajismo"}]},
+  {id:"tecnicos",nombre:"Servicios Técnicos",icon:"🔧",color:"rgba(74,180,212,0.08)",subs:[{icon:"💻",n:"Técnico PC & notebooks"},{icon:"📱",n:"Reparación de celulares"},{icon:"🍳",n:"Técnico electrodomésticos"},{icon:"🚗",n:"Mecánico a domicilio"},{icon:"📺",n:"TV & electrónica"},{icon:"🖨️",n:"Impresoras & equipos"}]},
+  {id:"profesionales",nombre:"Profesionales Matriculados",icon:"📐",color:"rgba(212,180,74,0.08)",subs:[{icon:"📐",n:"Agrimensor"},{icon:"🏛️",n:"Arquitecto"},{icon:"🏗️",n:"Ingeniero civil"},{icon:"⚡",n:"Electricista matriculado"},{icon:"🔥",n:"Técnico en gas mat."},{icon:"🧮",n:"Contador"},{icon:"⚖️",n:"Abogado"},{icon:"📦",n:"Despachante de aduana"},{icon:"🏢",n:"Escribano"},{icon:"🩺",n:"Médico a domicilio"}]},
+  {id:"tramites",nombre:"Gestores & Trámites",icon:"📋",color:"rgba(100,200,150,0.08)",subs:[{icon:"🚗",n:"Gestor de autos"},{icon:"🛂",n:"Gestor de ciudadanía"},{icon:"✈️",n:"Gestor de visas"},{icon:"🏠",n:"Gestor inmobiliario"},{icon:"🏛️",n:"Trámites judiciales"},{icon:"📋",n:"Trámites ANSES / AFIP"},{icon:"🎓",n:"Reconocimiento de títulos"}]},
+  {id:"digital",nombre:"Diseño & Digital",icon:"💻",color:"rgba(130,100,255,0.08)",subs:[{icon:"🎨",n:"Diseñador gráfico"},{icon:"🌐",n:"Diseño web"},{icon:"📱",n:"Diseño de app"},{icon:"📣",n:"Community manager"},{icon:"📸",n:"Fotógrafo profesional"},{icon:"🎬",n:"Editor de video"},{icon:"✍️",n:"Redactor & copywriter"},{icon:"📊",n:"Marketing digital"},{icon:"🤖",n:"Automatizaciones & IA"}]},
+  {id:"mascotas",nombre:"Mascotas",icon:"🐾",color:"rgba(212,74,120,0.08)",subs:[{icon:"🐾",n:"Paseador de perros"},{icon:"🐶",n:"Peluquero canino"},{icon:"🐱",n:"Veterinario a domicilio"},{icon:"🛁",n:"Baño y peluquería canina"},{icon:"🏠",n:"Guardería de mascotas"},{icon:"🐕",n:"Adiestramiento canino"}]},
+  {id:"bienestar",nombre:"Belleza & Bienestar",icon:"✨",color:"rgba(212,74,180,0.08)",subs:[{icon:"🧘",n:"Instructora de yoga"},{icon:"🏋️",n:"Personal trainer"},{icon:"🌸",n:"Cosmiatra"},{icon:"💅",n:"Manicura y pedicura"},{icon:"💇",n:"Peluquera a domicilio"},{icon:"🪷",n:"Esteticista"},{icon:"🧖",n:"Depilación a domicilio"},{icon:"💄",n:"Maquilladora profesional"},{icon:"💆",n:"Masajista"},{icon:"🌿",n:"Spa & relajación"}]},
+  {id:"logistica",nombre:"Logística & Mudanzas",icon:"🚚",color:"rgba(74,120,212,0.08)",subs:[{icon:"🚚",n:"Mudanzas"},{icon:"🛻",n:"Fletes"},{icon:"🏍️",n:"Mensajería en moto"},{icon:"🛠️",n:"Armado muebles"},{icon:"📦",n:"Guardamuebles"},{icon:"🚗",n:"Remis & traslados"}]},
 ];
 
-const PROFESIONALES = [
-  { id:1, nombre:"Carlos M.", oficios:["Electricista"], zona:"Palermo", rating:4.9, trabajos:87, verificado:true, estado:"activo", foto:null, email:"carlos@mail.com", tel:"+54 11 4444-1111", dni:"28.333.444", fecha:"10/03/2025" },
-  { id:2, nombre:"Ana R.",    oficios:["Pintora"],      zona:"Belgrano", rating:5.0, trabajos:134, verificado:true, estado:"activo", foto:null, email:"ana@mail.com", tel:"+54 11 5555-2222", dni:"32.111.222", fecha:"08/03/2025" },
-  { id:3, nombre:"Marcos T.", oficios:["Plomero"],      zona:"Caballito", rating:4.8, trabajos:62, verificado:false, estado:"pendiente", foto:null, email:"marcos@mail.com", tel:"+54 11 6666-3333", dni:"35.777.888", fecha:"15/03/2025" },
-  { id:4, nombre:"Laura G.",  oficios:["Limpieza"],     zona:"Villa Crespo", rating:4.9, trabajos:210, verificado:false, estado:"pendiente", foto:null, email:"laura@mail.com", tel:"+54 11 7777-4444", dni:"29.555.666", fecha:"16/03/2025" },
+const PROS_MOCK = [
+  {id:1,nombre:"Carlos M.",oficios:["Electricista"],zona:"Palermo",rating:4.9,trabajos:87,verificado:true,estado:"activo",foto:null,email:"carlos@mail.com",tel:"+54 11 4444-1111",dni:"28.333.444",fecha:"10/03/2025"},
+  {id:2,nombre:"Ana R.",oficios:["Pintora"],zona:"Belgrano",rating:5.0,trabajos:134,verificado:true,estado:"activo",foto:null,email:"ana@mail.com",tel:"+54 11 5555-2222",dni:"32.111.222",fecha:"08/03/2025"},
+  {id:3,nombre:"Marcos T.",oficios:["Plomero"],zona:"Caballito",rating:4.8,trabajos:62,verificado:false,estado:"pendiente",foto:null,email:"marcos@mail.com",tel:"+54 11 6666-3333",dni:"35.777.888",fecha:"15/03/2025"},
+  {id:4,nombre:"Laura G.",oficios:["Limpieza"],zona:"Villa Crespo",rating:4.9,trabajos:210,verificado:false,estado:"pendiente",foto:null,email:"laura@mail.com",tel:"+54 11 7777-4444",dni:"29.555.666",fecha:"16/03/2025"},
 ];
 
-const NOTIFICACIONES = [
-  { id:1, tipo:"urgente", titulo:"Nuevo pedido: Electricista en Palermo", desc:"Un vecino necesita revisión del tablero hoy. Presupuesto estimado $8.000", tiempo:"hace 5 min", rubro:"Electricista" },
-  { id:2, tipo:"normal",  titulo:"Pedido: Instalación de luces LED", desc:"Departamento en Belgrano. Flexible en horario.", tiempo:"hace 1 hora", rubro:"Electricista" },
-  { id:3, tipo:"normal",  titulo:"Pedido: Reparación tomacorriente", desc:"Casa en Villa Urquiza. 3 tomacorrientes quemados.", tiempo:"hace 3 horas", rubro:"Electricista" },
+const NOTIFS = [
+  {id:1,tipo:"urgente",titulo:"Nuevo pedido: Electricista en Palermo",desc:"Un vecino necesita revisión del tablero hoy. Presupuesto estimado $8.000",tiempo:"hace 5 min"},
+  {id:2,tipo:"normal",titulo:"Pedido: Instalación de luces LED",desc:"Departamento en Belgrano. Flexible en horario.",tiempo:"hace 1 hora"},
+  {id:3,tipo:"normal",titulo:"Pedido: Reparación tomacorriente",desc:"Casa en Villa Urquiza. 3 tomacorrientes quemados.",tiempo:"hace 3 horas"},
 ];
 
 const PEDIDOS_ADMIN = [
-  { id:1, cliente:"Martín L.", oficio:"Plomero", zona:"Palermo", desc:"Pérdida en baño urgente", fecha:"hoy 10:30", estado:"activo" },
-  { id:2, cliente:"Sofía P.",  oficio:"Electricista", zona:"Belgrano", desc:"Tablero sin luz en cocina", fecha:"hoy 09:15", estado:"activo" },
-  { id:3, cliente:"Roberto K.",oficio:"Pintor", zona:"Caballito", desc:"3 ambientes a pintar", fecha:"ayer", estado:"cerrado" },
+  {id:1,cliente:"Martín L.",oficio:"Plomero",zona:"Palermo",desc:"Pérdida en baño urgente",fecha:"hoy 10:30",estado:"activo"},
+  {id:2,cliente:"Sofía P.",oficio:"Electricista",zona:"Belgrano",desc:"Tablero sin luz en cocina",fecha:"hoy 09:15",estado:"activo"},
+  {id:3,cliente:"Roberto K.",oficio:"Pintor",zona:"Caballito",desc:"3 ambientes a pintar",fecha:"ayer",estado:"cerrado"},
 ];
 
-const RESPUESTAS = ["Perfecto, te confirmo enseguida.","Dale, sin problema!","¿Me podés mandar la dirección exacta?","Listo, quedamos así entonces.","Anotado, hasta el miércoles!"];
+const RESP = ["Perfecto, te confirmo enseguida.","Dale, sin problema!","¿Me podés mandar la dirección exacta?","Listo, quedamos así.","Anotado, hasta el miércoles!"];
 
-// ─── Avatar ───
-const Avatar = ({ foto, nombre, size=46, fontSize=18 }) => {
-  const iniciales = nombre ? nombre.split(" ").map(n=>n[0]).slice(0,2).join("").toUpperCase() : "?";
-  return (
-    <div style={{ width:size, height:size, borderRadius:"50%", background:"rgba(74,143,212,0.15)", border:"2px solid rgba(74,143,212,0.3)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, overflow:"hidden" }}>
-      {foto ? <img src={foto} alt={nombre} style={{ width:"100%", height:"100%", objectFit:"cover" }}/> : <span style={{ fontSize:size*0.35, color:"#6cb3f5", fontWeight:600 }}>{iniciales}</span>}
-    </div>
-  );
+// ─── Helpers UI ───
+const Av = ({foto,nombre,size=46})=>{
+  const ini = nombre?nombre.split(" ").map(n=>n[0]).slice(0,2).join("").toUpperCase():"?";
+  return <div style={{width:size,height:size,borderRadius:"50%",background:"rgba(74,143,212,0.15)",border:"2px solid rgba(74,143,212,0.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden"}}>
+    {foto?<img src={foto} alt={nombre} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:size*.32,color:"#6cb3f5",fontWeight:600}}>{ini}</span>}
+  </div>;
 };
 
-// ─── Buttons ───
-const PrimaryBtn = ({ children, onClick, disabled=false, style={} }) => (
+const Btn = ({children,onClick,disabled=false,style={}})=>(
   <button onClick={onClick} disabled={disabled}
-    style={{ background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:"16px 24px", borderRadius:13, fontFamily:F.sans, fontSize:15, fontWeight:600, cursor:disabled?"not-allowed":"pointer", width:"100%", boxShadow:"0 8px 32px rgba(74,143,212,0.25)", transition:"all .22s", opacity:disabled?0.5:1, ...style }}
-    onMouseEnter={e=>{ if(!disabled) e.currentTarget.style.transform="translateY(-2px)"; }}
-    onMouseLeave={e=>{ e.currentTarget.style.transform="translateY(0)"; }}
+    style={{background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:"15px 24px",borderRadius:13,fontFamily:F.sans,fontSize:15,fontWeight:600,cursor:disabled?"not-allowed":"pointer",width:"100%",transition:"all .2s",opacity:disabled?.5:1,...style}}
+    onMouseEnter={e=>{if(!disabled)e.currentTarget.style.transform="translateY(-2px)"}}
+    onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)"}}
   >{children}</button>
 );
 
-const GhostBtn = ({ children, onClick, style={} }) => (
-  <button onClick={onClick}
-    style={{ background:"rgba(74,143,212,0.08)", border:"1px solid rgba(74,143,212,0.3)", color:"#6cb3f5", padding:"16px 24px", borderRadius:13, fontFamily:F.sans, fontSize:15, fontWeight:500, cursor:"pointer", width:"100%", transition:"all .22s", ...style }}
+const Ghost = ({children,onClick,style={}})=>(
+  <button onClick={onClick} style={{background:"rgba(74,143,212,0.08)",border:"1px solid rgba(74,143,212,0.3)",color:"#6cb3f5",padding:"15px 24px",borderRadius:13,fontFamily:F.sans,fontSize:15,fontWeight:500,cursor:"pointer",width:"100%",transition:"all .2s",...style}}
     onMouseEnter={e=>e.currentTarget.style.background="rgba(74,143,212,0.15)"}
     onMouseLeave={e=>e.currentTarget.style.background="rgba(74,143,212,0.08)"}
   >{children}</button>
 );
 
-const BackBtn = ({ onClick }) => (
-  <button onClick={onClick} style={{ background:"none", border:"none", color:"#4a8fd4", fontSize:14, cursor:"pointer", marginBottom:22, fontFamily:F.sans }}>← Volver</button>
+const Back = ({onClick})=>(
+  <button onClick={onClick} style={{background:"none",border:"none",color:"#4a8fd4",fontSize:14,cursor:"pointer",marginBottom:20,fontFamily:F.sans}}>← Volver</button>
 );
 
-const Lbl = ({ children }) => (
-  <label style={{ fontSize:11, color:"#b0c4d8", letterSpacing:1.5, fontWeight:600 }}>{children}</label>
-);
+const Lbl = ({children})=><label style={{fontSize:11,color:"#b0c4d8",letterSpacing:1.5,fontWeight:600}}>{children}</label>;
 
-const Inp = ({ placeholder, type="text", value, onChange, err, style={} }) => (
+const Inp = ({placeholder,type="text",value,onChange,err,style={}})=>(
   <>
     <input type={type} placeholder={placeholder} value={value} onChange={onChange}
-      style={{ width:"100%", marginTop:8, background:"#0d1f35", border:`1px solid ${err?"#f87171":"rgba(74,143,212,0.15)"}`, color:"#ffffff", padding:"13px 15px", borderRadius:10, fontFamily:F.sans, fontSize:14, ...style }}/>
-    {err && <p style={{ color:"#f87171", fontSize:12, marginTop:4 }}>{err}</p>}
+      style={{width:"100%",marginTop:8,background:"#0d1f35",border:`1px solid ${err?"#f87171":"rgba(74,143,212,0.15)"}`,color:"#fff",padding:"13px 15px",borderRadius:10,fontFamily:F.sans,fontSize:14,...style}}/>
+    {err&&<p style={{color:"#f87171",fontSize:12,marginTop:4}}>{err}</p>}
   </>
 );
 
-const Sel = ({ value, onChange, children, style={} }) => (
+const Sel = ({value,onChange,children,style={}})=>(
   <select value={value} onChange={onChange}
-    style={{ width:"100%", marginTop:8, background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"13px 15px", borderRadius:10, fontFamily:F.sans, fontSize:14, ...style }}
+    style={{width:"100%",marginTop:8,background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"13px 15px",borderRadius:10,fontFamily:F.sans,fontSize:14,...style}}
   >{children}</select>
 );
 
 // ─── Nav ───
-const Nav = ({ setVista, noLeidas, clienteData, onCerrarSesion, onIniciarSesion }) => (
-  <nav style={{ position:"sticky", top:0, zIndex:100, background:"rgba(6,13,26,0.92)", backdropFilter:"blur(12px)", borderBottom:"1px solid rgba(74,143,212,0.15)", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px" }}>
-    <div onClick={()=>setVista("inicio")} style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
-      <div style={{ width:36, height:36, borderRadius:8, background:"linear-gradient(135deg,#4a8fd4,#1a3a5c)", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:F.serif, fontWeight:300, fontSize:20, color:"#ffffff" }}>N</div>
-      <span style={{ fontFamily:F.serif, fontWeight:300, fontSize:20, letterSpacing:3, color:"#ffffff" }}>NEX<span style={{color:"#4a8fd4"}}>O</span></span>
+const Nav = ({setVista,noLeidas,clienteData,onCerrar,onIniciar})=>(
+  <nav style={{position:"sticky",top:0,zIndex:100,background:"rgba(6,13,26,0.92)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(74,143,212,0.15)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 20px"}}>
+    <div onClick={()=>setVista("inicio")} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
+      <div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#4a8fd4,#1a3a5c)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.serif,fontWeight:300,fontSize:20,color:"#fff"}}>N</div>
+      <span style={{fontFamily:F.serif,fontWeight:300,fontSize:20,letterSpacing:3,color:"#fff"}}>NEX<span style={{color:"#4a8fd4"}}>O</span></span>
     </div>
-    <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-      <button onClick={()=>window.open("https://wa.me/5491161906655?text=Hola!%20Tengo%20una%20consulta%20sobre%20Nexo","_blank")} style={{ background:"rgba(37,211,102,0.12)", border:"1px solid rgba(37,211,102,0.3)", color:"#25d366", padding:"7px 10px", borderRadius:8, fontFamily:F.sans, fontSize:13, cursor:"pointer" }}>💬</button>
-      <button onClick={()=>setVista("notificaciones")} style={{ position:"relative", background:"none", border:"none", cursor:"pointer", fontSize:18, padding:"4px" }}>
-        🔔{noLeidas>0 && <span style={{ position:"absolute", top:0, right:0, width:15, height:15, borderRadius:"50%", background:"#f87171", fontSize:9, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff" }}>{noLeidas}</span>}
+    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+      <button onClick={()=>window.open("https://wa.me/5491161906655?text=Hola!%20Tengo%20una%20consulta%20sobre%20Nexo","_blank")} style={{background:"rgba(37,211,102,0.12)",border:"1px solid rgba(37,211,102,0.3)",color:"#25d366",padding:"7px 10px",borderRadius:8,fontFamily:F.sans,fontSize:13,cursor:"pointer"}}>💬</button>
+      <button onClick={()=>setVista("notificaciones")} style={{position:"relative",background:"none",border:"none",cursor:"pointer",fontSize:18,padding:"4px"}}>
+        🔔{noLeidas>0&&<span style={{position:"absolute",top:0,right:0,width:15,height:15,borderRadius:"50%",background:"#f87171",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff"}}>{noLeidas}</span>}
       </button>
       {clienteData
-        ? <button onClick={onCerrarSesion} style={{ background:"rgba(248,113,113,0.12)", border:"1px solid rgba(248,113,113,0.3)", color:"#f87171", padding:"7px 10px", borderRadius:8, fontFamily:F.sans, fontSize:12, cursor:"pointer" }}>Cerrar sesión</button>
-        : <button onClick={onIniciarSesion} style={{ background:"rgba(74,143,212,0.12)", border:"1px solid rgba(74,143,212,0.3)", color:"#6cb3f5", padding:"7px 10px", borderRadius:8, fontFamily:F.sans, fontSize:12, cursor:"pointer" }}>Iniciar sesión</button>
+        ?<button onClick={onCerrar} style={{background:"rgba(248,113,113,0.12)",border:"1px solid rgba(248,113,113,0.3)",color:"#f87171",padding:"7px 10px",borderRadius:8,fontFamily:F.sans,fontSize:12,cursor:"pointer"}}>Cerrar sesión</button>
+        :<button onClick={onIniciar} style={{background:"rgba(74,143,212,0.12)",border:"1px solid rgba(74,143,212,0.3)",color:"#6cb3f5",padding:"7px 10px",borderRadius:8,fontFamily:F.sans,fontSize:12,cursor:"pointer"}}>Iniciar sesión</button>
       }
-      <button onClick={()=>setVista("planes")} style={{ background:"transparent", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"7px 10px", borderRadius:8, fontFamily:F.sans, fontSize:12, cursor:"pointer" }}>Planes</button>
     </div>
   </nav>
 );
 
+// ─── TyC ───
+const TyC = ({onAccept,onClose})=>(
+  <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+    <div className="mod" style={{background:"#0d1f35",borderRadius:"20px 20px 0 0",padding:"28px 24px 36px",maxWidth:480,width:"100%",border:"1px solid rgba(74,143,212,0.15)",maxHeight:"85vh",display:"flex",flexDirection:"column"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <h3 style={{fontFamily:F.serif,fontSize:22,fontWeight:400,color:"#fff"}}>Términos y Condiciones</h3>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#8a9bb0",fontSize:22,cursor:"pointer"}}>×</button>
+      </div>
+      <div style={{overflowY:"auto",flex:1,paddingRight:4,marginBottom:20}}>
+        {[["1. Uso","Nexo conecta clientes con profesionales. No somos empleadores."],["2. Verificación","Debés completar verificación de identidad para operar como profesional."],["3. Responsabilidad","Sos responsable de la calidad de tus servicios."],["4. Pagos","Durante el lanzamiento Nexo es gratuito. Los planes se comunicarán por mail."],["5. Privacidad","Tus datos se tratan conforme a la Ley 25.326 de Argentina."]].map(([t,c])=>(
+          <div key={t} style={{marginBottom:14}}>
+            <div style={{fontWeight:600,fontSize:13,color:"#6cb3f5",marginBottom:4}}>{t}</div>
+            <p style={{fontSize:13,color:"#b0c4d8",lineHeight:1.6,fontWeight:300}}>{c}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{flex:1,background:"transparent",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:14,borderRadius:10,fontFamily:F.sans,fontSize:14,cursor:"pointer"}}>Cancelar</button>
+        <button onClick={onAccept} style={{flex:2,background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:14,borderRadius:10,fontFamily:F.sans,fontSize:14,fontWeight:600,cursor:"pointer"}}>Acepto los términos ✓</button>
+      </div>
+    </div>
+  </div>
+);
+
 // ─── PIN Admin ───
-const PinPopup = ({ onSuccess, onClose }) => {
-  const [pin, setPin] = useState("");
-  const [err, setErr] = useState(false);
-  const check = () => {
-    if (pin === ADMIN_PIN) { onSuccess(); }
-    else { setErr(true); setPin(""); setTimeout(()=>setErr(false), 1500); }
+const PinPopup = ({onSuccess,onClose})=>{
+  const [pin,setPin]=useState("");
+  const [err,setErr]=useState(false);
+  const check=()=>{
+    if(pin===ADMIN_PIN){onSuccess();}
+    else{setErr(true);setPin("");setTimeout(()=>setErr(false),1500);}
   };
-  return (
-    <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 24px" }}>
-      <div className="mod" style={{ background:"#0d1f35", borderRadius:20, padding:"36px 28px", maxWidth:320, width:"100%", border:"1px solid rgba(74,143,212,0.3)", textAlign:"center" }}>
-        <div style={{ fontSize:40, marginBottom:16 }}>🔐</div>
-        <h3 style={{ fontFamily:F.serif, fontSize:22, fontWeight:400, color:"#ffffff", marginBottom:8 }}>Panel Admin</h3>
-        <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:24, fontWeight:300 }}>Ingresá tu PIN para continuar</p>
+  return(
+    <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
+      <div className="mod" style={{background:"#0d1f35",borderRadius:20,padding:"36px 28px",maxWidth:300,width:"100%",border:"1px solid rgba(74,143,212,0.3)",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:12}}>🔐</div>
+        <h3 style={{fontFamily:F.serif,fontSize:22,color:"#fff",marginBottom:8}}>Panel Admin</h3>
+        <p style={{color:"#b0c4d8",fontSize:13,marginBottom:20,fontWeight:300}}>Ingresá tu PIN</p>
         <input type="password" maxLength={4} value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&check()} placeholder="• • • •"
-          style={{ width:"100%", background:"#060d1a", border:`1px solid ${err?"#f87171":"rgba(74,143,212,0.3)"}`, color:"#ffffff", padding:"16px", borderRadius:12, fontFamily:F.sans, fontSize:24, textAlign:"center", letterSpacing:8, marginBottom:16, transition:"border .2s" }}/>
-        {err && <p style={{ color:"#f87171", fontSize:13, marginBottom:12 }}>PIN incorrecto</p>}
-        <div style={{ display:"flex", gap:10 }}>
-          <button onClick={onClose} style={{ flex:1, background:"transparent", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:12, borderRadius:10, fontFamily:F.sans, fontSize:14, cursor:"pointer" }}>Cancelar</button>
-          <button onClick={check} style={{ flex:2, background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:12, borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer" }}>Ingresar →</button>
+          style={{width:"100%",background:"#060d1a",border:`1px solid ${err?"#f87171":"rgba(74,143,212,0.3)"}`,color:"#fff",padding:"14px",borderRadius:12,fontFamily:F.sans,fontSize:24,textAlign:"center",letterSpacing:8,marginBottom:12}}/>
+        {err&&<p style={{color:"#f87171",fontSize:13,marginBottom:10}}>PIN incorrecto</p>}
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onClose} style={{flex:1,background:"transparent",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:12,borderRadius:10,fontFamily:F.sans,fontSize:14,cursor:"pointer"}}>Cancelar</button>
+          <button onClick={check} style={{flex:2,background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:12,borderRadius:10,fontFamily:F.sans,fontSize:14,fontWeight:600,cursor:"pointer"}}>Ingresar →</button>
         </div>
       </div>
     </div>
   );
 };
 
-// ─── TyC ───
-const TyCPopup = ({ onAccept, onClose }) => (
-  <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-    <div className="mod" style={{ background:"#0d1f35", borderRadius:"20px 20px 0 0", padding:"28px 24px 36px", maxWidth:480, width:"100%", border:"1px solid rgba(74,143,212,0.15)", maxHeight:"85vh", display:"flex", flexDirection:"column" }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-        <h3 style={{ fontFamily:F.serif, fontSize:22, fontWeight:400, color:"#ffffff" }}>Términos y Condiciones</h3>
-        <button onClick={onClose} style={{ background:"none", border:"none", color:"#8a9bb0", fontSize:22, cursor:"pointer" }}>×</button>
-      </div>
-      <div style={{ overflowY:"auto", flex:1, paddingRight:4, marginBottom:20 }}>
-        {[
-          ["1. Uso","Nexo conecta clientes con profesionales. No somos empleadores ni garantizamos la relación laboral."],
-          ["2. Verificación","Debés completar verificación de identidad para operar como profesional."],
-          ["3. Responsabilidad","Sos responsable de la calidad de tus servicios."],
-          ["4. Pagos","Durante el lanzamiento Nexo es gratuito. Los planes se comunicarán por mail."],
-          ["5. Privacidad","Tus datos se tratan conforme a la Ley 25.326 de Argentina."],
-        ].map(([t,c])=>(
-          <div key={t} style={{ marginBottom:16 }}>
-            <div style={{ fontWeight:600, fontSize:13, color:"#6cb3f5", marginBottom:4 }}>{t}</div>
-            <p style={{ fontSize:13, color:"#b0c4d8", lineHeight:1.65, fontWeight:300 }}>{c}</p>
-          </div>
-        ))}
-      </div>
-      <div style={{ display:"flex", gap:10 }}>
-        <button onClick={onClose} style={{ flex:1, background:"transparent", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:14, borderRadius:10, fontFamily:F.sans, fontSize:14, cursor:"pointer" }}>Cancelar</button>
-        <button onClick={onAccept} style={{ flex:2, background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:14, borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer" }}>Acepto ✓</button>
-      </div>
-    </div>
-  </div>
-);
+// ─── Registro Cliente (con TyC) ───
+const RegCliente = ({onClose,onSuccess})=>{
+  const [n,setN]=useState("");
+  const [e,setE]=useState("");
+  const [t,setT]=useState("");
+  const [err,setErr]=useState({});
+  const [showTyC,setShowTyC]=useState(false);
+  const [tycOk,setTycOk]=useState(false);
 
-// ─── Registro Cliente ───
-const RegistroClientePopup = ({ onClose, onSuccess }) => {
-  const [nombre, setNombre] = useState("");
-  const [email,  setEmail]  = useState("");
-  const [tel,    setTel]    = useState("");
-  const [err,    setErr]    = useState({});
-  const validar = () => {
-    const e = {};
-    if (!nombre.trim()) e.nombre="Campo requerido";
-    if (!email.trim()||!email.includes("@")) e.email="Email inválido";
-    if (!tel.trim()) e.tel="Campo requerido";
-    setErr(e);
-    return Object.keys(e).length===0;
+  const validar=()=>{
+    const er={};
+    if(!n.trim())er.n="Campo requerido";
+    if(!e.trim()||!e.includes("@"))er.e="Email inválido";
+    if(!t.trim())er.t="Campo requerido";
+    if(!tycOk)er.tyc="Debés aceptar los términos";
+    setErr(er);
+    return Object.keys(er).length===0;
   };
-  return (
-    <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div className="mod" style={{ background:"#0d1f35", borderRadius:"20px 20px 0 0", padding:"28px 24px 36px", maxWidth:480, width:"100%", border:"1px solid rgba(74,143,212,0.15)" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-          <h3 style={{ fontFamily:F.serif, fontSize:22, fontWeight:400, color:"#ffffff" }}>Registrate para continuar</h3>
-          <button onClick={onClose} style={{ background:"none", border:"none", color:"#8a9bb0", fontSize:22, cursor:"pointer" }}>×</button>
+
+  return(
+    <>
+    {showTyC&&<TyC onAccept={()=>{setTycOk(true);setShowTyC(false);}} onClose={()=>setShowTyC(false)}/>}
+    <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",zIndex:998,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+      <div className="mod" style={{background:"#0d1f35",borderRadius:"20px 20px 0 0",padding:"28px 24px 36px",maxWidth:480,width:"100%",border:"1px solid rgba(74,143,212,0.15)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <h3 style={{fontFamily:F.serif,fontSize:22,fontWeight:400,color:"#fff"}}>Registrate para continuar</h3>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#8a9bb0",fontSize:22,cursor:"pointer"}}>×</button>
         </div>
-        <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20, fontWeight:300 }}>Necesitamos saber quién sos para conectarte con los profesionales.</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-          <div><Lbl>NOMBRE COMPLETO</Lbl><Inp placeholder="Ej: Martín López" value={nombre} onChange={e=>setNombre(e.target.value)} err={err.nombre}/></div>
-          <div><Lbl>EMAIL</Lbl><Inp type="email" placeholder="tu@mail.com" value={email} onChange={e=>setEmail(e.target.value)} err={err.email}/></div>
-          <div><Lbl>TELÉFONO</Lbl><Inp placeholder="+54 11 1234-5678" value={tel} onChange={e=>setTel(e.target.value)} err={err.tel}/></div>
-          <div style={{ background:"rgba(74,143,212,0.06)", border:"1px solid rgba(74,143,212,0.15)", borderRadius:10, padding:"10px 14px", fontSize:12, color:"#b0c4d8" }}>
-            🔒 Tus datos son privados. Solo los ven los profesionales con quienes te contactés.
+        <p style={{color:"#b0c4d8",fontSize:13,marginBottom:20,fontWeight:300}}>Necesitamos saber quién sos para conectarte con los profesionales.</p>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div><Lbl>NOMBRE COMPLETO</Lbl><Inp placeholder="Ej: Martín López" value={n} onChange={ev=>setN(ev.target.value)} err={err.n}/></div>
+          <div><Lbl>EMAIL</Lbl><Inp type="email" placeholder="tu@mail.com" value={e} onChange={ev=>setE(ev.target.value)} err={err.e}/></div>
+          <div><Lbl>TELÉFONO</Lbl><Inp placeholder="+54 11 1234-5678" value={t} onChange={ev=>setT(ev.target.value)} err={err.t}/></div>
+          <div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginTop:4}}>
+              <div onClick={()=>setTycOk(!tycOk)} style={{width:20,height:20,borderRadius:5,border:`2px solid ${tycOk?"#4a8fd4":"rgba(74,143,212,0.4)"}`,background:tycOk?"#4a8fd4":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+                {tycOk&&<span style={{fontSize:12,color:"#fff"}}>✓</span>}
+              </div>
+              <span style={{fontSize:13,color:"#b0c4d8"}}>Acepto los <button onClick={()=>setShowTyC(true)} style={{background:"none",border:"none",color:"#4a8fd4",cursor:"pointer",fontSize:13,textDecoration:"underline"}}>Términos y Condiciones</button></span>
+            </div>
+            {err.tyc&&<p style={{color:"#f87171",fontSize:12,marginTop:4}}>{err.tyc}</p>}
           </div>
-          <PrimaryBtn onClick={()=>{ if(validar()) onSuccess({ nombre, email, tel }); }}>Continuar →</PrimaryBtn>
+          <div style={{background:"rgba(74,143,212,0.06)",border:"1px solid rgba(74,143,212,0.15)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#b0c4d8"}}>
+            🔒 Tus datos son privados.
+          </div>
+          <Btn onClick={()=>{if(validar())onSuccess({nombre:n,email:e,tel:t});}}>Continuar →</Btn>
         </div>
       </div>
     </div>
+    </>
   );
 };
 
 // ─── Calificar ───
-const CalificarPopup = ({ nombre, onClose }) => {
-  const [stars, setStars]   = useState(0);
-  const [hover, setHover]   = useState(0);
-  const [com,   setCom]     = useState("");
-  const [ok,    setOk]      = useState(false);
-  if (ok) return (
-    <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 24px" }}>
-      <div className="mod" style={{ background:"#0d1f35", borderRadius:20, padding:"40px 28px", maxWidth:380, width:"100%", textAlign:"center" }}>
-        <div style={{ fontSize:52, marginBottom:16 }}>⭐</div>
-        <h3 style={{ fontFamily:F.serif, fontSize:24, color:"#ffffff", marginBottom:8 }}>¡Gracias por calificar!</h3>
-        <p style={{ color:"#b0c4d8", fontSize:14, marginBottom:24 }}>Tu opinión ayuda a toda la comunidad Nexo.</p>
-        <PrimaryBtn onClick={onClose}>Cerrar</PrimaryBtn>
+const Calificar = ({nombre,onClose})=>{
+  const [s,setS]=useState(0);
+  const [h,setH]=useState(0);
+  const [c,setC]=useState("");
+  const [ok,setOk]=useState(false);
+  if(ok)return(
+    <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
+      <div className="mod" style={{background:"#0d1f35",borderRadius:20,padding:"40px 28px",maxWidth:360,width:"100%",textAlign:"center"}}>
+        <div style={{fontSize:52,marginBottom:12}}>⭐</div>
+        <h3 style={{fontFamily:F.serif,fontSize:22,color:"#fff",marginBottom:8}}>¡Gracias por calificar!</h3>
+        <p style={{color:"#b0c4d8",fontSize:14,marginBottom:20}}>Tu opinión ayuda a toda la comunidad.</p>
+        <Btn onClick={onClose}>Cerrar</Btn>
       </div>
     </div>
   );
-  return (
-    <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div className="mod" style={{ background:"#0d1f35", borderRadius:"20px 20px 0 0", padding:"28px 24px 36px", maxWidth:480, width:"100%" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-          <h3 style={{ fontFamily:F.serif, fontSize:22, color:"#ffffff" }}>Calificar a {nombre}</h3>
-          <button onClick={onClose} style={{ background:"none", border:"none", color:"#8a9bb0", fontSize:22, cursor:"pointer" }}>×</button>
+  return(
+    <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+      <div className="mod" style={{background:"#0d1f35",borderRadius:"20px 20px 0 0",padding:"28px 24px 36px",maxWidth:480,width:"100%"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <h3 style={{fontFamily:F.serif,fontSize:22,color:"#fff"}}>Calificar a {nombre}</h3>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#8a9bb0",fontSize:22,cursor:"pointer"}}>×</button>
         </div>
-        <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:16 }}>
+        <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:12}}>
           {[1,2,3,4,5].map(n=>(
-            <button key={n} onClick={()=>setStars(n)} onMouseEnter={()=>setHover(n)} onMouseLeave={()=>setHover(0)}
-              style={{ background:"none", border:"none", fontSize:40, cursor:"pointer", transition:"transform .15s", transform:(hover||stars)>=n?"scale(1.2)":"scale(1)", filter:(hover||stars)>=n?"brightness(1)":"brightness(0.3)" }}>★</button>
+            <button key={n} onClick={()=>setS(n)} onMouseEnter={()=>setH(n)} onMouseLeave={()=>setH(0)}
+              style={{background:"none",border:"none",fontSize:38,cursor:"pointer",transition:"transform .15s",transform:(h||s)>=n?"scale(1.2)":"scale(1)",filter:(h||s)>=n?"brightness(1)":"brightness(0.3)"}}>★</button>
           ))}
         </div>
-        {stars>0 && <div style={{ textAlign:"center", color:"#6cb3f5", fontSize:13, marginBottom:16 }}>{["","Malo","Regular","Bien","Muy bien","¡Excelente!"][stars]}</div>}
-        <div style={{ marginBottom:20 }}>
-          <Lbl>COMENTARIO (OPCIONAL)</Lbl>
-          <textarea value={com} onChange={e=>setCom(e.target.value)} placeholder="Contá cómo fue el trabajo..."
-            style={{ width:"100%", marginTop:8, background:"#060d1a", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"13px 16px", borderRadius:10, fontFamily:F.sans, fontSize:14, resize:"none", minHeight:80 }}/>
-        </div>
-        <PrimaryBtn onClick={()=>stars>0&&setOk(true)} style={{ opacity:stars===0?0.4:1 }}>Enviar calificación</PrimaryBtn>
+        {s>0&&<div style={{textAlign:"center",color:"#6cb3f5",fontSize:13,marginBottom:12}}>{["","Malo","Regular","Bien","Muy bien","¡Excelente!"][s]}</div>}
+        <Lbl>COMENTARIO (OPCIONAL)</Lbl>
+        <textarea value={c} onChange={e=>setC(e.target.value)} placeholder="Contá cómo fue el trabajo..."
+          style={{width:"100%",marginTop:8,marginBottom:16,background:"#060d1a",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"12px 16px",borderRadius:10,fontFamily:F.sans,fontSize:14,resize:"none",minHeight:80}}/>
+        <Btn onClick={()=>s>0&&setOk(true)} style={{opacity:s===0?.4:1}}>Enviar calificación</Btn>
       </div>
     </div>
   );
 };
 
-// ─── Notif Popup ───
-const NotifPopup = ({ notif, onClose, onPostular }) => (
-  <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 24px" }}>
-    <div className="mod" style={{ background:"#0d1f35", borderRadius:20, padding:"28px 24px", maxWidth:400, width:"100%" }}>
-      {notif.tipo==="urgente" && (
-        <div style={{ background:"rgba(248,113,113,0.15)", border:"1px solid rgba(248,113,113,0.3)", borderRadius:8, padding:"8px 14px", marginBottom:16, display:"flex", alignItems:"center", gap:8 }}>
-          <span>🔴</span><span style={{ fontSize:12, color:"#f87171", fontWeight:600 }}>PEDIDO URGENTE</span>
-        </div>
-      )}
-      <h3 style={{ fontFamily:F.serif, fontSize:20, color:"#ffffff", marginBottom:8 }}>{notif.titulo}</h3>
-      <p style={{ color:"#b0c4d8", fontSize:14, lineHeight:1.6, marginBottom:18 }}>{notif.desc}</p>
-      <div style={{ display:"flex", gap:10 }}>
-        <button onClick={onClose} style={{ flex:1, background:"transparent", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"13px", borderRadius:10, fontFamily:F.sans, fontSize:14, cursor:"pointer" }}>Ignorar</button>
-        <button onClick={onPostular} style={{ flex:2, background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:"13px", borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer" }}>Postularme →</button>
-      </div>
-    </div>
-  </div>
-);
-
-// ─── Chat ───
-const ChatView = ({ pro, onClose, clienteNombre }) => {
-  const [msgs,   setMsgs]   = useState([
-    { id:1, de:"pro", texto:`Hola${clienteNombre?" "+clienteNombre.split(" ")[0]:""}! Vi tu pedido. ¿Cuándo necesitás que pase?`, hora:"ahora" },
-  ]);
-  const [texto,  setTexto]  = useState("");
-  const [presupuesto, setPres] = useState("");
-  const [typing, setTyping] = useState(false);
-  const [showPres, setShowPres] = useState(false);
-  const bottomRef = useRef(null);
-
-  useEffect(()=>{ bottomRef.current?.scrollIntoView({ behavior:"smooth" }); },[msgs,typing]);
-
-  const send = (txt) => {
-    const t = txt || texto;
-    if (!t.trim()) return;
-    const hora = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
-    setMsgs(p=>[...p,{ id:Date.now(), de:"cliente", texto:t.trim(), hora }]);
+// ─── Chat con presupuesto ───
+const ChatView = ({pro,onClose,clienteNombre})=>{
+  const [msgs,setMsgs]=useState([{id:1,de:"pro",texto:`Hola${clienteNombre?" "+clienteNombre.split(" ")[0]:""}! Vi tu pedido. ¿Cuándo necesitás que pase?`,hora:"ahora"}]);
+  const [texto,setTexto]=useState("");
+  const [pres,setPres]=useState("");
+  const [showPres,setShowPres]=useState(false);
+  const [typing,setTyping]=useState(false);
+  const ref=useRef(null);
+  useEffect(()=>{ref.current?.scrollIntoView({behavior:"smooth"});},[msgs,typing]);
+  const send=(txt)=>{
+    const t=txt||texto;
+    if(!t.trim())return;
+    const hora=new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+    setMsgs(p=>[...p,{id:Date.now(),de:"cliente",texto:t.trim(),hora}]);
     setTexto("");
     setTyping(true);
-    setTimeout(()=>{
-      setTyping(false);
-      setMsgs(p=>[...p,{ id:Date.now()+1, de:"pro", texto:RESPUESTAS[Math.floor(Math.random()*RESPUESTAS.length)], hora:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}) }]);
-    },1800);
+    setTimeout(()=>{setTyping(false);setMsgs(p=>[...p,{id:Date.now()+1,de:"pro",texto:RESP[Math.floor(Math.random()*RESP.length)],hora:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}]);},1800);
   };
-
-  const enviarPresupuesto = () => {
-    if (!presupuesto.trim()) return;
-    send(`💰 Presupuesto: $${presupuesto}`);
-    setPres("");
-    setShowPres(false);
-  };
-
-  return (
-    <div className="chat" style={{ position:"fixed", inset:0, background:"#060d1a", zIndex:200, display:"flex", flexDirection:"column", maxWidth:480, margin:"0 auto" }}>
-      <div style={{ background:"rgba(6,13,26,0.92)", backdropFilter:"blur(12px)", borderBottom:"1px solid rgba(74,143,212,0.15)", padding:"14px 20px", display:"flex", alignItems:"center", gap:14 }}>
-        <button onClick={onClose} style={{ background:"none", border:"none", color:"#4a8fd4", fontSize:22, cursor:"pointer" }}>←</button>
-        <Avatar foto={pro.foto} nombre={pro.nombre} size={40}/>
-        <div style={{ flex:1 }}>
-          <div style={{ fontWeight:600, fontSize:15, color:"#ffffff" }}>{pro.nombre} {pro.verificado&&<span style={{fontSize:10,color:"#4a8fd4",background:"rgba(74,143,212,0.12)",padding:"2px 6px",borderRadius:20}}>✓</span>}</div>
-          <div style={{ fontSize:12, color:"#4ade80", marginTop:2 }}>● En línea · {pro.oficios?pro.oficios[0]:pro.oficio}</div>
+  return(
+    <div className="chat" style={{position:"fixed",inset:0,background:"#060d1a",zIndex:200,display:"flex",flexDirection:"column",maxWidth:480,margin:"0 auto"}}>
+      <div style={{background:"rgba(6,13,26,0.92)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(74,143,212,0.15)",padding:"14px 20px",display:"flex",alignItems:"center",gap:14}}>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#4a8fd4",fontSize:22,cursor:"pointer"}}>←</button>
+        <Av foto={pro.foto} nombre={pro.nombre} size={40}/>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:600,fontSize:15,color:"#fff"}}>{pro.nombre} {pro.verificado&&<span style={{fontSize:10,color:"#4a8fd4",background:"rgba(74,143,212,0.12)",padding:"2px 6px",borderRadius:20}}>✓</span>}</div>
+          <div style={{fontSize:12,color:"#4ade80",marginTop:2}}>● En línea · {(pro.oficios||[pro.oficio])[0]}</div>
         </div>
-        <div style={{ textAlign:"right" }}>
-          <div style={{ fontSize:12, color:"#4a8fd4" }}>★ {pro.rating}</div>
-          <div style={{ fontSize:11, color:"#b0c4d8" }}>{pro.trabajos} trabajos</div>
+        <div style={{textAlign:"right"}}>
+          <div style={{fontSize:12,color:"#4a8fd4"}}>★ {pro.rating}</div>
+          <div style={{fontSize:11,color:"#b0c4d8"}}>{pro.trabajos} trabajos</div>
         </div>
       </div>
-
-      <div style={{ flex:1, overflowY:"auto", padding:"20px 16px", display:"flex", flexDirection:"column", gap:10 }}>
+      <div style={{flex:1,overflowY:"auto",padding:"20px 16px",display:"flex",flexDirection:"column",gap:10}}>
         {msgs.map(m=>(
-          <div key={m.id} style={{ display:"flex", flexDirection:"column", alignItems:m.de==="cliente"?"flex-end":"flex-start" }}>
-            <div style={{ maxWidth:"78%", padding:"11px 14px", borderRadius:m.de==="cliente"?"16px 16px 4px 16px":"16px 16px 16px 4px", background:m.de==="cliente"?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"#0d1f35", border:m.de==="pro"?"1px solid rgba(74,143,212,0.15)":"none", fontSize:14, lineHeight:1.55, color:"#ffffff" }}>{m.texto}</div>
-            <span style={{ fontSize:10, color:"#8a9bb0", marginTop:4 }}>{m.hora}</span>
+          <div key={m.id} style={{display:"flex",flexDirection:"column",alignItems:m.de==="cliente"?"flex-end":"flex-start"}}>
+            <div style={{maxWidth:"78%",padding:"11px 14px",borderRadius:m.de==="cliente"?"16px 16px 4px 16px":"16px 16px 16px 4px",background:m.de==="cliente"?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"#0d1f35",border:m.de==="pro"?"1px solid rgba(74,143,212,0.15)":"none",fontSize:14,lineHeight:1.55,color:"#fff"}}>{m.texto}</div>
+            <span style={{fontSize:10,color:"#8a9bb0",marginTop:4}}>{m.hora}</span>
           </div>
         ))}
-        {typing && (
-          <div style={{ display:"flex", gap:4, padding:"12px 16px", background:"#0d1f35", borderRadius:"16px 16px 16px 4px", width:"fit-content" }}>
-            {[0,1,2].map(i=><span key={i} style={{ width:6, height:6, borderRadius:"50%", background:"#8a9bb0", display:"inline-block", animation:`pulse 1s ${i*.2}s infinite` }}/>)}
-          </div>
-        )}
-        <div ref={bottomRef}/>
+        {typing&&<div style={{display:"flex",gap:4,padding:"12px 16px",background:"#0d1f35",borderRadius:"16px 16px 16px 4px",width:"fit-content"}}>{[0,1,2].map(i=><span key={i} style={{width:6,height:6,borderRadius:"50%",background:"#8a9bb0",display:"inline-block",animation:`pulse 1s ${i*.2}s infinite`}}/>)}</div>}
+        <div ref={ref}/>
       </div>
-
-      {showPres && (
-        <div style={{ background:"#0d1f35", borderTop:"1px solid rgba(74,143,212,0.15)", padding:"12px 16px", display:"flex", gap:10 }}>
-          <input value={presupuesto} onChange={e=>setPres(e.target.value)} placeholder="Monto del presupuesto..."
-            style={{ flex:1, background:"#060d1a", border:"1px solid rgba(74,143,212,0.3)", color:"#ffffff", padding:"10px 14px", borderRadius:10, fontFamily:F.sans, fontSize:14 }}/>
-          <button onClick={enviarPresupuesto} style={{ background:"linear-gradient(135deg,#4ade80,#22c55e)", border:"none", color:"#ffffff", padding:"10px 16px", borderRadius:10, fontFamily:F.sans, fontSize:13, fontWeight:600, cursor:"pointer" }}>Enviar $</button>
-          <button onClick={()=>setShowPres(false)} style={{ background:"none", border:"none", color:"#8a9bb0", fontSize:20, cursor:"pointer" }}>×</button>
+      {showPres&&(
+        <div style={{background:"#0d1f35",borderTop:"1px solid rgba(74,143,212,0.15)",padding:"12px 16px",display:"flex",gap:10}}>
+          <input value={pres} onChange={e=>setPres(e.target.value)} placeholder="Monto del presupuesto..."
+            style={{flex:1,background:"#060d1a",border:"1px solid rgba(74,143,212,0.3)",color:"#fff",padding:"10px 14px",borderRadius:10,fontFamily:F.sans,fontSize:14}}/>
+          <button onClick={()=>{if(pres.trim()){send(`💰 Presupuesto: $${pres}`);setPres("");setShowPres(false);}}} style={{background:"linear-gradient(135deg,#4ade80,#22c55e)",border:"none",color:"#fff",padding:"10px 16px",borderRadius:10,fontFamily:F.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>Enviar $</button>
+          <button onClick={()=>setShowPres(false)} style={{background:"none",border:"none",color:"#8a9bb0",fontSize:20,cursor:"pointer"}}>×</button>
         </div>
       )}
-
-      <div style={{ background:"rgba(6,13,26,0.92)", borderTop:"1px solid rgba(74,143,212,0.15)", padding:"14px 16px", display:"flex", gap:10, alignItems:"flex-end" }}>
-        <button onClick={()=>setShowPres(!showPres)} style={{ width:40, height:40, borderRadius:10, background:"rgba(74,212,120,0.12)", border:"1px solid rgba(74,212,120,0.3)", color:"#4ade80", fontSize:18, cursor:"pointer", flexShrink:0 }}>💰</button>
-        <textarea value={texto} onChange={e=>setTexto(e.target.value)} onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); send(); }}} placeholder="Escribí un mensaje..." rows={1}
-          style={{ flex:1, background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"12px 16px", borderRadius:12, fontFamily:F.sans, fontSize:14, resize:"none", lineHeight:1.5, maxHeight:100 }}/>
-        <button onClick={()=>send()} disabled={!texto.trim()} style={{ width:46, height:46, borderRadius:12, background:texto.trim()?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"rgba(74,143,212,0.1)", border:"none", cursor:texto.trim()?"pointer":"default", fontSize:20, flexShrink:0, color:"#ffffff" }}>➤</button>
+      <div style={{background:"rgba(6,13,26,0.92)",borderTop:"1px solid rgba(74,143,212,0.15)",padding:"14px 16px",display:"flex",gap:10,alignItems:"flex-end"}}>
+        <button onClick={()=>setShowPres(!showPres)} style={{width:42,height:42,borderRadius:10,background:"rgba(74,212,120,0.12)",border:"1px solid rgba(74,212,120,0.3)",color:"#4ade80",fontSize:18,cursor:"pointer",flexShrink:0}}>💰</button>
+        <textarea value={texto} onChange={e=>setTexto(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}} placeholder="Escribí un mensaje..." rows={1}
+          style={{flex:1,background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"12px 16px",borderRadius:12,fontFamily:F.sans,fontSize:14,resize:"none",lineHeight:1.5,maxHeight:100}}/>
+        <button onClick={()=>send()} disabled={!texto.trim()} style={{width:46,height:46,borderRadius:12,background:texto.trim()?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"rgba(74,143,212,0.1)",border:"none",cursor:texto.trim()?"pointer":"default",fontSize:20,flexShrink:0,color:"#fff"}}>➤</button>
       </div>
     </div>
   );
 };
 
 // ─── Panel Profesional ───
-const PanelProfesional = ({ onClose }) => {
-  const [tab, setTab] = useState("postulaciones");
-  const postulaciones = [
-    { id:1, titulo:"Revisión de tablero - Palermo", cliente:"Martín L.", fecha:"hoy 10:30", estado:"pendiente", presupuesto:"$8.000" },
-    { id:2, titulo:"Instalación luces LED - Belgrano", cliente:"Sofía P.", fecha:"hoy 09:00", estado:"aceptado", presupuesto:"$12.000" },
-    { id:3, titulo:"Reparación tomacorriente", cliente:"Roberto K.", fecha:"ayer", estado:"finalizado", presupuesto:"$4.500" },
+const PanelPro = ({onClose})=>{
+  const [tab,setTab]=useState("post");
+  const posts=[
+    {id:1,titulo:"Revisión de tablero - Palermo",cliente:"Martín L.",fecha:"hoy 10:30",estado:"pendiente",monto:"$8.000"},
+    {id:2,titulo:"Instalación luces LED - Belgrano",cliente:"Sofía P.",fecha:"hoy 09:00",estado:"aceptado",monto:"$12.000"},
+    {id:3,titulo:"Reparación tomacorriente",cliente:"Roberto K.",fecha:"ayer",estado:"finalizado",monto:"$4.500"},
   ];
-  const pedidosDisponibles = [
-    { id:4, titulo:"Urgente: corte de luz en PH", zona:"Palermo", presupuesto:"$6.000-$10.000", tiempo:"hace 10 min" },
-    { id:5, titulo:"Instalación aire acondicionado", zona:"Belgrano", presupuesto:"$15.000", tiempo:"hace 30 min" },
-    { id:6, titulo:"Tablero eléctrico nuevo", zona:"Caballito", presupuesto:"$20.000", tiempo:"hace 1 hora" },
+  const disp=[
+    {id:4,titulo:"Urgente: corte de luz en PH",zona:"Palermo",rango:"$6.000-$10.000",hace:"hace 10 min"},
+    {id:5,titulo:"Instalación aire acondicionado",zona:"Belgrano",rango:"$15.000",hace:"hace 30 min"},
+    {id:6,titulo:"Tablero eléctrico nuevo",zona:"Caballito",rango:"$20.000",hace:"hace 1 hora"},
   ];
-  const colorEstado = e => e==="aceptado"?"#4ade80":e==="pendiente"?"#fbbf24":"#8a9bb0";
-  return (
-    <div className="chat" style={{ position:"fixed", inset:0, background:"#060d1a", zIndex:200, display:"flex", flexDirection:"column", maxWidth:480, margin:"0 auto" }}>
-      <div style={{ background:"rgba(6,13,26,0.92)", backdropFilter:"blur(12px)", borderBottom:"1px solid rgba(74,143,212,0.15)", padding:"14px 20px", display:"flex", alignItems:"center", gap:14 }}>
-        <button onClick={onClose} style={{ background:"none", border:"none", color:"#4a8fd4", fontSize:22, cursor:"pointer" }}>←</button>
-        <div style={{ flex:1 }}>
-          <div style={{ fontWeight:600, fontSize:16, color:"#ffffff" }}>Mi panel profesional</div>
-          <div style={{ fontSize:12, color:"#4ade80", marginTop:2 }}>● Activo</div>
+  const col=e=>e==="aceptado"?"#4ade80":e==="pendiente"?"#fbbf24":"#8a9bb0";
+  return(
+    <div className="chat" style={{position:"fixed",inset:0,background:"#060d1a",zIndex:200,display:"flex",flexDirection:"column",maxWidth:480,margin:"0 auto"}}>
+      <div style={{background:"rgba(6,13,26,0.92)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(74,143,212,0.15)",padding:"14px 20px",display:"flex",alignItems:"center",gap:14}}>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#4a8fd4",fontSize:22,cursor:"pointer"}}>←</button>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:600,fontSize:16,color:"#fff"}}>Mi panel profesional</div>
+          <div style={{fontSize:12,color:"#4ade80",marginTop:2}}>● Activo · Podés postularte sin importar la zona</div>
         </div>
       </div>
-      <div style={{ display:"flex", gap:6, margin:"16px 16px 0", background:"#0d1f35", padding:4, borderRadius:10 }}>
-        {[{id:"postulaciones",label:"Mis postulaciones"},{id:"disponibles",label:"Pedidos disponibles"}].map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)}
-            style={{ flex:1, padding:"9px 6px", borderRadius:8, border:"none", background:tab===t.id?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"transparent", color:tab===t.id?"#ffffff":"#8a9bb0", fontFamily:F.sans, fontSize:12, fontWeight:600, cursor:"pointer" }}>
-            {t.label}
-          </button>
+      <div style={{display:"flex",gap:6,margin:"14px 14px 0",background:"#0d1f35",padding:4,borderRadius:10}}>
+        {[["post","Mis postulaciones"],["disp","Pedidos disponibles"]].map(([id,lbl])=>(
+          <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:"9px 6px",borderRadius:8,border:"none",background:tab===id?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"transparent",color:tab===id?"#fff":"#8a9bb0",fontFamily:F.sans,fontSize:12,fontWeight:600,cursor:"pointer"}}>{lbl}</button>
         ))}
       </div>
-      <div style={{ flex:1, overflowY:"auto", padding:"16px" }}>
-        {tab==="postulaciones" && postulaciones.map(p=>(
-          <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:14, padding:16, marginBottom:10 }}>
-            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
-              <div style={{ fontWeight:600, fontSize:14, color:"#ffffff", flex:1, marginRight:8 }}>{p.titulo}</div>
-              <span style={{ fontSize:11, padding:"3px 10px", borderRadius:20, fontWeight:600, background:`${colorEstado(p.estado)}22`, color:colorEstado(p.estado), whiteSpace:"nowrap" }}>{p.estado}</span>
+      <div style={{flex:1,overflowY:"auto",padding:"14px"}}>
+        {tab==="post"&&posts.map(p=>(
+          <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:16,marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+              <div style={{fontWeight:600,fontSize:14,color:"#fff",flex:1,marginRight:8}}>{p.titulo}</div>
+              <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:`${col(p.estado)}22`,color:col(p.estado),whiteSpace:"nowrap"}}>{p.estado}</span>
             </div>
-            <div style={{ fontSize:12, color:"#b0c4d8", marginBottom:4 }}>Cliente: {p.cliente}</div>
-            <div style={{ display:"flex", justifyContent:"space-between" }}>
-              <span style={{ fontSize:12, color:"#8a9bb0" }}>{p.fecha}</span>
-              <span style={{ fontSize:14, fontWeight:700, color:"#4a8fd4" }}>{p.presupuesto}</span>
+            <div style={{fontSize:12,color:"#b0c4d8",marginBottom:4}}>Cliente: {p.cliente}</div>
+            <div style={{display:"flex",justifyContent:"space-between"}}>
+              <span style={{fontSize:12,color:"#8a9bb0"}}>{p.fecha}</span>
+              <span style={{fontSize:14,fontWeight:700,color:"#4a8fd4"}}>{p.monto}</span>
             </div>
           </div>
         ))}
-        {tab==="disponibles" && (
-          <div>
-            <p style={{ fontSize:13, color:"#b0c4d8", marginBottom:12, fontWeight:300 }}>Podés postularte a cualquier pedido, sin importar la zona</p>
-            {pedidosDisponibles.map(p=>(
-              <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:14, padding:16, marginBottom:10 }}>
-                <div style={{ fontWeight:600, fontSize:14, color:"#ffffff", marginBottom:6 }}>{p.titulo}</div>
-                <div style={{ fontSize:12, color:"#b0c4d8", marginBottom:10 }}>📍 {p.zona} · {p.tiempo}</div>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <span style={{ fontSize:13, color:"#4a8fd4", fontWeight:600 }}>{p.presupuesto}</span>
-                  <button style={{ background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:"8px 16px", borderRadius:8, fontFamily:F.sans, fontSize:12, fontWeight:600, cursor:"pointer" }}>Postularme →</button>
-                </div>
-              </div>
-            ))}
+        {tab==="disp"&&disp.map(p=>(
+          <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:16,marginBottom:10}}>
+            <div style={{fontWeight:600,fontSize:14,color:"#fff",marginBottom:6}}>{p.titulo}</div>
+            <div style={{fontSize:12,color:"#b0c4d8",marginBottom:10}}>📍 {p.zona} · {p.hace}</div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:13,color:"#4a8fd4",fontWeight:600}}>{p.rango}</span>
+              <button style={{background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:"8px 16px",borderRadius:8,fontFamily:F.sans,fontSize:12,fontWeight:600,cursor:"pointer"}}>Postularme →</button>
+            </div>
           </div>
-        )}
+        ))}
       </div>
     </div>
   );
 };
 
-// ─── APP ───
-export default function App() {
-  const [vista,       setVista]      = useState("inicio");
-  const [catAbierta,  setCatAbierta] = useState(null);
-  const [busqueda,    setBusqueda]   = useState("");
-  const [oficio,      setOficio]     = useState("");
-  const [urgencia,    setUrgencia]   = useState(0);
+// ══════════════════════════════════
+// APP PRINCIPAL
+// ══════════════════════════════════
+export default function App(){
+  const [vista,setVista]=useState("inicio");
+  const [catAb,setCatAb]=useState(null);
+  const [busq,setBusq]=useState("");
+  const [oficio,setOficio]=useState("");
+  const [urgencia,setUrgencia]=useState(0);
 
-  const [pros,        setPros]       = useState(PROFESIONALES);
-  const [adminTab,    setAdminTab]   = useState("verificaciones");
-  const [adminSearch, setAdminSearch]= useState("");
-  const [adminMsg,    setAdminMsg]   = useState({});
-  const [showAddPro,  setShowAddPro] = useState(false);
-  const [apNombre,    setApNombre]   = useState("");
-  const [apOficio,    setApOficio]   = useState("");
-  const [apZona,      setApZona]     = useState("");
-  const [apEmail,     setApEmail]    = useState("");
-  const [showPin,     setShowPin]    = useState(false);
-  const [adminOk,     setAdminOk]    = useState(false);
+  const [pros,setPros]=useState(PROS_MOCK);
+  const [adminTab,setAdminTab]=useState("verificaciones");
+  const [adminSearch,setAdminSearch]=useState("");
+  const [adminMsg,setAdminMsg]=useState({});
+  const [showAddPro,setShowAddPro]=useState(false);
+  const [apN,setApN]=useState("");const [apO,setApO]=useState("");const [apZ,setApZ]=useState("");const [apE,setApE]=useState("");
+  const [showPin,setShowPin]=useState(false);
+  const [adminOk,setAdminOk]=useState(false);
 
-  const [leidas,      setLeidas]     = useState([]);
-  const [postulados,  setPostulados] = useState([]);
-  const [showNotif,   setShowNotif]  = useState(false);
-  const [notifActiva, setNotifActiva]= useState(null);
+  const [leidas,setLeidas]=useState([]);
+  const [postulados,setPostulados]=useState([]);
+  const [showNotif,setShowNotif]=useState(false);
+  const [notifAct,setNotifAct]=useState(null);
 
-  const [showTyC,     setShowTyC]    = useState(false);
-  const [tycOk,       setTycOk]      = useState(false);
-  const [showCalif,   setShowCalif]  = useState(false);
+  const [showTyC,setShowTyC]=useState(false);
+  const [tycOk,setTycOk]=useState(false);
+  const [showCalif,setShowCalif]=useState(false);
 
-  const [clienteData,    setClienteData]    = useState(null);
-  const [showRegCliente, setShowRegCliente] = useState(false);
-  const [pendingNav,     setPendingNav]     = useState(null);
+  const [cliente,setCliente]=useState(null);
+  const [showRegC,setShowRegC]=useState(false);
+  const [pendNav,setPendNav]=useState(null);
 
-  const [chat,        setChat]       = useState(null);
-  const [showPanel,   setShowPanel]  = useState(false);
+  const [chat,setChat]=useState(null);
+  const [showPanel,setShowPanel]=useState(false);
 
-  const [rNombre,  setRNombre]  = useState("");
-  const [rEmail,   setREmail]   = useState("");
-  const [rTel,     setRTel]     = useState("");
-  const [rZona,    setRZona]    = useState("");
-  const [rCat,     setRCat]     = useState(0);
-  const [rOficios, setROficios] = useState([]);
-  const [rFotoUrl, setRFotoUrl] = useState(null);
-  const [rErr,     setRErr]     = useState({});
+  // Registro profesional
+  const [rN,setRN]=useState("");const [rE,setRE]=useState("");const [rT,setRT]=useState("");const [rZ,setRZ]=useState("");
+  const [rCatIdx,setRCatIdx]=useState(0);
+  const [rCatsSelec,setRCatsSelec]=useState([]);// múltiples categorías
+  const [rOficiosSelec,setROficiosSelec]=useState([]);// múltiples oficios
+  const [rFotoUrl,setRFotoUrl]=useState(null);
+  const [rErr,setRErr]=useState({});
 
-  const activos    = pros.filter(p=>p.estado==="activo");
-  const pendientes = pros.filter(p=>p.estado==="pendiente");
-  const noLeidas   = NOTIFICACIONES.filter(n=>!leidas.includes(n.id)).length;
+  const activos=pros.filter(p=>p.estado==="activo");
+  const pendientes=pros.filter(p=>p.estado==="pendiente");
+  const noLeidas=NOTIFS.filter(n=>!leidas.includes(n.id)).length;
 
-  const catsFiltradas = busqueda.trim()
-    ? CATEGORIAS.map(c=>({...c,subs:c.subs.filter(s=>s.n.toLowerCase().includes(busqueda.toLowerCase()))})).filter(c=>c.subs.length>0)
-    : CATEGORIAS;
+  const catsFilt=busq.trim()?CATS.map(c=>({...c,subs:c.subs.filter(s=>s.n.toLowerCase().includes(busq.toLowerCase()))})).filter(c=>c.subs.length>0):CATS;
+  const prosFilt=adminSearch.trim()?pros.filter(p=>p.nombre.toLowerCase().includes(adminSearch.toLowerCase())||(p.oficios||[]).join(" ").toLowerCase().includes(adminSearch.toLowerCase())):pros;
 
-  const prosFiltrados = adminSearch.trim()
-    ? pros.filter(p=>p.nombre.toLowerCase().includes(adminSearch.toLowerCase())||(p.oficios||[p.oficio]).join(" ").toLowerCase().includes(adminSearch.toLowerCase()))
-    : pros;
-
-  const elegirOficio = nombre => { setOficio(nombre); setVista("buscar"); setCatAbierta(null); };
-
-  const navegarComoCliente = destino => {
-    if (!clienteData) { setPendingNav(destino); setShowRegCliente(true); }
-    else setVista(destino);
+  const elegirOficio=n=>{setOficio(n);setVista("buscar");setCatAb(null);};
+  const irComoCliente=dest=>{if(!cliente){setPendNav(dest);setShowRegC(true);}else setVista(dest);};
+  
+  const onClienteReg=async data=>{
+    try{ await supabase.from('clientes').insert([{nombre:data.nombre,email:data.email,telefono:data.tel}]); }catch(e){}
+    setCliente(data);setShowRegC(false);
+    if(pendNav){setVista(pendNav);setPendNav(null);}
   };
 
-  const onClienteRegistrado = async data => {
-    await supabase.from('clientes').insert([{ nombre:data.nombre, email:data.email, telefono:data.tel }]);
-    setClienteData(data);
-    setShowRegCliente(false);
-    if (pendingNav) { setVista(pendingNav); setPendingNav(null); }
+  const abrirNotif=n=>{setNotifAct(n);setShowNotif(true);setLeidas(p=>p.includes(n.id)?p:[...p,n.id]);};
+  const postular=()=>{setPostulados(p=>[...p,notifAct.id]);setShowNotif(false);setNotifAct(null);};
+  const verificar=id=>setPros(p=>p.map(x=>x.id===id?{...x,verificado:true,estado:"activo"}:x));
+  const rechazar=id=>setPros(p=>p.map(x=>x.id===id?{...x,verificado:false,estado:"rechazado"}:x));
+
+  const toggleCat=cat=>{
+    setRCatsSelec(prev=>prev.includes(cat)?prev.filter(c=>c!==cat):[...prev,cat]);
+    setROficiosSelec([]);
   };
+  const toggleOficio=o=>setROficiosSelec(prev=>prev.includes(o)?prev.filter(x=>x!==o):[...prev,o]);
 
-  const abrirNotif = n => { setNotifActiva(n); setShowNotif(true); setLeidas(p=>p.includes(n.id)?p:[...p,n.id]); };
-  const postular = () => { setPostulados(p=>[...p,notifActiva.id]); setShowNotif(false); setNotifActiva(null); };
-  const verificarPro = id => setPros(p=>p.map(x=>x.id===id?{...x,verificado:true,estado:"activo"}:x));
-  const rechazarPro  = id => setPros(p=>p.map(x=>x.id===id?{...x,verificado:false,estado:"rechazado"}:x));
-
-  const handleFoto = e => { const f=e.target.files[0]; if(f) setRFotoUrl(URL.createObjectURL(f)); };
-
-  const toggleOficio = oficio => {
-    setROficios(prev => prev.includes(oficio) ? prev.filter(o=>o!==oficio) : [...prev, oficio]);
-  };
-
-  const validarRegistro = () => {
-    const e = {};
-    if (!rNombre.trim()) e.nombre="Campo requerido";
-    if (!rEmail.trim()||!rEmail.includes("@")) e.email="Email inválido";
-    if (!rTel.trim()) e.tel="Campo requerido";
-    if (!rZona.trim()) e.zona="Seleccioná una zona";
+  const validarReg=()=>{
+    const e={};
+    if(!rN.trim())e.n="Campo requerido";
+    if(!rE.trim()||!rE.includes("@"))e.e="Email inválido";
+    if(!rT.trim())e.t="Campo requerido";
+    if(!rZ.trim())e.z="Seleccioná una zona";
+    if(!tycOk)e.tyc="Debés aceptar los términos";
     setRErr(e);
     return Object.keys(e).length===0;
   };
 
-  const handleAceptarTyC = () => {
-    setTycOk(true);
-    setShowTyC(false);
-    const e = {};
-    if (!rNombre.trim()) e.nombre="Campo requerido";
-    if (!rEmail.trim()||!rEmail.includes("@")) e.email="Email inválido";
-    if (!rTel.trim()) e.tel="Campo requerido";
-    if (!rZona.trim()) e.zona="Seleccioná una zona";
+  const handleAceptarTyC=()=>{
+    setTycOk(true);setShowTyC(false);
+    const e={};
+    if(!rN.trim())e.n="Campo requerido";
+    if(!rE.trim()||!rE.includes("@"))e.e="Email inválido";
+    if(!rT.trim())e.t="Campo requerido";
+    if(!rZ.trim())e.z="Seleccioná una zona";
     setRErr(e);
-    if (Object.keys(e).length===0) setVista("planes");
+    if(Object.keys(e).length===0)setVista("planes");
   };
 
-  const handleRegistro = async () => {
-    if (!tycOk) { setShowTyC(true); return; }
-    if (!validarRegistro()) return;
-    const { error } = await supabase.from('profesionales').insert([{
-      nombre: rNombre, email: rEmail, telefono: rTel, zona: rZona,
-      oficio: rOficios.length>0 ? rOficios.join(", ") : CATEGORIAS[rCat].subs[0].n,
-      verificado: false, estado: 'pendiente'
-    }]);
-    if (error) { alert('Error al registrar. Intentá de nuevo.'); return; }
+  const handleReg=async()=>{
+    if(!tycOk){setShowTyC(true);return;}
+    if(!validarReg())return;
+    const oficiosStr=rOficiosSelec.length>0?rOficiosSelec.join(", "):CATS[rCatIdx].subs[0].n;
+    try{
+      await supabase.from('profesionales').insert([{nombre:rN,email:rE,telefono:rT,zona:rZ,oficio:oficiosStr,verificado:false,estado:'pendiente'}]);
+    }catch(e){}
     setVista('planes');
   };
 
-  const handleAddPro = () => {
-    if (!apNombre.trim()||!apOficio.trim()||!apZona.trim()) return;
-    setPros(p=>[...p,{ id:Date.now(), nombre:apNombre, oficios:[apOficio], zona:apZona, email:apEmail, rating:0, trabajos:0, verificado:true, estado:"activo", foto:null }]);
-    setApNombre(""); setApOficio(""); setApZona(""); setApEmail("");
-    setShowAddPro(false);
+  const addPro=()=>{
+    if(!apN.trim()||!apO.trim()||!apZ.trim())return;
+    setPros(p=>[...p,{id:Date.now(),nombre:apN,oficios:[apO],zona:apZ,email:apE,rating:0,trabajos:0,verificado:true,estado:"activo",foto:null}]);
+    setApN("");setApO("");setApZ("");setApE("");setShowAddPro(false);
   };
 
-  const abrirAdmin = () => {
-    if (adminOk) setVista("admin");
-    else setShowPin(true);
-  };
+  if(chat)return(<><style>{GS}</style><ChatView pro={chat} onClose={()=>setChat(null)} clienteNombre={cliente?.nombre}/></>);
+  if(showPanel)return(<><style>{GS}</style><PanelPro onClose={()=>setShowPanel(false)}/></>);
 
-  if (chat) return (<><style>{GS}</style><ChatView pro={chat} onClose={()=>setChat(null)} clienteNombre={clienteData?.nombre}/></>);
-  if (showPanel) return (<><style>{GS}</style><PanelProfesional onClose={()=>setShowPanel(false)}/></>);
-
-  return (
+  return(
     <><style>{GS}</style>
-    <div style={{ minHeight:"100vh", background:"#060d1a", maxWidth:480, margin:"0 auto", color:"#ffffff" }}>
+    <div style={{minHeight:"100vh",background:"#060d1a",maxWidth:480,margin:"0 auto",color:"#fff"}}>
 
-      <Nav setVista={setVista} noLeidas={noLeidas} clienteData={clienteData} onCerrarSesion={()=>setClienteData(null)} onIniciarSesion={()=>setShowRegCliente(true)}/>
+      <Nav setVista={setVista} noLeidas={noLeidas} clienteData={cliente} onCerrar={()=>setCliente(null)} onIniciar={()=>setShowRegC(true)}/>
 
       {/* INICIO */}
-      {vista==="inicio" && (
+      {vista==="inicio"&&(
         <div>
-          <div style={{ minHeight:"88vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"40px 28px 60px", background:"radial-gradient(ellipse at 50% 0%, rgba(74,143,212,0.12) 0%, transparent 65%)" }}>
-            <div className="fu" style={{ display:"inline-flex", alignItems:"center", gap:8, border:"1px solid rgba(74,143,212,0.15)", borderRadius:20, padding:"8px 18px", marginBottom:36, background:"rgba(74,143,212,0.06)" }}>
-              <span style={{ width:7, height:7, borderRadius:"50%", background:"#4a8fd4", display:"inline-block", animation:"pulse 2s infinite" }}/>
-              <span style={{ fontSize:11, letterSpacing:2, color:"#ffffff", fontWeight:400 }}>ARGENTINA · ZONA NORTE · CABA</span>
+          <div style={{minHeight:"88vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 28px 60px",background:"radial-gradient(ellipse at 50% 0%,rgba(74,143,212,0.12) 0%,transparent 65%)"}}>
+            <div className="fu" style={{display:"inline-flex",alignItems:"center",gap:8,border:"1px solid rgba(74,143,212,0.15)",borderRadius:20,padding:"8px 18px",marginBottom:36,background:"rgba(74,143,212,0.06)"}}>
+              <span style={{width:7,height:7,borderRadius:"50%",background:"#4a8fd4",display:"inline-block",animation:"pulse 2s infinite"}}/>
+              <span style={{fontSize:11,letterSpacing:2,color:"#fff",fontWeight:400}}>ARGENTINA · ZONA NORTE · CABA</span>
             </div>
-            <h1 className="fu1" style={{ fontFamily:F.serif, fontSize:"clamp(38px,8vw,58px)", fontWeight:300, lineHeight:1.12, textAlign:"center", marginBottom:20, color:"#ffffff" }}>
+            <h1 className="fu1" style={{fontFamily:F.serif,fontSize:"clamp(38px,8vw,58px)",fontWeight:300,lineHeight:1.12,textAlign:"center",marginBottom:20,color:"#fff"}}>
               El oficio que<br/>necesitás, <em style={{color:"#6cb3f5",fontStyle:"italic",fontWeight:300}}>hoy.</em>
             </h1>
-            <p className="fu2" style={{ textAlign:"center", color:"#b0c4d8", fontSize:16, lineHeight:1.7, marginBottom:40, maxWidth:340, fontWeight:300 }}>
+            <p className="fu2" style={{textAlign:"center",color:"#b0c4d8",fontSize:16,lineHeight:1.7,marginBottom:40,maxWidth:340,fontWeight:300}}>
               Conectamos vecinos con profesionales de confianza.<br/>Publicás tu pedido y ellos cotizan. Vos elegís.
             </p>
-            {clienteData && (
-              <div style={{ background:"rgba(74,212,120,0.08)", border:"1px solid rgba(74,212,120,0.3)", borderRadius:10, padding:"10px 18px", marginBottom:16, fontSize:13, color:"#4ade80" }}>
-                ✓ Hola, {clienteData.nombre.split(" ")[0]}!
-              </div>
-            )}
-            <div className="fu3" style={{ display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:360 }}>
-              <PrimaryBtn onClick={()=>navegarComoCliente("categorias")}>Necesito un servicio</PrimaryBtn>
-              <GhostBtn onClick={()=>setVista("registro-pro")}>Soy profesional</GhostBtn>
+            {cliente&&<div style={{background:"rgba(74,212,120,0.08)",border:"1px solid rgba(74,212,120,0.3)",borderRadius:10,padding:"10px 18px",marginBottom:14,fontSize:13,color:"#4ade80"}}>✓ Hola, {cliente.nombre.split(" ")[0]}!</div>}
+            <div className="fu3" style={{display:"flex",flexDirection:"column",gap:12,width:"100%",maxWidth:360}}>
+              <Btn onClick={()=>irComoCliente("categorias")}>Necesito un servicio</Btn>
+              <Ghost onClick={()=>setVista("registro-pro")}>Soy profesional</Ghost>
             </div>
-            <button onClick={()=>setShowPanel(true)} style={{ marginTop:16, background:"none", border:"none", color:"#4a8fd4", fontSize:13, cursor:"pointer", fontFamily:F.sans, textDecoration:"underline" }}>
+            <button onClick={()=>setShowPanel(true)} style={{marginTop:14,background:"none",border:"none",color:"#4a8fd4",fontSize:13,cursor:"pointer",fontFamily:F.sans,textDecoration:"underline"}}>
               Tengo cuenta de profesional → Mi panel
             </button>
-            <div className="fu4" style={{ display:"flex", marginTop:48, width:"100%", borderTop:"1px solid rgba(74,143,212,0.15)", paddingTop:32 }}>
-              {[["2.400+","PROFESIONALES"],["80+","OFICIOS"],["4.9★","CALIFICACIÓN"]].map(([v,l])=>(
-                <div key={l} style={{ flex:1, textAlign:"center" }}>
-                  <div style={{ fontFamily:F.serif, fontSize:28, fontWeight:400, color:"#4a8fd4" }}>{v}</div>
-                  <div style={{ fontSize:10, letterSpacing:1.5, color:"#ffffff", marginTop:4 }}>{l}</div>
+            <div className="fu4" style={{display:"flex",marginTop:48,width:"100%",borderTop:"1px solid rgba(74,143,212,0.15)",paddingTop:32}}>
+              {[["2.400+","PROFESIONALES"],["90+","OFICIOS"],["4.9★","CALIFICACIÓN"]].map(([v,l])=>(
+                <div key={l} style={{flex:1,textAlign:"center"}}>
+                  <div style={{fontFamily:F.serif,fontSize:28,fontWeight:400,color:"#4a8fd4"}}>{v}</div>
+                  <div style={{fontSize:10,letterSpacing:1.5,color:"#fff",marginTop:4}}>{l}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div style={{ padding:"0 24px 40px" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+          <div style={{padding:"0 24px 40px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
               <div>
-                <h2 style={{ fontFamily:F.serif, fontSize:24, fontWeight:400, color:"#ffffff" }}>¿Qué necesitás?</h2>
-                <p style={{ color:"#b0c4d8", fontSize:13, marginTop:4, fontWeight:300 }}>12 categorías · 90+ oficios</p>
+                <h2 style={{fontFamily:F.serif,fontSize:24,fontWeight:400,color:"#fff"}}>¿Qué necesitás?</h2>
+                <p style={{color:"#b0c4d8",fontSize:13,marginTop:4,fontWeight:300}}>12 categorías · 90+ oficios</p>
               </div>
-              <button onClick={()=>setVista("categorias")} style={{ background:"none", border:"1px solid rgba(74,143,212,0.15)", color:"#4a8fd4", padding:"7px 14px", borderRadius:8, fontSize:13, cursor:"pointer", fontFamily:F.sans }}>Ver todas →</button>
+              <button onClick={()=>setVista("categorias")} style={{background:"none",border:"1px solid rgba(74,143,212,0.15)",color:"#4a8fd4",padding:"7px 14px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:F.sans}}>Ver todas →</button>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
-              {CATEGORIAS.map(cat=>(
-                <button key={cat.id} onClick={()=>{ setVista("categorias"); setCatAbierta(cat.id); }}
-                  style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:12, padding:"16px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:7, cursor:"pointer", transition:"all .2s" }}
-                  onMouseEnter={e=>{ e.currentTarget.style.background="#102540"; e.currentTarget.style.transform="translateY(-2px)"; }}
-                  onMouseLeave={e=>{ e.currentTarget.style.background="#0d1f35"; e.currentTarget.style.transform="translateY(0)"; }}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+              {CATS.map(cat=>(
+                <button key={cat.id} onClick={()=>{setVista("categorias");setCatAb(cat.id);}}
+                  style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:12,padding:"16px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:7,cursor:"pointer",transition:"all .2s"}}
+                  onMouseEnter={e=>{e.currentTarget.style.background="#102540";e.currentTarget.style.transform="translateY(-2px)";}}
+                  onMouseLeave={e=>{e.currentTarget.style.background="#0d1f35";e.currentTarget.style.transform="translateY(0)";}}
                 >
-                  <span style={{ fontSize:24 }}>{cat.icon}</span>
-                  <span style={{ fontSize:10, color:"#ffffff", textAlign:"center", lineHeight:1.3 }}>{cat.nombre.split("&")[0].trim()}</span>
+                  <span style={{fontSize:24}}>{cat.icon}</span>
+                  <span style={{fontSize:10,color:"#fff",textAlign:"center",lineHeight:1.3}}>{cat.nombre.split("&")[0].trim()}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div style={{ padding:"0 24px 60px" }}>
-            <h2 style={{ fontFamily:F.serif, fontSize:24, fontWeight:400, marginBottom:6, color:"#ffffff" }}>Profesionales top</h2>
-            <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20, fontWeight:300 }}>Los mejor calificados esta semana</p>
+          <div style={{padding:"0 24px 60px"}}>
+            <h2 style={{fontFamily:F.serif,fontSize:24,fontWeight:400,marginBottom:6,color:"#fff"}}>Profesionales top</h2>
+            <p style={{color:"#b0c4d8",fontSize:13,marginBottom:20,fontWeight:300}}>Los mejor calificados esta semana</p>
             {activos.map(p=>(
               <div key={p.id} onClick={()=>setVista("perfil")}
-                style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:14, padding:"14px 16px", display:"flex", alignItems:"center", gap:14, cursor:"pointer", transition:"all .2s", marginBottom:10 }}
+                style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:"14px 16px",display:"flex",alignItems:"center",gap:14,cursor:"pointer",transition:"all .2s",marginBottom:10}}
                 onMouseEnter={e=>e.currentTarget.style.background="#102540"}
                 onMouseLeave={e=>e.currentTarget.style.background="#0d1f35"}
               >
-                <Avatar foto={p.foto} nombre={p.nombre} size={46}/>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontWeight:600, fontSize:15, color:"#ffffff" }}>{p.nombre} {p.verificado&&<span style={{fontSize:11,color:"#4a8fd4",background:"rgba(74,143,212,0.12)",padding:"2px 7px",borderRadius:20}}>✓</span>}</div>
-                  <div style={{ color:"#b0c4d8", fontSize:12, marginTop:2 }}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
+                <Av foto={p.foto} nombre={p.nombre} size={46}/>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:15,color:"#fff"}}>{p.nombre} {p.verificado&&<span style={{fontSize:11,color:"#4a8fd4",background:"rgba(74,143,212,0.12)",padding:"2px 7px",borderRadius:20}}>✓</span>}</div>
+                  <div style={{color:"#b0c4d8",fontSize:12,marginTop:2}}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
                 </div>
-                <div style={{ textAlign:"right" }}>
-                  <div style={{ color:"#4a8fd4", fontWeight:600 }}>★ {p.rating}</div>
-                  <div style={{ color:"#b0c4d8", fontSize:11, marginTop:2 }}>{p.trabajos} trabajos</div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{color:"#4a8fd4",fontWeight:600}}>★ {p.rating}</div>
+                  <div style={{color:"#b0c4d8",fontSize:11,marginTop:2}}>{p.trabajos} trabajos</div>
                 </div>
               </div>
             ))}
@@ -688,39 +593,39 @@ export default function App() {
       )}
 
       {/* CATEGORÍAS */}
-      {vista==="categorias" && (
-        <div className="page" style={{ padding:"24px 20px 60px" }}>
-          <BackBtn onClick={()=>setVista("inicio")}/>
-          <h2 style={{ fontFamily:F.serif, fontSize:28, fontWeight:400, marginBottom:4, color:"#ffffff" }}>Todos los oficios</h2>
-          <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20 }}>12 categorías · 90+ profesiones</p>
-          <div style={{ position:"relative", marginBottom:22 }}>
-            <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", color:"#8a9bb0" }}>🔍</span>
-            <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Buscar oficio..."
-              style={{ width:"100%", background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"13px 40px 13px 42px", borderRadius:12, fontFamily:F.sans, fontSize:15 }}/>
-            {busqueda && <button onClick={()=>setBusqueda("")} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:"#8a9bb0", cursor:"pointer", fontSize:20 }}>×</button>}
+      {vista==="categorias"&&(
+        <div className="page" style={{padding:"24px 20px 60px"}}>
+          <Back onClick={()=>setVista("inicio")}/>
+          <h2 style={{fontFamily:F.serif,fontSize:28,fontWeight:400,marginBottom:4,color:"#fff"}}>Todos los oficios</h2>
+          <p style={{color:"#b0c4d8",fontSize:13,marginBottom:20}}>12 categorías · 90+ profesiones</p>
+          <div style={{position:"relative",marginBottom:22}}>
+            <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:"#8a9bb0"}}>🔍</span>
+            <input value={busq} onChange={e=>setBusq(e.target.value)} placeholder="Buscar oficio..."
+              style={{width:"100%",background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"13px 40px 13px 42px",borderRadius:12,fontFamily:F.sans,fontSize:15}}/>
+            {busq&&<button onClick={()=>setBusq("")} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#8a9bb0",cursor:"pointer",fontSize:20}}>×</button>}
           </div>
-          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            {catsFiltradas.map(cat=>(
-              <div key={cat.id} style={{ borderRadius:14, overflow:"hidden", border:`1px solid ${catAbierta===cat.id?"rgba(74,143,212,0.4)":"rgba(74,143,212,0.15)"}` }}>
-                <button onClick={()=>setCatAbierta(p=>p===cat.id?null:cat.id)}
-                  style={{ width:"100%", background:catAbierta===cat.id?"rgba(74,143,212,0.1)":"#0d1f35", border:"none", padding:"16px 18px", display:"flex", alignItems:"center", gap:14, cursor:"pointer" }}>
-                  <div style={{ width:42, height:42, borderRadius:10, fontSize:20, background:cat.color, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>{cat.icon}</div>
-                  <div style={{ flex:1, textAlign:"left" }}>
-                    <div style={{ fontWeight:600, fontSize:15, color:"#ffffff" }}>{cat.nombre}</div>
-                    <div style={{ fontSize:12, color:"#b0c4d8", marginTop:2 }}>{cat.subs.length} servicios</div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {catsFilt.map(cat=>(
+              <div key={cat.id} style={{borderRadius:14,overflow:"hidden",border:`1px solid ${catAb===cat.id?"rgba(74,143,212,0.4)":"rgba(74,143,212,0.15)"}`}}>
+                <button onClick={()=>setCatAb(p=>p===cat.id?null:cat.id)}
+                  style={{width:"100%",background:catAb===cat.id?"rgba(74,143,212,0.1)":"#0d1f35",border:"none",padding:"16px 18px",display:"flex",alignItems:"center",gap:14,cursor:"pointer"}}>
+                  <div style={{width:42,height:42,borderRadius:10,fontSize:20,background:cat.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{cat.icon}</div>
+                  <div style={{flex:1,textAlign:"left"}}>
+                    <div style={{fontWeight:600,fontSize:15,color:"#fff"}}>{cat.nombre}</div>
+                    <div style={{fontSize:12,color:"#b0c4d8",marginTop:2}}>{cat.subs.length} servicios</div>
                   </div>
-                  <span style={{ color:"#4a8fd4", fontSize:20, transition:"transform .25s", transform:catAbierta===cat.id?"rotate(180deg)":"rotate(0deg)", display:"inline-block" }}>⌄</span>
+                  <span style={{color:"#4a8fd4",fontSize:20,transition:"transform .25s",transform:catAb===cat.id?"rotate(180deg)":"rotate(0deg)",display:"inline-block"}}>⌄</span>
                 </button>
-                {(catAbierta===cat.id||busqueda) && (
-                  <div style={{ background:"rgba(6,13,26,0.7)", borderTop:"1px solid rgba(74,143,212,0.15)", display:"grid", gridTemplateColumns:"repeat(3,1fr)" }}>
+                {(catAb===cat.id||busq)&&(
+                  <div style={{background:"rgba(6,13,26,0.7)",borderTop:"1px solid rgba(74,143,212,0.15)",display:"grid",gridTemplateColumns:"repeat(3,1fr)"}}>
                     {cat.subs.map((sub,idx)=>(
                       <button key={sub.n} onClick={()=>elegirOficio(sub.n)}
-                        style={{ background:"transparent", border:"none", borderRight:idx%3!==2?"1px solid rgba(74,143,212,0.15)":"none", borderBottom:idx<cat.subs.length-3?"1px solid rgba(74,143,212,0.15)":"none", padding:"15px 8px", display:"flex", flexDirection:"column", alignItems:"center", gap:6, cursor:"pointer" }}
+                        style={{background:"transparent",border:"none",borderRight:idx%3!==2?"1px solid rgba(74,143,212,0.15)":"none",borderBottom:idx<cat.subs.length-3?"1px solid rgba(74,143,212,0.15)":"none",padding:"15px 8px",display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:"pointer"}}
                         onMouseEnter={e=>e.currentTarget.style.background="rgba(74,143,212,0.1)"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}
                       >
-                        <span style={{ fontSize:22 }}>{sub.icon}</span>
-                        <span style={{ fontSize:10, color:"#ffffff", textAlign:"center", lineHeight:1.3 }}>{sub.n}</span>
+                        <span style={{fontSize:22}}>{sub.icon}</span>
+                        <span style={{fontSize:10,color:"#fff",textAlign:"center",lineHeight:1.3}}>{sub.n}</span>
                       </button>
                     ))}
                   </div>
@@ -732,22 +637,17 @@ export default function App() {
       )}
 
       {/* BUSCAR */}
-      {vista==="buscar" && (
-        <div className="page" style={{ padding:"32px 24px 60px" }}>
-          <BackBtn onClick={()=>setVista("categorias")}/>
-          {clienteData && (
-            <div style={{ background:"rgba(74,212,120,0.08)", border:"1px solid rgba(74,212,120,0.3)", borderRadius:10, padding:"10px 14px", marginBottom:20, display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{color:"#4ade80"}}>✓</span>
-              <span style={{ fontSize:13, color:"#4ade80" }}>Hola, {clienteData.nombre.split(" ")[0]}! Tu pedido quedará registrado.</span>
-            </div>
-          )}
-          <h2 style={{ fontFamily:F.serif, fontSize:28, fontWeight:400, marginBottom:6, color:"#ffffff" }}>{oficio||"Publicar pedido"}</h2>
-          <p style={{ color:"#b0c4d8", fontSize:14, marginBottom:28, fontWeight:300 }}>Los profesionales te cotizan en minutos</p>
-          <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+      {vista==="buscar"&&(
+        <div className="page" style={{padding:"32px 24px 60px"}}>
+          <Back onClick={()=>setVista("categorias")}/>
+          {cliente&&<div style={{background:"rgba(74,212,120,0.08)",border:"1px solid rgba(74,212,120,0.3)",borderRadius:10,padding:"10px 14px",marginBottom:20,display:"flex",alignItems:"center",gap:8}}><span style={{color:"#4ade80"}}>✓</span><span style={{fontSize:13,color:"#4ade80"}}>Hola, {cliente.nombre.split(" ")[0]}! Tu pedido quedará registrado.</span></div>}
+          <h2 style={{fontFamily:F.serif,fontSize:28,fontWeight:400,marginBottom:6,color:"#fff"}}>{oficio||"Publicar pedido"}</h2>
+          <p style={{color:"#b0c4d8",fontSize:14,marginBottom:28,fontWeight:300}}>Los profesionales te cotizan en minutos</p>
+          <div style={{display:"flex",flexDirection:"column",gap:16}}>
             <div>
               <Lbl>SERVICIO</Lbl>
-              <div onClick={()=>setVista("categorias")} style={{ marginTop:8, background:"#0d1f35", border:"1px solid #4a8fd4", borderRadius:10, padding:"14px 16px", color:"#6cb3f5", fontSize:15, cursor:"pointer" }}>
-                {oficio} <span style={{ color:"#b0c4d8", fontWeight:300, fontSize:13 }}>· cambiar</span>
+              <div onClick={()=>setVista("categorias")} style={{marginTop:8,background:"#0d1f35",border:"1px solid #4a8fd4",borderRadius:10,padding:"14px 16px",color:"#6cb3f5",fontSize:15,cursor:"pointer"}}>
+                {oficio} <span style={{color:"#b0c4d8",fontWeight:300,fontSize:13}}>· cambiar</span>
               </div>
             </div>
             <div>
@@ -759,44 +659,44 @@ export default function App() {
             <div>
               <Lbl>DESCRIBÍ EL TRABAJO</Lbl>
               <textarea placeholder="Ej: Tengo una pérdida en el baño, urgente..."
-                style={{ width:"100%", marginTop:8, background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"14px 16px", borderRadius:10, fontFamily:F.sans, fontSize:14, resize:"none", minHeight:100, lineHeight:1.6 }}/>
+                style={{width:"100%",marginTop:8,background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"14px 16px",borderRadius:10,fontFamily:F.sans,fontSize:14,resize:"none",minHeight:100,lineHeight:1.6}}/>
             </div>
             <div>
               <Lbl>URGENCIA</Lbl>
-              <div style={{ display:"flex", gap:8, marginTop:8 }}>
+              <div style={{display:"flex",gap:8,marginTop:8}}>
                 {["Urgente (hoy)","Esta semana","Sin apuro"].map((u,i)=>(
                   <button key={u} onClick={()=>setUrgencia(i)}
-                    style={{ flex:1, padding:"10px 4px", background:urgencia===i?"rgba(74,143,212,0.15)":"#0d1f35", border:`1px solid ${urgencia===i?"#4a8fd4":"rgba(74,143,212,0.15)"}`, borderRadius:8, color:urgencia===i?"#6cb3f5":"#ffffff", fontSize:11, fontFamily:F.sans, cursor:"pointer", transition:"all .2s" }}>{u}</button>
+                    style={{flex:1,padding:"10px 4px",background:urgencia===i?"rgba(74,143,212,0.15)":"#0d1f35",border:`1px solid ${urgencia===i?"#4a8fd4":"rgba(74,143,212,0.15)"}`,borderRadius:8,color:urgencia===i?"#6cb3f5":"#fff",fontSize:11,fontFamily:F.sans,cursor:"pointer",transition:"all .2s"}}>{u}</button>
                 ))}
               </div>
             </div>
-            <PrimaryBtn onClick={()=>setVista("cotizaciones")} style={{ marginTop:4 }}>Publicar pedido →</PrimaryBtn>
+            <Btn onClick={()=>setVista("cotizaciones")} style={{marginTop:4}}>Publicar pedido →</Btn>
           </div>
         </div>
       )}
 
       {/* COTIZACIONES */}
-      {vista==="cotizaciones" && (
-        <div className="page" style={{ padding:"32px 24px 60px" }}>
-          <BackBtn onClick={()=>setVista("buscar")}/>
-          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
-            <span style={{ width:8, height:8, borderRadius:"50%", background:"#4ade80", display:"inline-block", animation:"pulse 2s infinite" }}/>
-            <span style={{ fontSize:12, color:"#4ade80", fontWeight:500 }}>3 profesionales disponibles ahora</span>
+      {vista==="cotizaciones"&&(
+        <div className="page" style={{padding:"32px 24px 60px"}}>
+          <Back onClick={()=>setVista("buscar")}/>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+            <span style={{width:8,height:8,borderRadius:"50%",background:"#4ade80",display:"inline-block",animation:"pulse 2s infinite"}}/>
+            <span style={{fontSize:12,color:"#4ade80",fontWeight:500}}>3 profesionales disponibles ahora</span>
           </div>
-          <h2 style={{ fontFamily:F.serif, fontSize:28, fontWeight:400, marginBottom:24, color:"#ffffff" }}>Cotizaciones</h2>
+          <h2 style={{fontFamily:F.serif,fontSize:28,fontWeight:400,marginBottom:24,color:"#fff"}}>Cotizaciones</h2>
           {activos.slice(0,3).map((p,i)=>(
-            <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:14, padding:18, marginBottom:12 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
-                <Avatar foto={p.foto} nombre={p.nombre} size={46}/>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontWeight:600, fontSize:15, color:"#ffffff" }}>{p.nombre} {p.verificado&&<span style={{color:"#4a8fd4"}}>✓</span>}</div>
-                  <div style={{ color:"#b0c4d8", fontSize:12 }}>{(p.oficios||[p.oficio]).join(", ")} · ★ {p.rating}</div>
+            <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:18,marginBottom:12}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+                <Av foto={p.foto} nombre={p.nombre} size={46}/>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:15,color:"#fff"}}>{p.nombre} {p.verificado&&<span style={{color:"#4a8fd4"}}>✓</span>}</div>
+                  <div style={{color:"#b0c4d8",fontSize:12}}>{(p.oficios||[p.oficio]).join(", ")} · ★ {p.rating}</div>
                 </div>
-                <div style={{ fontFamily:F.serif, fontSize:22, fontWeight:700, color:"#4a8fd4" }}>${[8000,12000,6500][i].toLocaleString()}</div>
+                <div style={{fontFamily:F.serif,fontSize:22,fontWeight:700,color:"#4a8fd4"}}>${[8000,12000,6500][i].toLocaleString()}</div>
               </div>
-              <div style={{ display:"flex", gap:8 }}>
-                <button onClick={()=>setVista("perfil")} style={{ flex:1, background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:11, borderRadius:10, fontFamily:F.sans, fontSize:13, fontWeight:600, cursor:"pointer" }}>Ver perfil</button>
-                <button onClick={()=>setChat(p)} style={{ flex:1, background:"rgba(74,143,212,0.08)", border:"1px solid rgba(74,143,212,0.3)", color:"#6cb3f5", padding:11, borderRadius:10, fontFamily:F.sans, fontSize:13, fontWeight:600, cursor:"pointer" }}>💬 Chat</button>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setVista("perfil")} style={{flex:1,background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:11,borderRadius:10,fontFamily:F.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>Ver perfil</button>
+                <button onClick={()=>setChat(p)} style={{flex:1,background:"rgba(74,143,212,0.08)",border:"1px solid rgba(74,143,212,0.3)",color:"#6cb3f5",padding:11,borderRadius:10,fontFamily:F.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>💬 Chat</button>
               </div>
             </div>
           ))}
@@ -804,120 +704,128 @@ export default function App() {
       )}
 
       {/* PERFIL */}
-      {vista==="perfil" && (
+      {vista==="perfil"&&(
         <div className="page">
-          <div style={{ background:"linear-gradient(180deg,rgba(74,143,212,0.15) 0%,transparent 100%)", padding:"32px 24px 24px" }}>
-            <BackBtn onClick={()=>setVista("cotizaciones")}/>
-            <div style={{ display:"flex", alignItems:"center", gap:16 }}>
-              <Avatar foto={activos[0].foto} nombre={activos[0].nombre} size={72} fontSize={28}/>
+          <div style={{background:"linear-gradient(180deg,rgba(74,143,212,0.15) 0%,transparent 100%)",padding:"32px 24px 24px"}}>
+            <Back onClick={()=>setVista("cotizaciones")}/>
+            <div style={{display:"flex",alignItems:"center",gap:16}}>
+              <Av foto={activos[0].foto} nombre={activos[0].nombre} size={72}/>
               <div>
-                <div style={{ fontFamily:F.serif, fontSize:24, fontWeight:400, color:"#ffffff" }}>Carlos M. <span style={{color:"#4a8fd4",fontSize:16}}>✓</span></div>
-                <div style={{ color:"#b0c4d8", fontSize:14 }}>Electricista · Palermo</div>
-                <div style={{ color:"#4a8fd4", fontSize:14, marginTop:4 }}>★ 4.9 · 87 trabajos</div>
+                <div style={{fontFamily:F.serif,fontSize:24,fontWeight:400,color:"#fff"}}>Carlos M. <span style={{color:"#4a8fd4",fontSize:16}}>✓</span></div>
+                <div style={{color:"#b0c4d8",fontSize:14}}>Electricista · Palermo</div>
+                <div style={{color:"#4a8fd4",fontSize:14,marginTop:4}}>★ 4.9 · 87 trabajos</div>
               </div>
             </div>
           </div>
-          <div style={{ padding:"0 24px 60px" }}>
-            <div style={{ display:"flex", gap:8, marginBottom:20, marginTop:8, flexWrap:"wrap" }}>
-              {["Instalaciones","Reparaciones","Urgencias 24hs","Matriculado"].map(tag=>(
-                <span key={tag} style={{ fontSize:11, color:"#6cb3f5", background:"rgba(74,143,212,0.1)", padding:"4px 10px", borderRadius:20 }}>{tag}</span>
-              ))}
+          <div style={{padding:"0 24px 60px"}}>
+            <div style={{display:"flex",gap:8,marginBottom:20,marginTop:8,flexWrap:"wrap"}}>
+              {["Instalaciones","Reparaciones","Urgencias 24hs","Matriculado"].map(tag=><span key={tag} style={{fontSize:11,color:"#6cb3f5",background:"rgba(74,143,212,0.1)",padding:"4px 10px",borderRadius:20}}>{tag}</span>)}
             </div>
-            <p style={{ color:"#b0c4d8", fontSize:14, lineHeight:1.7, marginBottom:28, fontWeight:300 }}>Electricista matriculado con 12 años de experiencia. Instalaciones domiciliarias, tableros y urgencias. Garantía escrita en todos los trabajos.</p>
-            <div style={{ display:"flex", gap:8 }}>
-              <PrimaryBtn style={{ flex:2 }} onClick={()=>setChat(activos[0])}>💬 Chatear con Carlos</PrimaryBtn>
-              <button onClick={()=>setShowCalif(true)} style={{ flex:1, background:"transparent", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:14, borderRadius:13, fontFamily:F.sans, fontSize:14, cursor:"pointer" }}>★ Calificar</button>
+            <p style={{color:"#b0c4d8",fontSize:14,lineHeight:1.7,marginBottom:28,fontWeight:300}}>Electricista matriculado con 12 años de experiencia. Instalaciones domiciliarias, tableros y urgencias. Garantía escrita en todos los trabajos.</p>
+            <div style={{display:"flex",gap:8}}>
+              <Btn style={{flex:2}} onClick={()=>setChat(activos[0])}>💬 Chatear con Carlos</Btn>
+              <button onClick={()=>setShowCalif(true)} style={{flex:1,background:"transparent",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:14,borderRadius:13,fontFamily:F.sans,fontSize:14,cursor:"pointer"}}>★ Calificar</button>
             </div>
           </div>
         </div>
       )}
 
       {/* REGISTRO PROFESIONAL */}
-      {vista==="registro-pro" && (
-        <div className="page" style={{ padding:"32px 24px 60px" }}>
-          <BackBtn onClick={()=>setVista("inicio")}/>
-          <h2 style={{ fontFamily:F.serif, fontSize:30, fontWeight:300, marginBottom:8, color:"#ffffff" }}>Sumate como<br/><em style={{color:"#6cb3f5",fontStyle:"italic"}}>profesional</em></h2>
-          <p style={{ color:"#b0c4d8", fontSize:14, marginBottom:24, fontWeight:300 }}>Empezá gratis. Recibí pedidos en tu zona.</p>
-          {tycOk && (
-            <div style={{ background:"rgba(74,212,120,0.08)", border:"1px solid rgba(74,212,120,0.3)", borderRadius:10, padding:"10px 14px", marginBottom:20, display:"flex", alignItems:"center", gap:8 }}>
-              <span style={{color:"#4ade80"}}>✓</span>
-              <span style={{ fontSize:13, color:"#4ade80" }}>Términos y condiciones aceptados</span>
-            </div>
-          )}
+      {vista==="registro-pro"&&(
+        <div className="page" style={{padding:"32px 24px 60px"}}>
+          <Back onClick={()=>setVista("inicio")}/>
+          <h2 style={{fontFamily:F.serif,fontSize:30,fontWeight:300,marginBottom:8,color:"#fff"}}>Sumate como<br/><em style={{color:"#6cb3f5",fontStyle:"italic"}}>profesional</em></h2>
+          <p style={{color:"#b0c4d8",fontSize:14,marginBottom:24,fontWeight:300}}>Empezá gratis. Recibí pedidos en tu zona.</p>
+          {tycOk&&<div style={{background:"rgba(74,212,120,0.08)",border:"1px solid rgba(74,212,120,0.3)",borderRadius:10,padding:"10px 14px",marginBottom:20,display:"flex",alignItems:"center",gap:8}}><span style={{color:"#4ade80"}}>✓</span><span style={{fontSize:13,color:"#4ade80"}}>Términos aceptados</span></div>}
+
           {/* Foto */}
-          <div style={{ marginBottom:20, display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
-            <div style={{ width:80, height:80, borderRadius:"50%", background:"#0d1f35", border:`2px dashed ${rFotoUrl?"#4a8fd4":"rgba(74,143,212,0.3)"}`, display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", cursor:"pointer" }}
-              onClick={()=>document.getElementById('fotoInput').click()}>
-              {rFotoUrl ? <img src={rFotoUrl} alt="foto" style={{ width:"100%", height:"100%", objectFit:"cover" }}/> : <span style={{ fontSize:28 }}>📷</span>}
+          <div style={{marginBottom:20,display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+            <div style={{width:80,height:80,borderRadius:"50%",background:"#0d1f35",border:`2px dashed ${rFotoUrl?"#4a8fd4":"rgba(74,143,212,0.3)"}`,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",cursor:"pointer"}} onClick={()=>document.getElementById('fi').click()}>
+              {rFotoUrl?<img src={rFotoUrl} alt="foto" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:28}}>📷</span>}
             </div>
-            <input id="fotoInput" type="file" accept="image/*" capture="user" onChange={handleFoto} style={{ display:"none" }}/>
-            <button onClick={()=>document.getElementById('fotoInput').click()} style={{ background:"none", border:"none", color:"#4a8fd4", fontSize:13, cursor:"pointer", fontFamily:F.sans, textDecoration:"underline" }}>
-              {rFotoUrl ? "Cambiar foto" : "Subir foto de perfil"}
-            </button>
+            <input id="fi" type="file" accept="image/*" capture="user" onChange={e=>{const f=e.target.files[0];if(f)setRFotoUrl(URL.createObjectURL(f));}} style={{display:"none"}}/>
+            <button onClick={()=>document.getElementById('fi').click()} style={{background:"none",border:"none",color:"#4a8fd4",fontSize:13,cursor:"pointer",fontFamily:F.sans,textDecoration:"underline"}}>{rFotoUrl?"Cambiar foto":"Subir foto de perfil"}</button>
           </div>
-          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-            <div><Lbl>NOMBRE COMPLETO</Lbl><Inp placeholder="Ej: Carlos Martínez" value={rNombre} onChange={e=>setRNombre(e.target.value)} err={rErr.nombre}/></div>
-            <div>
-              <Lbl>EMAIL</Lbl>
-              <Inp type="email" placeholder="tu@mail.com" value={rEmail} onChange={e=>setREmail(e.target.value)} err={rErr.email}/>
-              {!tycOk && <button onClick={()=>setShowTyC(true)} style={{ marginTop:8, background:"none", border:"none", color:"#4a8fd4", fontSize:13, cursor:"pointer", padding:0, textDecoration:"underline", fontFamily:F.sans }}>Leer y aceptar Términos y Condiciones →</button>}
-            </div>
-            <div><Lbl>TELÉFONO</Lbl><Inp placeholder="+54 11 1234-5678" value={rTel} onChange={e=>setRTel(e.target.value)} err={rErr.tel}/></div>
+
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            <div><Lbl>NOMBRE COMPLETO</Lbl><Inp placeholder="Ej: Carlos Martínez" value={rN} onChange={e=>setRN(e.target.value)} err={rErr.n}/></div>
+            <div><Lbl>EMAIL</Lbl><Inp type="email" placeholder="tu@mail.com" value={rE} onChange={e=>setRE(e.target.value)} err={rErr.e}/></div>
+            <div><Lbl>TELÉFONO</Lbl><Inp placeholder="+54 11 1234-5678" value={rT} onChange={e=>setRT(e.target.value)} err={rErr.t}/></div>
             <div>
               <Lbl>ZONA DE TRABAJO</Lbl>
-              <Sel value={rZona} onChange={e=>setRZona(e.target.value)} style={{ color:rZona?"#ffffff":"#8a9bb0", border:`1px solid ${rErr.zona?"#f87171":"rgba(74,143,212,0.15)"}` }}>
+              <Sel value={rZ} onChange={e=>setRZ(e.target.value)} style={{color:rZ?"#fff":"#8a9bb0",border:`1px solid ${rErr.z?"#f87171":"rgba(74,143,212,0.15)"}`}}>
                 <option value="">Seleccioná tu zona...</option>
                 {["CABA - Palermo","CABA - Belgrano","CABA - Caballito","CABA - Villa Crespo","CABA - Flores","CABA - Villa Urquiza","GBA - Zona Norte","GBA - Zona Oeste","GBA - Zona Sur"].map(z=><option key={z} value={z}>{z}</option>)}
               </Sel>
-              {rErr.zona && <p style={{ color:"#f87171", fontSize:12, marginTop:4 }}>{rErr.zona}</p>}
+              {rErr.z&&<p style={{color:"#f87171",fontSize:12,marginTop:4}}>{rErr.z}</p>}
             </div>
-            {/* Selección múltiple de oficios */}
+
+            {/* Múltiples categorías */}
             <div>
-              <Lbl>CATEGORÍA PRINCIPAL</Lbl>
-              <Sel value={rCat} onChange={e=>{ setRCat(Number(e.target.value)); setROficios([]); }}>
-                {CATEGORIAS.map((c,i)=><option key={c.id} value={i}>{c.icon} {c.nombre}</option>)}
-              </Sel>
-            </div>
-            <div>
-              <Lbl>OFICIOS (PODÉS ELEGIR VARIOS)</Lbl>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginTop:8 }}>
-                {CATEGORIAS[rCat].subs.map(s=>(
-                  <button key={s.n} onClick={()=>toggleOficio(s.n)}
-                    style={{ padding:"7px 12px", borderRadius:20, border:`1px solid ${rOficios.includes(s.n)?"#4a8fd4":"rgba(74,143,212,0.2)"}`, background:rOficios.includes(s.n)?"rgba(74,143,212,0.2)":"transparent", color:rOficios.includes(s.n)?"#6cb3f5":"#b0c4d8", fontSize:12, cursor:"pointer", transition:"all .2s", fontFamily:F.sans }}>
-                    {s.icon} {s.n}
+              <Lbl>CATEGORÍAS (ELEGÍ LAS QUE OFRECÉS)</Lbl>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:8}}>
+                {CATS.map(c=>(
+                  <button key={c.id} onClick={()=>toggleCat(c.id)}
+                    style={{padding:"7px 12px",borderRadius:20,border:`1px solid ${rCatsSelec.includes(c.id)?"#4a8fd4":"rgba(74,143,212,0.2)"}`,background:rCatsSelec.includes(c.id)?"rgba(74,143,212,0.2)":"transparent",color:rCatsSelec.includes(c.id)?"#6cb3f5":"#b0c4d8",fontSize:12,cursor:"pointer",fontFamily:F.sans}}>
+                    {c.icon} {c.nombre.split("&")[0].trim()}
                   </button>
                 ))}
               </div>
-              {rOficios.length>0 && <p style={{ fontSize:12, color:"#4ade80", marginTop:8 }}>✓ {rOficios.length} oficio{rOficios.length>1?"s":""} seleccionado{rOficios.length>1?"s":""}</p>}
             </div>
-            <PrimaryBtn onClick={handleRegistro} style={{ marginTop:4, opacity:tycOk?1:0.7 }}>
-              {tycOk?"Ver planes →":"Aceptar T&C para continuar"}
-            </PrimaryBtn>
+
+            {/* Oficios de categorías seleccionadas */}
+            {rCatsSelec.length>0&&(
+              <div>
+                <Lbl>OFICIOS ESPECÍFICOS</Lbl>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:8}}>
+                  {CATS.filter(c=>rCatsSelec.includes(c.id)).flatMap(c=>c.subs).map(s=>(
+                    <button key={s.n} onClick={()=>toggleOficio(s.n)}
+                      style={{padding:"6px 11px",borderRadius:20,border:`1px solid ${rOficiosSelec.includes(s.n)?"#4ade80":"rgba(74,143,212,0.2)"}`,background:rOficiosSelec.includes(s.n)?"rgba(74,212,120,0.15)":"transparent",color:rOficiosSelec.includes(s.n)?"#4ade80":"#b0c4d8",fontSize:11,cursor:"pointer",fontFamily:F.sans}}>
+                      {s.icon} {s.n}
+                    </button>
+                  ))}
+                </div>
+                {rOficiosSelec.length>0&&<p style={{fontSize:12,color:"#4ade80",marginTop:8}}>✓ {rOficiosSelec.length} oficio{rOficiosSelec.length>1?"s":""} seleccionado{rOficiosSelec.length>1?"s":""}</p>}
+              </div>
+            )}
+
+            {/* TyC */}
+            <div>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div onClick={()=>tycOk?setTycOk(false):setShowTyC(true)} style={{width:20,height:20,borderRadius:5,border:`2px solid ${tycOk?"#4a8fd4":"rgba(74,143,212,0.4)"}`,background:tycOk?"#4a8fd4":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+                  {tycOk&&<span style={{fontSize:12,color:"#fff"}}>✓</span>}
+                </div>
+                <span style={{fontSize:13,color:"#b0c4d8"}}>Acepto los <button onClick={()=>setShowTyC(true)} style={{background:"none",border:"none",color:"#4a8fd4",cursor:"pointer",fontSize:13,textDecoration:"underline"}}>Términos y Condiciones</button></span>
+              </div>
+              {rErr.tyc&&<p style={{color:"#f87171",fontSize:12,marginTop:4}}>{rErr.tyc}</p>}
+            </div>
+
+            <Btn onClick={handleReg} style={{marginTop:4}}>Ver planes →</Btn>
           </div>
         </div>
       )}
 
       {/* NOTIFICACIONES */}
-      {vista==="notificaciones" && (
-        <div className="page" style={{ padding:"24px 20px 60px" }}>
-          <BackBtn onClick={()=>setVista("inicio")}/>
-          <h2 style={{ fontFamily:F.serif, fontSize:28, fontWeight:400, marginBottom:4, color:"#ffffff" }}>Mis pedidos</h2>
-          <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20, fontWeight:300 }}>Pedidos nuevos en tu rubro</p>
-          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-            {NOTIFICACIONES.map(n=>{
-              const postulado=postulados.includes(n.id);
-              return (
-                <div key={n.id} onClick={()=>!postulado&&abrirNotif(n)}
-                  style={{ background:leidas.includes(n.id)?"#0d1f35":"rgba(74,143,212,0.08)", border:`1px solid ${n.tipo==="urgente"&&!leidas.includes(n.id)?"rgba(248,113,113,0.35)":"rgba(74,143,212,0.15)"}`, borderRadius:14, padding:"16px 18px", cursor:postulado?"default":"pointer" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
-                    <div style={{ display:"flex", gap:8 }}>
-                      {n.tipo==="urgente"&&!leidas.includes(n.id)&&<span style={{ fontSize:10, color:"#f87171", background:"rgba(248,113,113,0.15)", padding:"2px 8px", borderRadius:20, fontWeight:600 }}>URGENTE</span>}
-                      {postulado&&<span style={{ fontSize:10, color:"#4ade80", background:"rgba(74,212,120,0.12)", padding:"2px 8px", borderRadius:20, fontWeight:600 }}>✓ POSTULADO</span>}
+      {vista==="notificaciones"&&(
+        <div className="page" style={{padding:"24px 20px 60px"}}>
+          <Back onClick={()=>setVista("inicio")}/>
+          <h2 style={{fontFamily:F.serif,fontSize:28,fontWeight:400,marginBottom:4,color:"#fff"}}>Mis pedidos</h2>
+          <p style={{color:"#b0c4d8",fontSize:13,marginBottom:20,fontWeight:300}}>Pedidos nuevos en tu rubro</p>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {NOTIFS.map(n=>{
+              const post=postulados.includes(n.id);
+              return(
+                <div key={n.id} onClick={()=>!post&&abrirNotif(n)}
+                  style={{background:leidas.includes(n.id)?"#0d1f35":"rgba(74,143,212,0.08)",border:`1px solid ${n.tipo==="urgente"&&!leidas.includes(n.id)?"rgba(248,113,113,0.35)":"rgba(74,143,212,0.15)"}`,borderRadius:14,padding:"16px 18px",cursor:post?"default":"pointer"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                    <div style={{display:"flex",gap:8}}>
+                      {n.tipo==="urgente"&&!leidas.includes(n.id)&&<span style={{fontSize:10,color:"#f87171",background:"rgba(248,113,113,0.15)",padding:"2px 8px",borderRadius:20,fontWeight:600}}>URGENTE</span>}
+                      {post&&<span style={{fontSize:10,color:"#4ade80",background:"rgba(74,212,120,0.12)",padding:"2px 8px",borderRadius:20,fontWeight:600}}>✓ POSTULADO</span>}
                     </div>
-                    <span style={{ fontSize:12, color:"#b0c4d8" }}>{n.tiempo}</span>
+                    <span style={{fontSize:12,color:"#b0c4d8"}}>{n.tiempo}</span>
                   </div>
-                  <div style={{ fontWeight:600, fontSize:14, marginBottom:4, color:"#ffffff" }}>{n.titulo}</div>
-                  <div style={{ color:"#b0c4d8", fontSize:13, lineHeight:1.5 }}>{n.desc}</div>
+                  <div style={{fontWeight:600,fontSize:14,marginBottom:4,color:"#fff"}}>{n.titulo}</div>
+                  <div style={{color:"#b0c4d8",fontSize:13,lineHeight:1.5}}>{n.desc}</div>
                 </div>
               );
             })}
@@ -925,36 +833,37 @@ export default function App() {
         </div>
       )}
 
-      {/* PLANES */}
-      {vista==="planes" && (
-        <div className="page" style={{ padding:"32px 24px 60px" }}>
-          <BackBtn onClick={()=>setVista("inicio")}/>
-          <h2 style={{ fontFamily:F.serif, fontSize:32, fontWeight:300, marginBottom:6, color:"#ffffff" }}>Elegí tu plan</h2>
-          <p style={{ color:"#b0c4d8", fontSize:14, marginBottom:36, fontWeight:300 }}>Todos incluyen verificación de identidad ✓</p>
+      {/* PLANES — SOLO PARA PROFESIONALES */}
+      {vista==="planes"&&(
+        <div className="page" style={{padding:"32px 24px 60px"}}>
+          <Back onClick={()=>setVista("inicio")}/>
+          <h2 style={{fontFamily:F.serif,fontSize:32,fontWeight:300,marginBottom:6,color:"#fff"}}>Elegí tu plan</h2>
+          <p style={{color:"#b0c4d8",fontSize:14,marginBottom:8,fontWeight:300}}>Planes para profesionales · Clientes gratis</p>
+          <div style={{background:"rgba(74,212,120,0.06)",border:"1px solid rgba(74,212,120,0.2)",borderRadius:10,padding:"10px 14px",marginBottom:28,fontSize:13,color:"#4ade80"}}>
+            ✓ Si sos cliente, publicar pedidos en Nexo es siempre gratis.
+          </div>
           {[
-            { nombre:"Inicio",      precio:"Gratis",  sub:"7 días sin costo", dest:false, tag:null, features:["3 contactos por mes","Perfil verificado ✓","Notificaciones de pedidos"] },
-            { nombre:"Profesional", precio:"$2.500",  sub:"por mes",          dest:true,  tag:"MÁS POPULAR", features:["Contactos ilimitados","Badge destacado","Chat con clientes","Soporte prioritario","Estadísticas básicas"] },
-            { nombre:"Empresa",     precio:"$18.000", sub:"por mes",          dest:false, tag:"PARA EMPRESAS", features:["Todo Profesional","Hasta 5 usuarios","Primero en búsquedas","Estadísticas avanzadas","Panel de empresa"] },
+            {nombre:"Inicio",precio:"Gratis",sub:"7 días sin costo",dest:false,tag:null,features:["3 contactos por mes","Perfil verificado ✓","Notificaciones de pedidos","Acceso a todas las categorías"]},
+            {nombre:"Profesional",precio:"$2.500",sub:"por mes",dest:true,tag:"MÁS POPULAR",features:["Contactos ilimitados","Badge destacado","Chat con clientes","Soporte prioritario","Estadísticas básicas","Postularse sin límite de zona"]},
+            {nombre:"Empresa",precio:"$18.000",sub:"por mes",dest:false,tag:"PARA EMPRESAS",features:["Todo Profesional","Hasta 5 usuarios del equipo","Primero en búsquedas","Estadísticas avanzadas","Panel de empresa"]},
           ].map(p=>(
-            <div key={p.nombre} style={{ background:p.dest?"linear-gradient(135deg,rgba(74,143,212,0.18),rgba(30,77,130,0.18))":"#0d1f35", border:`1px solid ${p.dest?"#4a8fd4":p.nombre==="Empresa"?"rgba(212,180,74,0.4)":"rgba(74,143,212,0.15)"}`, borderRadius:16, padding:24, position:"relative", boxShadow:p.dest?"0 0 40px rgba(74,143,212,0.15)":"none", marginBottom:16 }}>
-              {p.tag && <div style={{ position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", background:p.dest?"#4a8fd4":"rgba(212,180,74,0.9)", color:"#ffffff", fontSize:11, fontWeight:600, padding:"4px 16px", borderRadius:20, whiteSpace:"nowrap" }}>{p.tag}</div>}
-              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:16 }}>
+            <div key={p.nombre} style={{background:p.dest?"linear-gradient(135deg,rgba(74,143,212,0.18),rgba(30,77,130,0.18))":"#0d1f35",border:`1px solid ${p.dest?"#4a8fd4":p.nombre==="Empresa"?"rgba(212,180,74,0.4)":"rgba(74,143,212,0.15)"}`,borderRadius:16,padding:24,position:"relative",boxShadow:p.dest?"0 0 40px rgba(74,143,212,0.15)":"none",marginBottom:16}}>
+              {p.tag&&<div style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",background:p.dest?"#4a8fd4":"rgba(212,180,74,0.9)",color:"#fff",fontSize:11,fontWeight:600,padding:"4px 16px",borderRadius:20,whiteSpace:"nowrap"}}>{p.tag}</div>}
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
                 <div>
-                  <div style={{ fontFamily:F.serif, fontSize:22, color:"#ffffff" }}>{p.nombre}</div>
-                  <div style={{ color:"#b0c4d8", fontSize:12, marginTop:2 }}>{p.sub}</div>
+                  <div style={{fontFamily:F.serif,fontSize:22,color:"#fff"}}>{p.nombre}</div>
+                  <div style={{color:"#b0c4d8",fontSize:12,marginTop:2}}>{p.sub}</div>
                 </div>
-                <div style={{ fontFamily:F.serif, fontSize:28, fontWeight:600, color:p.dest?"#6cb3f5":"#ffffff" }}>{p.precio}</div>
+                <div style={{fontFamily:F.serif,fontSize:28,fontWeight:600,color:p.dest?"#6cb3f5":"#fff"}}>{p.precio}</div>
               </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:20 }}>
-                {p.features.map(f=><div key={f} style={{ display:"flex", alignItems:"center", gap:8, fontSize:13, color:"#b0c4d8" }}><span style={{color:p.dest?"#4a8fd4":"#8a9bb0"}}>✓</span> {f}</div>)}
+              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
+                {p.features.map(f=><div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"#b0c4d8"}}><span style={{color:p.dest?"#4a8fd4":"#8a9bb0"}}>✓</span> {f}</div>)}
               </div>
-              <button
-                onClick={()=>{
-                  if (p.nombre==="Inicio") { setVista("inicio"); return; }
-                  if (p.nombre==="Empresa") { window.open("https://wa.me/5491161906655?text=Hola!%20Quiero%20info%20sobre%20el%20plan%20Empresa%20de%20Nexo","_blank"); return; }
-                  window.open("https://www.mercadopago.com.ar","_blank");
-                }}
-                style={{ width:"100%", background:p.dest?"linear-gradient(135deg,#4a8fd4,#1e4d82)":p.nombre==="Empresa"?"rgba(212,180,74,0.15)":"rgba(74,143,212,0.08)", border:p.dest?"none":p.nombre==="Empresa"?"1px solid rgba(212,180,74,0.4)":"1px solid rgba(74,143,212,0.3)", color:p.dest?"#ffffff":p.nombre==="Empresa"?"#fbbf24":"#6cb3f5", padding:14, borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer" }}>
+              <button onClick={()=>{
+                if(p.nombre==="Inicio"){setVista("inicio");return;}
+                if(p.nombre==="Empresa"){window.open("https://wa.me/5491161906655?text=Hola!%20Quiero%20info%20sobre%20el%20plan%20Empresa%20de%20Nexo","_blank");return;}
+                window.open("https://www.mercadopago.com.ar","_blank");
+              }} style={{width:"100%",background:p.dest?"linear-gradient(135deg,#4a8fd4,#1e4d82)":p.nombre==="Empresa"?"rgba(212,180,74,0.15)":"rgba(74,143,212,0.08)",border:p.dest?"none":p.nombre==="Empresa"?"1px solid rgba(212,180,74,0.4)":"1px solid rgba(74,143,212,0.3)",color:p.dest?"#fff":p.nombre==="Empresa"?"#fbbf24":"#6cb3f5",padding:14,borderRadius:10,fontFamily:F.sans,fontSize:14,fontWeight:600,cursor:"pointer"}}>
                 {p.nombre==="Inicio"?"Comenzar gratis":p.nombre==="Empresa"?"Contactar por WhatsApp →":"Pagar con Mercado Pago →"}
               </button>
             </div>
@@ -962,153 +871,152 @@ export default function App() {
         </div>
       )}
 
-      {/* ADMIN — protegido con PIN */}
-      {vista==="admin" && adminOk && (
-        <div className="page" style={{ padding:"24px 20px 60px" }}>
-          <BackBtn onClick={()=>setVista("inicio")}/>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <h2 style={{ fontFamily:F.serif, fontSize:26, fontWeight:400, color:"#ffffff" }}>Panel Admin</h2>
-              <span style={{ fontSize:11, background:"rgba(74,143,212,0.15)", color:"#4a8fd4", padding:"3px 10px", borderRadius:20, fontWeight:600 }}>NEXO HQ</span>
+      {/* ADMIN */}
+      {vista==="admin"&&adminOk&&(
+        <div className="page" style={{padding:"24px 20px 60px"}}>
+          <Back onClick={()=>setVista("inicio")}/>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <h2 style={{fontFamily:F.serif,fontSize:26,fontWeight:400,color:"#fff"}}>Panel Admin</h2>
+              <span style={{fontSize:11,background:"rgba(74,143,212,0.15)",color:"#4a8fd4",padding:"3px 10px",borderRadius:20,fontWeight:600}}>NEXO HQ</span>
             </div>
-            <button onClick={()=>setShowAddPro(true)} style={{ background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:"8px 14px", borderRadius:10, fontFamily:F.sans, fontSize:12, fontWeight:600, cursor:"pointer" }}>+ Agregar pro</button>
+            <button onClick={()=>setShowAddPro(true)} style={{background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:"8px 14px",borderRadius:10,fontFamily:F.sans,fontSize:12,fontWeight:600,cursor:"pointer"}}>+ Pro gratis</button>
           </div>
-          <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:24, fontWeight:300 }}>Gestión interna de Nexo</p>
+          <p style={{color:"#b0c4d8",fontSize:13,marginBottom:24,fontWeight:300}}>Gestión interna de Nexo · Solo vos podés ver esto</p>
 
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:24 }}>
-            {[
-              { val:activos.length, label:"Activos", color:"#4ade80" },
-              { val:pendientes.length, label:"Pendientes", color:"#fbbf24" },
-              { val:PEDIDOS_ADMIN.filter(p=>p.estado==="activo").length, label:"Pedidos", color:"#4a8fd4" },
-              { val:pros.filter(p=>p.estado==="rechazado").length, label:"Rechazados", color:"#f87171" },
-            ].map(s=>(
-              <div key={s.label} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:12, padding:"12px 8px", textAlign:"center" }}>
-                <div style={{ fontFamily:F.serif, fontSize:22, color:s.color }}>{s.val}</div>
-                <div style={{ fontSize:10, color:"#ffffff", marginTop:4 }}>{s.label}</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:24}}>
+            {[{val:activos.length,label:"Activos",color:"#4ade80"},{val:pendientes.length,label:"Pendientes",color:"#fbbf24"},{val:PEDIDOS_ADMIN.filter(p=>p.estado==="activo").length,label:"Pedidos",color:"#4a8fd4"},{val:pros.filter(p=>p.estado==="rechazado").length,label:"Rechazados",color:"#f87171"}].map(s=>(
+              <div key={s.label} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
+                <div style={{fontFamily:F.serif,fontSize:22,color:s.color}}>{s.val}</div>
+                <div style={{fontSize:10,color:"#fff",marginTop:4}}>{s.label}</div>
               </div>
             ))}
           </div>
 
-          <div style={{ display:"flex", gap:6, marginBottom:20, background:"#0d1f35", padding:4, borderRadius:10 }}>
-            {[{id:"verificaciones",label:"Verificaciones"},{id:"profesionales",label:"Profesionales"},{id:"pedidos",label:"Pedidos"}].map(tab=>(
-              <button key={tab.id} onClick={()=>setAdminTab(tab.id)}
-                style={{ flex:1, padding:"9px 6px", borderRadius:8, border:"none", background:adminTab===tab.id?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"transparent", color:adminTab===tab.id?"#ffffff":"#b0c4d8", fontFamily:F.sans, fontSize:12, fontWeight:600, cursor:"pointer", whiteSpace:"nowrap" }}>
-                {tab.label}
-              </button>
+          <div style={{display:"flex",gap:6,marginBottom:20,background:"#0d1f35",padding:4,borderRadius:10}}>
+            {[{id:"verificaciones",label:"Verificaciones"},{id:"profesionales",label:"Profesionales"},{id:"pedidos",label:"Pedidos"}].map(t=>(
+              <button key={t.id} onClick={()=>setAdminTab(t.id)} style={{flex:1,padding:"9px 6px",borderRadius:8,border:"none",background:adminTab===t.id?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"transparent",color:adminTab===t.id?"#fff":"#b0c4d8",fontFamily:F.sans,fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>{t.label}</button>
             ))}
           </div>
 
-          {adminTab==="verificaciones" && (
+          {adminTab==="verificaciones"&&(
             <div>
-              {pendientes.length===0 ? (
-                <div style={{ textAlign:"center", padding:"40px 0", color:"#b0c4d8" }}>
-                  <div style={{ fontSize:36, marginBottom:10 }}>✅</div>
+              {pendientes.length===0?(
+                <div style={{textAlign:"center",padding:"40px 0",color:"#b0c4d8"}}>
+                  <div style={{fontSize:36,marginBottom:10}}>✅</div>
                   <div>No hay verificaciones pendientes</div>
                 </div>
-              ) : pendientes.map(p=>(
-                <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(251,191,36,0.2)", borderRadius:14, padding:18, marginBottom:12 }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
-                    <Avatar foto={p.foto} nombre={p.nombre} size={46}/>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:600, fontSize:15, color:"#ffffff" }}>{p.nombre} <span style={{ fontSize:10, color:"#fbbf24", background:"rgba(251,191,36,0.12)", padding:"2px 8px", borderRadius:20 }}>PENDIENTE</span></div>
-                      <div style={{ color:"#b0c4d8", fontSize:12, marginTop:2 }}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
+              ):pendientes.map(p=>(
+                <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(251,191,36,0.2)",borderRadius:14,padding:18,marginBottom:12}}>
+                  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+                    <Av foto={p.foto} nombre={p.nombre} size={46}/>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:600,fontSize:15,color:"#fff"}}>{p.nombre} <span style={{fontSize:10,color:"#fbbf24",background:"rgba(251,191,36,0.12)",padding:"2px 8px",borderRadius:20}}>PENDIENTE</span></div>
+                      <div style={{color:"#b0c4d8",fontSize:12,marginTop:2}}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
                     </div>
                   </div>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14, fontSize:12, color:"#b0c4d8" }}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14,fontSize:12,color:"#b0c4d8"}}>
                     <div><span style={{color:"#8a9bb0"}}>Email: </span>{p.email}</div>
                     <div><span style={{color:"#8a9bb0"}}>Tel: </span>{p.tel}</div>
                     <div><span style={{color:"#8a9bb0"}}>DNI: </span>{p.dni}</div>
                     <div><span style={{color:"#8a9bb0"}}>Solicitud: </span>{p.fecha}</div>
                   </div>
-                  <div style={{ marginBottom:12 }}>
+                  <div style={{marginBottom:12}}>
                     <Lbl>MENSAJE AL PROFESIONAL</Lbl>
                     <textarea value={adminMsg[p.id]||""} onChange={e=>setAdminMsg(prev=>({...prev,[p.id]:e.target.value}))} placeholder="Mensaje opcional..."
-                      style={{ width:"100%", marginTop:8, background:"#060d1a", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"11px 14px", borderRadius:10, fontFamily:F.sans, fontSize:13, resize:"none", minHeight:56 }}/>
+                      style={{width:"100%",marginTop:8,background:"#060d1a",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"11px 14px",borderRadius:10,fontFamily:F.sans,fontSize:13,resize:"none",minHeight:56}}/>
                   </div>
-                  <div style={{ display:"flex", gap:8 }}>
-                    <button onClick={()=>rechazarPro(p.id)} style={{ flex:1, background:"rgba(248,113,113,0.1)", border:"1px solid rgba(248,113,113,0.3)", color:"#f87171", padding:12, borderRadius:10, fontFamily:F.sans, fontSize:13, fontWeight:600, cursor:"pointer" }}>✗ Rechazar</button>
-                    <button onClick={()=>verificarPro(p.id)} style={{ flex:2, background:"linear-gradient(135deg,rgba(74,212,120,0.3),rgba(74,212,120,0.15))", border:"1px solid rgba(74,212,120,0.4)", color:"#4ade80", padding:12, borderRadius:10, fontFamily:F.sans, fontSize:13, fontWeight:600, cursor:"pointer" }}>✓ Verificar y activar</button>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>rechazar(p.id)} style={{flex:1,background:"rgba(248,113,113,0.1)",border:"1px solid rgba(248,113,113,0.3)",color:"#f87171",padding:12,borderRadius:10,fontFamily:F.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>✗ Rechazar</button>
+                    <button onClick={()=>verificar(p.id)} style={{flex:2,background:"linear-gradient(135deg,rgba(74,212,120,0.3),rgba(74,212,120,0.15))",border:"1px solid rgba(74,212,120,0.4)",color:"#4ade80",padding:12,borderRadius:10,fontFamily:F.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>✓ Verificar y activar</button>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {adminTab==="profesionales" && (
+          {adminTab==="profesionales"&&(
             <div>
-              <div style={{ position:"relative", marginBottom:14 }}>
+              <div style={{marginBottom:14}}>
                 <input value={adminSearch} onChange={e=>setAdminSearch(e.target.value)} placeholder="Buscar por nombre u oficio..."
-                  style={{ width:"100%", background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"12px 16px", borderRadius:10, fontFamily:F.sans, fontSize:13 }}/>
+                  style={{width:"100%",background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"12px 16px",borderRadius:10,fontFamily:F.sans,fontSize:13}}/>
               </div>
-              {prosFiltrados.map(p=>(
-                <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:14, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"center", gap:12 }}>
-                  <Avatar foto={p.foto} nombre={p.nombre} size={42}/>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontWeight:600, fontSize:14, color:"#ffffff" }}>{p.nombre}</div>
-                    <div style={{ color:"#b0c4d8", fontSize:12 }}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
+              {prosFilt.map(p=>(
+                <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:12}}>
+                  <Av foto={p.foto} nombre={p.nombre} size={42}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,fontSize:14,color:"#fff"}}>{p.nombre}</div>
+                    <div style={{color:"#b0c4d8",fontSize:12}}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
                   </div>
-                  <span style={{ fontSize:11, padding:"3px 10px", borderRadius:20, fontWeight:600, background:p.estado==="activo"?"rgba(74,212,120,0.1)":p.estado==="pendiente"?"rgba(251,191,36,0.1)":"rgba(248,113,113,0.1)", color:p.estado==="activo"?"#4ade80":p.estado==="pendiente"?"#fbbf24":"#f87171" }}>{p.estado}</span>
+                  <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:p.estado==="activo"?"rgba(74,212,120,0.1)":p.estado==="pendiente"?"rgba(251,191,36,0.1)":"rgba(248,113,113,0.1)",color:p.estado==="activo"?"#4ade80":p.estado==="pendiente"?"#fbbf24":"#f87171"}}>{p.estado}</span>
                 </div>
               ))}
             </div>
           )}
 
-          {adminTab==="pedidos" && (
-            <div>
-              {PEDIDOS_ADMIN.map(p=>(
-                <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:14, padding:16, marginBottom:10 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
-                    <div>
-                      <div style={{ fontWeight:600, fontSize:14, color:"#ffffff" }}>{p.cliente}</div>
-                      <div style={{ color:"#4a8fd4", fontSize:12, marginTop:2 }}>{p.oficio} · {p.zona}</div>
-                    </div>
-                    <span style={{ fontSize:11, padding:"3px 10px", borderRadius:20, fontWeight:600, background:p.estado==="activo"?"rgba(74,212,120,0.1)":"rgba(74,143,212,0.1)", color:p.estado==="activo"?"#4ade80":"#4a8fd4" }}>{p.estado}</span>
-                  </div>
-                  <div style={{ color:"#b0c4d8", fontSize:13, marginBottom:8 }}>{p.desc}</div>
-                  <div style={{ color:"#8a9bb0", fontSize:11 }}>{p.fecha}</div>
+          {adminTab==="pedidos"&&PEDIDOS_ADMIN.map(p=>(
+            <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:16,marginBottom:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                <div>
+                  <div style={{fontWeight:600,fontSize:14,color:"#fff"}}>{p.cliente}</div>
+                  <div style={{color:"#4a8fd4",fontSize:12,marginTop:2}}>{p.oficio} · {p.zona}</div>
                 </div>
-              ))}
+                <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:p.estado==="activo"?"rgba(74,212,120,0.1)":"rgba(74,143,212,0.1)",color:p.estado==="activo"?"#4ade80":"#4a8fd4"}}>{p.estado}</span>
+              </div>
+              <div style={{color:"#b0c4d8",fontSize:13,marginBottom:6}}>{p.desc}</div>
+              <div style={{color:"#8a9bb0",fontSize:11}}>{p.fecha}</div>
             </div>
-          )}
+          ))}
         </div>
       )}
 
       {/* POPUPS */}
-      {showPin && <PinPopup onSuccess={()=>{ setAdminOk(true); setShowPin(false); setVista("admin"); }} onClose={()=>setShowPin(false)}/>}
-      {showTyC && <TyCPopup onAccept={handleAceptarTyC} onClose={()=>setShowTyC(false)}/>}
-      {showCalif && <CalificarPopup nombre="Carlos M." onClose={()=>setShowCalif(false)}/>}
-      {showNotif && notifActiva && <NotifPopup notif={notifActiva} onClose={()=>{ setShowNotif(false); setNotifActiva(null); }} onPostular={postular}/>}
-      {showRegCliente && <RegistroClientePopup onClose={()=>setShowRegCliente(false)} onSuccess={onClienteRegistrado}/>}
+      {showPin&&<PinPopup onSuccess={()=>{setAdminOk(true);setShowPin(false);setVista("admin");}} onClose={()=>setShowPin(false)}/>}
+      {showTyC&&<TyC onAccept={handleAceptarTyC} onClose={()=>setShowTyC(false)}/>}
+      {showCalif&&<Calificar nombre="Carlos M." onClose={()=>setShowCalif(false)}/>}
+      {showNotif&&notifAct&&(
+        <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
+          <div className="mod" style={{background:"#0d1f35",borderRadius:20,padding:"28px 24px",maxWidth:400,width:"100%"}}>
+            {notifAct.tipo==="urgente"&&<div style={{background:"rgba(248,113,113,0.15)",border:"1px solid rgba(248,113,113,0.3)",borderRadius:8,padding:"8px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span>🔴</span><span style={{fontSize:12,color:"#f87171",fontWeight:600}}>PEDIDO URGENTE</span></div>}
+            <h3 style={{fontFamily:F.serif,fontSize:20,color:"#fff",marginBottom:8}}>{notifAct.titulo}</h3>
+            <p style={{color:"#b0c4d8",fontSize:14,lineHeight:1.6,marginBottom:18}}>{notifAct.desc}</p>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>{setShowNotif(false);setNotifAct(null);}} style={{flex:1,background:"transparent",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"13px",borderRadius:10,fontFamily:F.sans,fontSize:14,cursor:"pointer"}}>Ignorar</button>
+              <button onClick={postular} style={{flex:2,background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:"13px",borderRadius:10,fontFamily:F.sans,fontSize:14,fontWeight:600,cursor:"pointer"}}>Postularme →</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showRegC&&<RegCliente onClose={()=>setShowRegC(false)} onSuccess={onClienteReg}/>}
 
       {/* POPUP AGREGAR PRO (solo desde admin) */}
-      {showAddPro && (
-        <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-          <div className="mod" style={{ background:"#0d1f35", borderRadius:"20px 20px 0 0", padding:"28px 24px 36px", maxWidth:480, width:"100%", border:"1px solid rgba(74,143,212,0.15)" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-              <h3 style={{ fontFamily:F.serif, fontSize:22, color:"#ffffff" }}>Agregar profesional</h3>
-              <button onClick={()=>setShowAddPro(false)} style={{ background:"none", border:"none", color:"#8a9bb0", fontSize:22, cursor:"pointer" }}>×</button>
+      {showAddPro&&(
+        <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+          <div className="mod" style={{background:"#0d1f35",borderRadius:"20px 20px 0 0",padding:"28px 24px 36px",maxWidth:480,width:"100%",border:"1px solid rgba(74,143,212,0.15)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <h3 style={{fontFamily:F.serif,fontSize:22,color:"#fff"}}>Agregar profesional gratis</h3>
+              <button onClick={()=>setShowAddPro(false)} style={{background:"none",border:"none",color:"#8a9bb0",fontSize:22,cursor:"pointer"}}>×</button>
             </div>
-            <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20, fontWeight:300 }}>Se activará verificado y sin cargo.</p>
-            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-              <div><Lbl>NOMBRE</Lbl><Inp placeholder="Ej: Juan Pérez" value={apNombre} onChange={e=>setApNombre(e.target.value)}/></div>
-              <div><Lbl>OFICIO</Lbl><Inp placeholder="Ej: Plomero" value={apOficio} onChange={e=>setApOficio(e.target.value)}/></div>
-              <div><Lbl>ZONA</Lbl><Inp placeholder="Ej: Palermo" value={apZona} onChange={e=>setApZona(e.target.value)}/></div>
-              <div><Lbl>EMAIL (OPCIONAL)</Lbl><Inp placeholder="correo@mail.com" value={apEmail} onChange={e=>setApEmail(e.target.value)}/></div>
-              <div style={{ background:"rgba(74,212,120,0.06)", border:"1px solid rgba(74,212,120,0.2)", borderRadius:10, padding:"10px 14px", fontSize:12, color:"#4ade80" }}>
-                ✓ Se activará directo como verificado y sin cargo
-              </div>
-              <PrimaryBtn onClick={handleAddPro}>Agregar profesional →</PrimaryBtn>
+            <p style={{color:"#b0c4d8",fontSize:13,marginBottom:18,fontWeight:300}}>Se activará verificado y sin cargo.</p>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <div><Lbl>NOMBRE</Lbl><Inp placeholder="Ej: Juan Pérez" value={apN} onChange={e=>setApN(e.target.value)}/></div>
+              <div><Lbl>OFICIO</Lbl><Inp placeholder="Ej: Plomero" value={apO} onChange={e=>setApO(e.target.value)}/></div>
+              <div><Lbl>ZONA</Lbl><Inp placeholder="Ej: Palermo" value={apZ} onChange={e=>setApZ(e.target.value)}/></div>
+              <div><Lbl>EMAIL (OPCIONAL)</Lbl><Inp placeholder="correo@mail.com" value={apE} onChange={e=>setApE(e.target.value)}/></div>
+              <div style={{background:"rgba(74,212,120,0.06)",border:"1px solid rgba(74,212,120,0.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#4ade80"}}>✓ Se activará directo como verificado y sin cargo</div>
+              <Btn onClick={addPro}>Agregar →</Btn>
             </div>
           </div>
         </div>
       )}
 
-      {/* Botón admin oculto — solo visible tocando 5 veces el logo */}
-      {vista==="inicio" && (
-        <div style={{ position:"fixed", bottom:20, right:20, opacity:0.01 }}>
-          <button onClick={abrirAdmin} style={{ width:40, height:40, borderRadius:"50%", background:"transparent", border:"none", cursor:"pointer" }}>⚙</button>
-        </div>
-      )}
+      {/* BOTÓN ADMIN — visible solo en el footer */}
+      <div style={{textAlign:"center",padding:"20px 0 30px",borderTop:"1px solid rgba(74,143,212,0.08)"}}>
+        <p style={{fontSize:11,color:"rgba(74,143,212,0.3)",marginBottom:8}}>© 2025 Nexo · Argentina</p>
+        <button onClick={()=>{if(adminOk)setVista("admin");else setShowPin(true);}} style={{background:"none",border:"1px solid rgba(74,143,212,0.15)",color:"rgba(74,143,212,0.4)",padding:"6px 14px",borderRadius:8,fontFamily:F.sans,fontSize:11,cursor:"pointer"}}>
+          {adminOk?"⚙️ Admin":"🔐 Admin"}
+        </button>
+      </div>
 
     </div></>
   );
