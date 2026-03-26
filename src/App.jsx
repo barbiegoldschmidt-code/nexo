@@ -1,24 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from './supabase';
+import { crearPreferencia } from './mercadopago';
 
 const ADMIN_PIN = "4567";
 
 const C = {
-  bg:       "#060d1a",
-  bgCard:   "#0d1f35",
-  bgHover:  "#102540",
-  nav:      "rgba(6,13,26,0.92)",
-  blue:     "#4a8fd4",
-  blueL:    "#6cb3f5",
-  blueD:    "#1a3a5c",
-  blueBtn:  "#1e4d82",
-  white:    "#ffffff",
-  gray:     "#8a9bb0",
-  grayL:    "#b0c4d8",
-  border:   "rgba(74,143,212,0.15)",
-  green:    "#4ade80",
-  red:      "#f87171",
-  yellow:   "#fbbf24",
+  bg:"#060d1a", bgCard:"#0d1f35", bgHover:"#102540",
+  nav:"rgba(6,13,26,0.92)", blue:"#4a8fd4", blueL:"#6cb3f5",
+  blueD:"#1a3a5c", blueBtn:"#1e4d82", white:"#ffffff",
+  gray:"#8a9bb0", grayL:"#b0c4d8", border:"rgba(74,143,212,0.15)",
+  green:"#4ade80", red:"#f87171", yellow:"#fbbf24",
 };
 const F = { serif:"'Playfair Display',Georgia,serif", sans:"'DM Sans','Segoe UI',sans-serif" };
 
@@ -54,57 +45,35 @@ const CATS = [
   {id:"logistica",nombre:"Logística & Mudanzas",icon:"🚚",color:"rgba(74,120,212,0.08)",subs:[{icon:"🚚",n:"Mudanzas"},{icon:"🛻",n:"Fletes"},{icon:"🏍️",n:"Mensajería en moto"},{icon:"🛠️",n:"Armado muebles"},{icon:"📦",n:"Guardamuebles"},{icon:"🚗",n:"Remis & traslados"}]},
 ];
 
-const PROS_MOCK = [
-  {id:1,nombre:"Carlos M.",oficios:["Electricista"],zona:"Palermo",rating:4.9,trabajos:87,verificado:true,estado:"activo",foto:null,email:"carlos@mail.com",tel:"+54 11 4444-1111",dni:"28.333.444",fecha:"10/03/2025"},
-  {id:2,nombre:"Ana R.",oficios:["Pintora"],zona:"Belgrano",rating:5.0,trabajos:134,verificado:true,estado:"activo",foto:null,email:"ana@mail.com",tel:"+54 11 5555-2222",dni:"32.111.222",fecha:"08/03/2025"},
-  {id:3,nombre:"Marcos T.",oficios:["Plomero"],zona:"Caballito",rating:4.8,trabajos:62,verificado:false,estado:"pendiente",foto:null,email:"marcos@mail.com",tel:"+54 11 6666-3333",dni:"35.777.888",fecha:"15/03/2025"},
-  {id:4,nombre:"Laura G.",oficios:["Limpieza"],zona:"Villa Crespo",rating:4.9,trabajos:210,verificado:false,estado:"pendiente",foto:null,email:"laura@mail.com",tel:"+54 11 7777-4444",dni:"29.555.666",fecha:"16/03/2025"},
-];
-
-const NOTIFS = [
-  {id:1,tipo:"urgente",titulo:"Nuevo pedido: Electricista en Palermo",desc:"Un vecino necesita revisión del tablero hoy. Presupuesto estimado $8.000",tiempo:"hace 5 min"},
-  {id:2,tipo:"normal",titulo:"Pedido: Instalación de luces LED",desc:"Departamento en Belgrano. Flexible en horario.",tiempo:"hace 1 hora"},
-  {id:3,tipo:"normal",titulo:"Pedido: Reparación tomacorriente",desc:"Casa en Villa Urquiza. 3 tomacorrientes quemados.",tiempo:"hace 3 horas"},
-];
-
-const PEDIDOS_ADMIN = [
-  {id:1,cliente:"Martín L.",oficio:"Plomero",zona:"Palermo",desc:"Pérdida en baño urgente",fecha:"hoy 10:30",estado:"activo"},
-  {id:2,cliente:"Sofía P.",oficio:"Electricista",zona:"Belgrano",desc:"Tablero sin luz en cocina",fecha:"hoy 09:15",estado:"activo"},
-  {id:3,cliente:"Roberto K.",oficio:"Pintor",zona:"Caballito",desc:"3 ambientes a pintar",fecha:"ayer",estado:"cerrado"},
-];
-
 const RESP = ["Perfecto, te confirmo enseguida.","Dale, sin problema!","¿Me podés mandar la dirección exacta?","Listo, quedamos así.","Anotado, hasta el miércoles!"];
 
-// ─── Helpers UI ───
-const Av = ({foto,nombre,size=46})=>{
-  const ini = nombre?nombre.split(" ").map(n=>n[0]).slice(0,2).join("").toUpperCase():"?";
+// ─── UI Helpers ───
+const Av=({foto,nombre,size=46})=>{
+  const ini=nombre?nombre.split(" ").map(n=>n[0]).slice(0,2).join("").toUpperCase():"?";
   return <div style={{width:size,height:size,borderRadius:"50%",background:"rgba(74,143,212,0.15)",border:"2px solid rgba(74,143,212,0.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden"}}>
     {foto?<img src={foto} alt={nombre} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:size*.32,color:"#6cb3f5",fontWeight:600}}>{ini}</span>}
   </div>;
 };
 
-const Btn = ({children,onClick,disabled=false,style={}})=>(
-  <button onClick={onClick} disabled={disabled}
-    style={{background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:"15px 24px",borderRadius:13,fontFamily:F.sans,fontSize:15,fontWeight:600,cursor:disabled?"not-allowed":"pointer",width:"100%",transition:"all .2s",opacity:disabled?.5:1,...style}}
-    onMouseEnter={e=>{if(!disabled)e.currentTarget.style.transform="translateY(-2px)"}}
+const Btn=({children,onClick,disabled=false,loading=false,style={}})=>(
+  <button onClick={onClick} disabled={disabled||loading}
+    style={{background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:"15px 24px",borderRadius:13,fontFamily:F.sans,fontSize:15,fontWeight:600,cursor:(disabled||loading)?"not-allowed":"pointer",width:"100%",transition:"all .2s",opacity:(disabled||loading)?.6:1,...style}}
+    onMouseEnter={e=>{if(!disabled&&!loading)e.currentTarget.style.transform="translateY(-2px)"}}
     onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)"}}
-  >{children}</button>
+  >{loading?"Procesando...":children}</button>
 );
 
-const Ghost = ({children,onClick,style={}})=>(
+const Ghost=({children,onClick,style={}})=>(
   <button onClick={onClick} style={{background:"rgba(74,143,212,0.08)",border:"1px solid rgba(74,143,212,0.3)",color:"#6cb3f5",padding:"15px 24px",borderRadius:13,fontFamily:F.sans,fontSize:15,fontWeight:500,cursor:"pointer",width:"100%",transition:"all .2s",...style}}
     onMouseEnter={e=>e.currentTarget.style.background="rgba(74,143,212,0.15)"}
     onMouseLeave={e=>e.currentTarget.style.background="rgba(74,143,212,0.08)"}
   >{children}</button>
 );
 
-const Back = ({onClick})=>(
-  <button onClick={onClick} style={{background:"none",border:"none",color:"#4a8fd4",fontSize:14,cursor:"pointer",marginBottom:20,fontFamily:F.sans}}>← Volver</button>
-);
+const Back=({onClick})=><button onClick={onClick} style={{background:"none",border:"none",color:"#4a8fd4",fontSize:14,cursor:"pointer",marginBottom:20,fontFamily:F.sans}}>← Volver</button>;
+const Lbl=({children})=><label style={{fontSize:11,color:"#b0c4d8",letterSpacing:1.5,fontWeight:600}}>{children}</label>;
 
-const Lbl = ({children})=><label style={{fontSize:11,color:"#b0c4d8",letterSpacing:1.5,fontWeight:600}}>{children}</label>;
-
-const Inp = ({placeholder,type="text",value,onChange,err,style={}})=>(
+const Inp=({placeholder,type="text",value,onChange,err,style={}})=>(
   <>
     <input type={type} placeholder={placeholder} value={value} onChange={onChange}
       style={{width:"100%",marginTop:8,background:"#0d1f35",border:`1px solid ${err?"#f87171":"rgba(74,143,212,0.15)"}`,color:"#fff",padding:"13px 15px",borderRadius:10,fontFamily:F.sans,fontSize:14,...style}}/>
@@ -112,42 +81,29 @@ const Inp = ({placeholder,type="text",value,onChange,err,style={}})=>(
   </>
 );
 
-const Sel = ({value,onChange,children,style={}})=>(
+const Sel=({value,onChange,children,style={}})=>(
   <select value={value} onChange={onChange}
     style={{width:"100%",marginTop:8,background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"13px 15px",borderRadius:10,fontFamily:F.sans,fontSize:14,...style}}
   >{children}</select>
 );
 
-// ─── Nav ───
-const Nav = ({setVista,noLeidas,clienteData,onCerrar,onIniciar})=>(
-  <nav style={{position:"sticky",top:0,zIndex:100,background:"rgba(6,13,26,0.92)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(74,143,212,0.15)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 20px"}}>
-    <div onClick={()=>setVista("inicio")} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
-      <div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#4a8fd4,#1a3a5c)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.serif,fontWeight:300,fontSize:20,color:"#fff"}}>N</div>
-      <span style={{fontFamily:F.serif,fontWeight:300,fontSize:20,letterSpacing:3,color:"#fff"}}>NEX<span style={{color:"#4a8fd4"}}>O</span></span>
-    </div>
-    <div style={{display:"flex",gap:6,alignItems:"center"}}>
-      <button onClick={()=>window.open("https://wa.me/5491161906655?text=Hola!%20Tengo%20una%20consulta%20sobre%20Nexo","_blank")} style={{background:"rgba(37,211,102,0.12)",border:"1px solid rgba(37,211,102,0.3)",color:"#25d366",padding:"7px 10px",borderRadius:8,fontFamily:F.sans,fontSize:13,cursor:"pointer"}}>💬</button>
-      <button onClick={()=>setVista("notificaciones")} style={{position:"relative",background:"none",border:"none",cursor:"pointer",fontSize:18,padding:"4px"}}>
-        🔔{noLeidas>0&&<span style={{position:"absolute",top:0,right:0,width:15,height:15,borderRadius:"50%",background:"#f87171",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff"}}>{noLeidas}</span>}
-      </button>
-      {clienteData
-        ?<button onClick={onCerrar} style={{background:"rgba(248,113,113,0.12)",border:"1px solid rgba(248,113,113,0.3)",color:"#f87171",padding:"7px 10px",borderRadius:8,fontFamily:F.sans,fontSize:12,cursor:"pointer"}}>Cerrar sesión</button>
-        :<button onClick={onIniciar} style={{background:"rgba(74,143,212,0.12)",border:"1px solid rgba(74,143,212,0.3)",color:"#6cb3f5",padding:"7px 10px",borderRadius:8,fontFamily:F.sans,fontSize:12,cursor:"pointer"}}>Iniciar sesión</button>
-      }
-    </div>
-  </nav>
-);
-
-// ─── TyC ───
-const TyC = ({onAccept,onClose})=>(
-  <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+// ─── TyC Cliente ───
+const TyCCliente=({onAccept,onClose})=>(
+  <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
     <div className="mod" style={{background:"#0d1f35",borderRadius:"20px 20px 0 0",padding:"28px 24px 36px",maxWidth:480,width:"100%",border:"1px solid rgba(74,143,212,0.15)",maxHeight:"85vh",display:"flex",flexDirection:"column"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
         <h3 style={{fontFamily:F.serif,fontSize:22,fontWeight:400,color:"#fff"}}>Términos y Condiciones</h3>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#8a9bb0",fontSize:22,cursor:"pointer"}}>×</button>
       </div>
       <div style={{overflowY:"auto",flex:1,paddingRight:4,marginBottom:20}}>
-        {[["1. Uso","Nexo conecta clientes con profesionales. No somos empleadores."],["2. Verificación","Debés completar verificación de identidad para operar como profesional."],["3. Responsabilidad","Sos responsable de la calidad de tus servicios."],["4. Pagos","Durante el lanzamiento Nexo es gratuito. Los planes se comunicarán por mail."],["5. Privacidad","Tus datos se tratan conforme a la Ley 25.326 de Argentina."]].map(([t,c])=>(
+        {[
+          ["1. ¿Qué es Nexo?","Nexo es una plataforma que conecta personas que necesitan servicios con profesionales independientes. No somos una agencia de empleo ni garantizamos la prestación del servicio."],
+          ["2. Tu responsabilidad como cliente","Al publicar un pedido, aceptás que la contratación y el acuerdo económico con el profesional son de tu exclusiva responsabilidad. Nexo actúa como intermediario de contacto."],
+          ["3. Privacidad de tus datos","Tu nombre, email y teléfono serán compartidos únicamente con los profesionales que respondan a tu pedido. No vendemos ni compartimos tus datos con terceros."],
+          ["4. Calificaciones","Al finalizar un servicio, podés calificar al profesional. Las calificaciones son públicas y contribuyen a la confianza de la comunidad."],
+          ["5. Servicio gratuito","Publicar pedidos y contactar profesionales en Nexo es completamente gratuito para los clientes."],
+          ["6. Ley aplicable","Estos términos se rigen por la legislación argentina, incluyendo la Ley 25.326 de Protección de Datos Personales."],
+        ].map(([t,c])=>(
           <div key={t} style={{marginBottom:14}}>
             <div style={{fontWeight:600,fontSize:13,color:"#6cb3f5",marginBottom:4}}>{t}</div>
             <p style={{fontSize:13,color:"#b0c4d8",lineHeight:1.6,fontWeight:300}}>{c}</p>
@@ -156,20 +112,49 @@ const TyC = ({onAccept,onClose})=>(
       </div>
       <div style={{display:"flex",gap:10}}>
         <button onClick={onClose} style={{flex:1,background:"transparent",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:14,borderRadius:10,fontFamily:F.sans,fontSize:14,cursor:"pointer"}}>Cancelar</button>
-        <button onClick={onAccept} style={{flex:2,background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:14,borderRadius:10,fontFamily:F.sans,fontSize:14,fontWeight:600,cursor:"pointer"}}>Acepto los términos ✓</button>
+        <button onClick={onAccept} style={{flex:2,background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:14,borderRadius:10,fontFamily:F.sans,fontSize:14,fontWeight:600,cursor:"pointer"}}>Acepto ✓</button>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── TyC Profesional ───
+const TyCPro=({onAccept,onClose})=>(
+  <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",zIndex:1000,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+    <div className="mod" style={{background:"#0d1f35",borderRadius:"20px 20px 0 0",padding:"28px 24px 36px",maxWidth:480,width:"100%",border:"1px solid rgba(74,143,212,0.15)",maxHeight:"85vh",display:"flex",flexDirection:"column"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <h3 style={{fontFamily:F.serif,fontSize:22,fontWeight:400,color:"#fff"}}>Términos y Condiciones</h3>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#8a9bb0",fontSize:22,cursor:"pointer"}}>×</button>
+      </div>
+      <div style={{overflowY:"auto",flex:1,paddingRight:4,marginBottom:20}}>
+        {[
+          ["1. Tu rol en Nexo","Nexo es una plataforma de contacto entre profesionales y clientes. No somos tu empleador ni garantizamos la relación laboral. Sos un prestador de servicios independiente."],
+          ["2. Verificación de identidad","Para activar tu perfil debés completar el proceso de verificación de identidad. Tu cuenta permanecerá pendiente hasta que nuestro equipo valide tus datos."],
+          ["3. Responsabilidad por el servicio","Sos responsable de la calidad, puntualidad y resultado de los trabajos que ofrecés. Nexo no asume responsabilidad por daños o incumplimientos durante la prestación."],
+          ["4. Planes y suscripciones","El plan Inicio es gratuito. Los planes Profesional y Empresa se cobran mensualmente vía Mercado Pago. Podés cancelar en cualquier momento."],
+          ["5. Calificaciones","Los clientes pueden calificarte luego de cada servicio. Las calificaciones son públicas. Reiteradas calificaciones negativas pueden resultar en la suspensión de tu cuenta."],
+          ["6. Conducta","Queda prohibido el uso de Nexo para actividades ilegales, fraudulentas o que violen los derechos de terceros. Nexo se reserva el derecho de suspender cuentas que incumplan estas normas."],
+          ["7. Privacidad","Tus datos son tratados conforme a la Ley 25.326 de Protección de Datos Personales de Argentina."],
+        ].map(([t,c])=>(
+          <div key={t} style={{marginBottom:14}}>
+            <div style={{fontWeight:600,fontSize:13,color:"#6cb3f5",marginBottom:4}}>{t}</div>
+            <p style={{fontSize:13,color:"#b0c4d8",lineHeight:1.6,fontWeight:300}}>{c}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={onClose} style={{flex:1,background:"transparent",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:14,borderRadius:10,fontFamily:F.sans,fontSize:14,cursor:"pointer"}}>Cancelar</button>
+        <button onClick={onAccept} style={{flex:2,background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:14,borderRadius:10,fontFamily:F.sans,fontSize:14,fontWeight:600,cursor:"pointer"}}>Acepto ✓</button>
       </div>
     </div>
   </div>
 );
 
 // ─── PIN Admin ───
-const PinPopup = ({onSuccess,onClose})=>{
+const PinPopup=({onSuccess,onClose})=>{
   const [pin,setPin]=useState("");
   const [err,setErr]=useState(false);
-  const check=()=>{
-    if(pin===ADMIN_PIN){onSuccess();}
-    else{setErr(true);setPin("");setTimeout(()=>setErr(false),1500);}
-  };
+  const check=()=>{if(pin===ADMIN_PIN){onSuccess();}else{setErr(true);setPin("");setTimeout(()=>setErr(false),1500);}};
   return(
     <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
       <div className="mod" style={{background:"#0d1f35",borderRadius:20,padding:"36px 28px",maxWidth:300,width:"100%",border:"1px solid rgba(74,143,212,0.3)",textAlign:"center"}}>
@@ -188,28 +173,21 @@ const PinPopup = ({onSuccess,onClose})=>{
   );
 };
 
-// ─── Registro Cliente (con TyC) ───
-const RegCliente = ({onClose,onSuccess})=>{
-  const [n,setN]=useState("");
-  const [e,setE]=useState("");
-  const [t,setT]=useState("");
-  const [err,setErr]=useState({});
-  const [showTyC,setShowTyC]=useState(false);
-  const [tycOk,setTycOk]=useState(false);
-
+// ─── Registro Cliente con TyC propio ───
+const RegCliente=({onClose,onSuccess})=>{
+  const [n,setN]=useState("");const [e,setE]=useState("");const [t,setT]=useState("");
+  const [err,setErr]=useState({});const [showTyC,setShowTyC]=useState(false);const [tycOk,setTycOk]=useState(false);
   const validar=()=>{
     const er={};
     if(!n.trim())er.n="Campo requerido";
     if(!e.trim()||!e.includes("@"))er.e="Email inválido";
     if(!t.trim())er.t="Campo requerido";
     if(!tycOk)er.tyc="Debés aceptar los términos";
-    setErr(er);
-    return Object.keys(er).length===0;
+    setErr(er);return Object.keys(er).length===0;
   };
-
   return(
     <>
-    {showTyC&&<TyC onAccept={()=>{setTycOk(true);setShowTyC(false);}} onClose={()=>setShowTyC(false)}/>}
+    {showTyC&&<TyCCliente onAccept={()=>{setTycOk(true);setShowTyC(false);}} onClose={()=>setShowTyC(false)}/>}
     <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",zIndex:998,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
       <div className="mod" style={{background:"#0d1f35",borderRadius:"20px 20px 0 0",padding:"28px 24px 36px",maxWidth:480,width:"100%",border:"1px solid rgba(74,143,212,0.15)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -218,20 +196,20 @@ const RegCliente = ({onClose,onSuccess})=>{
         </div>
         <p style={{color:"#b0c4d8",fontSize:13,marginBottom:20,fontWeight:300}}>Necesitamos saber quién sos para conectarte con los profesionales.</p>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          <div><Lbl>NOMBRE COMPLETO</Lbl><Inp placeholder="Ej: Martín López" value={n} onChange={ev=>setN(ev.target.value)} err={err.n}/></div>
+          <div><Lbl>NOMBRE COMPLETO</Lbl><Inp placeholder="Tu nombre y apellido" value={n} onChange={ev=>setN(ev.target.value)} err={err.n}/></div>
           <div><Lbl>EMAIL</Lbl><Inp type="email" placeholder="tu@mail.com" value={e} onChange={ev=>setE(ev.target.value)} err={err.e}/></div>
           <div><Lbl>TELÉFONO</Lbl><Inp placeholder="+54 11 1234-5678" value={t} onChange={ev=>setT(ev.target.value)} err={err.t}/></div>
           <div>
             <div style={{display:"flex",alignItems:"center",gap:10,marginTop:4}}>
-              <div onClick={()=>setTycOk(!tycOk)} style={{width:20,height:20,borderRadius:5,border:`2px solid ${tycOk?"#4a8fd4":"rgba(74,143,212,0.4)"}`,background:tycOk?"#4a8fd4":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+              <div onClick={()=>tycOk?setTycOk(false):setShowTyC(true)} style={{width:20,height:20,borderRadius:5,border:`2px solid ${tycOk?"#4a8fd4":"rgba(74,143,212,0.4)"}`,background:tycOk?"#4a8fd4":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
                 {tycOk&&<span style={{fontSize:12,color:"#fff"}}>✓</span>}
               </div>
-              <span style={{fontSize:13,color:"#b0c4d8"}}>Acepto los <button onClick={()=>setShowTyC(true)} style={{background:"none",border:"none",color:"#4a8fd4",cursor:"pointer",fontSize:13,textDecoration:"underline"}}>Términos y Condiciones</button></span>
+              <span style={{fontSize:13,color:"#b0c4d8"}}>Leí y acepto los <button onClick={()=>setShowTyC(true)} style={{background:"none",border:"none",color:"#4a8fd4",cursor:"pointer",fontSize:13,textDecoration:"underline"}}>Términos y Condiciones</button></span>
             </div>
             {err.tyc&&<p style={{color:"#f87171",fontSize:12,marginTop:4}}>{err.tyc}</p>}
           </div>
           <div style={{background:"rgba(74,143,212,0.06)",border:"1px solid rgba(74,143,212,0.15)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#b0c4d8"}}>
-            🔒 Tus datos son privados.
+            🔒 Tus datos son privados. Solo los ven los profesionales que respondan a tu pedido.
           </div>
           <Btn onClick={()=>{if(validar())onSuccess({nombre:n,email:e,tel:t});}}>Continuar →</Btn>
         </div>
@@ -242,11 +220,8 @@ const RegCliente = ({onClose,onSuccess})=>{
 };
 
 // ─── Calificar ───
-const Calificar = ({nombre,onClose})=>{
-  const [s,setS]=useState(0);
-  const [h,setH]=useState(0);
-  const [c,setC]=useState("");
-  const [ok,setOk]=useState(false);
+const Calificar=({nombre,onClose})=>{
+  const [s,setS]=useState(0);const [h,setH]=useState(0);const [c,setC]=useState("");const [ok,setOk]=useState(false);
   if(ok)return(
     <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
       <div className="mod" style={{background:"#0d1f35",borderRadius:20,padding:"40px 28px",maxWidth:360,width:"100%",textAlign:"center"}}>
@@ -281,21 +256,15 @@ const Calificar = ({nombre,onClose})=>{
 };
 
 // ─── Chat con presupuesto ───
-const ChatView = ({pro,onClose,clienteNombre})=>{
+const ChatView=({pro,onClose,clienteNombre})=>{
   const [msgs,setMsgs]=useState([{id:1,de:"pro",texto:`Hola${clienteNombre?" "+clienteNombre.split(" ")[0]:""}! Vi tu pedido. ¿Cuándo necesitás que pase?`,hora:"ahora"}]);
-  const [texto,setTexto]=useState("");
-  const [pres,setPres]=useState("");
-  const [showPres,setShowPres]=useState(false);
-  const [typing,setTyping]=useState(false);
+  const [texto,setTexto]=useState("");const [pres,setPres]=useState("");const [showPres,setShowPres]=useState(false);const [typing,setTyping]=useState(false);
   const ref=useRef(null);
   useEffect(()=>{ref.current?.scrollIntoView({behavior:"smooth"});},[msgs,typing]);
   const send=(txt)=>{
-    const t=txt||texto;
-    if(!t.trim())return;
+    const t=txt||texto;if(!t.trim())return;
     const hora=new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
-    setMsgs(p=>[...p,{id:Date.now(),de:"cliente",texto:t.trim(),hora}]);
-    setTexto("");
-    setTyping(true);
+    setMsgs(p=>[...p,{id:Date.now(),de:"cliente",texto:t.trim(),hora}]);setTexto("");setTyping(true);
     setTimeout(()=>{setTyping(false);setMsgs(p=>[...p,{id:Date.now()+1,de:"pro",texto:RESP[Math.floor(Math.random()*RESP.length)],hora:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}]);},1800);
   };
   return(
@@ -324,14 +293,14 @@ const ChatView = ({pro,onClose,clienteNombre})=>{
       </div>
       {showPres&&(
         <div style={{background:"#0d1f35",borderTop:"1px solid rgba(74,143,212,0.15)",padding:"12px 16px",display:"flex",gap:10}}>
-          <input value={pres} onChange={e=>setPres(e.target.value)} placeholder="Monto del presupuesto..."
+          <input value={pres} onChange={e=>setPres(e.target.value)} placeholder="Monto del presupuesto en $..."
             style={{flex:1,background:"#060d1a",border:"1px solid rgba(74,143,212,0.3)",color:"#fff",padding:"10px 14px",borderRadius:10,fontFamily:F.sans,fontSize:14}}/>
           <button onClick={()=>{if(pres.trim()){send(`💰 Presupuesto: $${pres}`);setPres("");setShowPres(false);}}} style={{background:"linear-gradient(135deg,#4ade80,#22c55e)",border:"none",color:"#fff",padding:"10px 16px",borderRadius:10,fontFamily:F.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>Enviar $</button>
           <button onClick={()=>setShowPres(false)} style={{background:"none",border:"none",color:"#8a9bb0",fontSize:20,cursor:"pointer"}}>×</button>
         </div>
       )}
       <div style={{background:"rgba(6,13,26,0.92)",borderTop:"1px solid rgba(74,143,212,0.15)",padding:"14px 16px",display:"flex",gap:10,alignItems:"flex-end"}}>
-        <button onClick={()=>setShowPres(!showPres)} style={{width:42,height:42,borderRadius:10,background:"rgba(74,212,120,0.12)",border:"1px solid rgba(74,212,120,0.3)",color:"#4ade80",fontSize:18,cursor:"pointer",flexShrink:0}}>💰</button>
+        <button onClick={()=>setShowPres(!showPres)} style={{width:42,height:42,borderRadius:10,background:"rgba(74,212,120,0.12)",border:"1px solid rgba(74,212,120,0.3)",color:"#4ade80",fontSize:18,cursor:"pointer",flexShrink:0}} title="Enviar presupuesto">💰</button>
         <textarea value={texto} onChange={e=>setTexto(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}} placeholder="Escribí un mensaje..." rows={1}
           style={{flex:1,background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"12px 16px",borderRadius:12,fontFamily:F.sans,fontSize:14,resize:"none",lineHeight:1.5,maxHeight:100}}/>
         <button onClick={()=>send()} disabled={!texto.trim()} style={{width:46,height:46,borderRadius:12,background:texto.trim()?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"rgba(74,143,212,0.1)",border:"none",cursor:texto.trim()?"pointer":"default",fontSize:20,flexShrink:0,color:"#fff"}}>➤</button>
@@ -341,26 +310,26 @@ const ChatView = ({pro,onClose,clienteNombre})=>{
 };
 
 // ─── Panel Profesional ───
-const PanelPro = ({onClose})=>{
+const PanelPro=({pro,onClose})=>{
   const [tab,setTab]=useState("post");
-  const posts=[
-    {id:1,titulo:"Revisión de tablero - Palermo",cliente:"Martín L.",fecha:"hoy 10:30",estado:"pendiente",monto:"$8.000"},
-    {id:2,titulo:"Instalación luces LED - Belgrano",cliente:"Sofía P.",fecha:"hoy 09:00",estado:"aceptado",monto:"$12.000"},
-    {id:3,titulo:"Reparación tomacorriente",cliente:"Roberto K.",fecha:"ayer",estado:"finalizado",monto:"$4.500"},
-  ];
-  const disp=[
-    {id:4,titulo:"Urgente: corte de luz en PH",zona:"Palermo",rango:"$6.000-$10.000",hace:"hace 10 min"},
-    {id:5,titulo:"Instalación aire acondicionado",zona:"Belgrano",rango:"$15.000",hace:"hace 30 min"},
-    {id:6,titulo:"Tablero eléctrico nuevo",zona:"Caballito",rango:"$20.000",hace:"hace 1 hora"},
-  ];
-  const col=e=>e==="aceptado"?"#4ade80":e==="pendiente"?"#fbbf24":"#8a9bb0";
+  const [postulaciones,setPostulaciones]=useState([]);
+  const [pedidos,setPedidos]=useState([]);
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    // En producción esto vendría de Supabase
+    setPostulaciones([]);
+    setPedidos([]);
+    setLoading(false);
+  },[]);
+
   return(
     <div className="chat" style={{position:"fixed",inset:0,background:"#060d1a",zIndex:200,display:"flex",flexDirection:"column",maxWidth:480,margin:"0 auto"}}>
       <div style={{background:"rgba(6,13,26,0.92)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(74,143,212,0.15)",padding:"14px 20px",display:"flex",alignItems:"center",gap:14}}>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#4a8fd4",fontSize:22,cursor:"pointer"}}>←</button>
         <div style={{flex:1}}>
           <div style={{fontWeight:600,fontSize:16,color:"#fff"}}>Mi panel profesional</div>
-          <div style={{fontSize:12,color:"#4ade80",marginTop:2}}>● Activo · Podés postularte sin importar la zona</div>
+          <div style={{fontSize:12,color:"#4ade80",marginTop:2}}>● Podés postularte sin importar la zona</div>
         </div>
       </div>
       <div style={{display:"flex",gap:6,margin:"14px 14px 0",background:"#0d1f35",padding:4,borderRadius:10}}>
@@ -368,34 +337,40 @@ const PanelPro = ({onClose})=>{
           <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:"9px 6px",borderRadius:8,border:"none",background:tab===id?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"transparent",color:tab===id?"#fff":"#8a9bb0",fontFamily:F.sans,fontSize:12,fontWeight:600,cursor:"pointer"}}>{lbl}</button>
         ))}
       </div>
-      <div style={{flex:1,overflowY:"auto",padding:"14px"}}>
-        {tab==="post"&&posts.map(p=>(
-          <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:16,marginBottom:10}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-              <div style={{fontWeight:600,fontSize:14,color:"#fff",flex:1,marginRight:8}}>{p.titulo}</div>
-              <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:`${col(p.estado)}22`,color:col(p.estado),whiteSpace:"nowrap"}}>{p.estado}</span>
-            </div>
-            <div style={{fontSize:12,color:"#b0c4d8",marginBottom:4}}>Cliente: {p.cliente}</div>
-            <div style={{display:"flex",justifyContent:"space-between"}}>
-              <span style={{fontSize:12,color:"#8a9bb0"}}>{p.fecha}</span>
-              <span style={{fontSize:14,fontWeight:700,color:"#4a8fd4"}}>{p.monto}</span>
-            </div>
+      <div style={{flex:1,overflowY:"auto",padding:"14px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        {loading?(
+          <div style={{textAlign:"center",color:"#b0c4d8"}}>Cargando...</div>
+        ):(
+          <div style={{textAlign:"center",padding:"40px 20px",color:"#b0c4d8"}}>
+            <div style={{fontSize:40,marginBottom:12}}>{tab==="post"?"📋":"🔍"}</div>
+            <p style={{fontSize:14,fontWeight:300}}>{tab==="post"?"Aún no te postulaste a ningún pedido.":"No hay pedidos disponibles en este momento."}</p>
+            <p style={{fontSize:12,color:"#8a9bb0",marginTop:8}}>Cuando haya pedidos en tu rubro, aparecerán acá.</p>
           </div>
-        ))}
-        {tab==="disp"&&disp.map(p=>(
-          <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:16,marginBottom:10}}>
-            <div style={{fontWeight:600,fontSize:14,color:"#fff",marginBottom:6}}>{p.titulo}</div>
-            <div style={{fontSize:12,color:"#b0c4d8",marginBottom:10}}>📍 {p.zona} · {p.hace}</div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <span style={{fontSize:13,color:"#4a8fd4",fontWeight:600}}>{p.rango}</span>
-              <button style={{background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:"8px 16px",borderRadius:8,fontFamily:F.sans,fontSize:12,fontWeight:600,cursor:"pointer"}}>Postularme →</button>
-            </div>
-          </div>
-        ))}
+        )}
       </div>
     </div>
   );
 };
+
+// ─── Nav ───
+const Nav=({setVista,noLeidas,cliente,onCerrar,onIniciar})=>(
+  <nav style={{position:"sticky",top:0,zIndex:100,background:"rgba(6,13,26,0.92)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(74,143,212,0.15)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 20px"}}>
+    <div onClick={()=>setVista("inicio")} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}>
+      <div style={{width:36,height:36,borderRadius:8,background:"linear-gradient(135deg,#4a8fd4,#1a3a5c)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:F.serif,fontWeight:300,fontSize:20,color:"#fff"}}>N</div>
+      <span style={{fontFamily:F.serif,fontWeight:300,fontSize:20,letterSpacing:3,color:"#fff"}}>NEX<span style={{color:"#4a8fd4"}}>O</span></span>
+    </div>
+    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+      <button onClick={()=>window.open("https://wa.me/5491161906655?text=Hola!%20Tengo%20una%20consulta%20sobre%20Nexo","_blank")} style={{background:"rgba(37,211,102,0.12)",border:"1px solid rgba(37,211,102,0.3)",color:"#25d366",padding:"7px 10px",borderRadius:8,fontFamily:F.sans,fontSize:13,cursor:"pointer"}}>💬</button>
+      <button onClick={()=>setVista("notificaciones")} style={{position:"relative",background:"none",border:"none",cursor:"pointer",fontSize:18,padding:"4px"}}>
+        🔔{noLeidas>0&&<span style={{position:"absolute",top:0,right:0,width:15,height:15,borderRadius:"50%",background:"#f87171",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff"}}>{noLeidas}</span>}
+      </button>
+      {cliente
+        ?<button onClick={onCerrar} style={{background:"rgba(248,113,113,0.12)",border:"1px solid rgba(248,113,113,0.3)",color:"#f87171",padding:"7px 10px",borderRadius:8,fontFamily:F.sans,fontSize:12,cursor:"pointer"}}>Cerrar sesión</button>
+        :<button onClick={onIniciar} style={{background:"rgba(74,143,212,0.12)",border:"1px solid rgba(74,143,212,0.3)",color:"#6cb3f5",padding:"7px 10px",borderRadius:8,fontFamily:F.sans,fontSize:12,cursor:"pointer"}}>Iniciar sesión</button>
+      }
+    </div>
+  </nav>
+);
 
 // ══════════════════════════════════
 // APP PRINCIPAL
@@ -407,7 +382,11 @@ export default function App(){
   const [oficio,setOficio]=useState("");
   const [urgencia,setUrgencia]=useState(0);
 
-  const [pros,setPros]=useState(PROS_MOCK);
+  // Profesionales desde Supabase
+  const [pros,setPros]=useState([]);
+  const [loadingPros,setLoadingPros]=useState(true);
+
+  // Admin
   const [adminTab,setAdminTab]=useState("verificaciones");
   const [adminSearch,setAdminSearch]=useState("");
   const [adminMsg,setAdminMsg]=useState({});
@@ -421,9 +400,10 @@ export default function App(){
   const [showNotif,setShowNotif]=useState(false);
   const [notifAct,setNotifAct]=useState(null);
 
-  const [showTyC,setShowTyC]=useState(false);
+  const [showTyCPro,setShowTyCPro]=useState(false);
   const [tycOk,setTycOk]=useState(false);
   const [showCalif,setShowCalif]=useState(false);
+  const [califNombre,setCalifNombre]=useState("");
 
   const [cliente,setCliente]=useState(null);
   const [showRegC,setShowRegC]=useState(false);
@@ -432,39 +412,51 @@ export default function App(){
   const [chat,setChat]=useState(null);
   const [showPanel,setShowPanel]=useState(false);
 
+  // MP
+  const [loadingMP,setLoadingMP]=useState(false);
+
   // Registro profesional
   const [rN,setRN]=useState("");const [rE,setRE]=useState("");const [rT,setRT]=useState("");const [rZ,setRZ]=useState("");
-  const [rCatIdx,setRCatIdx]=useState(0);
-  const [rCatsSelec,setRCatsSelec]=useState([]);// múltiples categorías
-  const [rOficiosSelec,setROficiosSelec]=useState([]);// múltiples oficios
+  const [rCatsSelec,setRCatsSelec]=useState([]);
+  const [rOficiosSelec,setROficiosSelec]=useState([]);
   const [rFotoUrl,setRFotoUrl]=useState(null);
   const [rErr,setRErr]=useState({});
 
-  const activos=pros.filter(p=>p.estado==="activo");
+  // Cargar profesionales desde Supabase
+  useEffect(()=>{
+    const cargar=async()=>{
+      try{
+        const {data}=await supabase.from('profesionales').select('*').eq('estado','activo');
+        if(data) setPros(data.map(p=>({...p,oficios:p.oficio?p.oficio.split(", "):[],foto:null,rating:p.rating||0,trabajos:p.trabajos_realizados||0,verificado:p.verificado||false})));
+      }catch(e){}
+      setLoadingPros(false);
+    };
+    cargar();
+  },[]);
+
+  const activos=pros.filter(p=>p.estado==="activo"||p.verificado);
   const pendientes=pros.filter(p=>p.estado==="pendiente");
-  const noLeidas=NOTIFS.filter(n=>!leidas.includes(n.id)).length;
+  const noLeidas=0;
 
   const catsFilt=busq.trim()?CATS.map(c=>({...c,subs:c.subs.filter(s=>s.n.toLowerCase().includes(busq.toLowerCase()))})).filter(c=>c.subs.length>0):CATS;
-  const prosFilt=adminSearch.trim()?pros.filter(p=>p.nombre.toLowerCase().includes(adminSearch.toLowerCase())||(p.oficios||[]).join(" ").toLowerCase().includes(adminSearch.toLowerCase())):pros;
+  const prosFilt=adminSearch.trim()?pros.filter(p=>p.nombre?.toLowerCase().includes(adminSearch.toLowerCase())||(p.oficio||"").toLowerCase().includes(adminSearch.toLowerCase())):pros;
 
   const elegirOficio=n=>{setOficio(n);setVista("buscar");setCatAb(null);};
   const irComoCliente=dest=>{if(!cliente){setPendNav(dest);setShowRegC(true);}else setVista(dest);};
-  
+
   const onClienteReg=async data=>{
-    try{ await supabase.from('clientes').insert([{nombre:data.nombre,email:data.email,telefono:data.tel}]); }catch(e){}
+    try{await supabase.from('clientes').insert([{nombre:data.nombre,email:data.email,telefono:data.tel}]);}catch(e){}
     setCliente(data);setShowRegC(false);
     if(pendNav){setVista(pendNav);setPendNav(null);}
   };
 
   const abrirNotif=n=>{setNotifAct(n);setShowNotif(true);setLeidas(p=>p.includes(n.id)?p:[...p,n.id]);};
   const postular=()=>{setPostulados(p=>[...p,notifAct.id]);setShowNotif(false);setNotifAct(null);};
+
   const verificar=id=>setPros(p=>p.map(x=>x.id===id?{...x,verificado:true,estado:"activo"}:x));
   const rechazar=id=>setPros(p=>p.map(x=>x.id===id?{...x,verificado:false,estado:"rechazado"}:x));
 
-  const toggleCat=cat=>{
-    setRCatsSelec(prev=>prev.includes(cat)?prev.filter(c=>c!==cat):[...prev,cat]);
-    setROficiosSelec([]);
-  };
+  const toggleCat=cat=>{setRCatsSelec(prev=>prev.includes(cat)?prev.filter(c=>c!==cat):[...prev,cat]);};
   const toggleOficio=o=>setROficiosSelec(prev=>prev.includes(o)?prev.filter(x=>x!==o):[...prev,o]);
 
   const validarReg=()=>{
@@ -474,45 +466,47 @@ export default function App(){
     if(!rT.trim())e.t="Campo requerido";
     if(!rZ.trim())e.z="Seleccioná una zona";
     if(!tycOk)e.tyc="Debés aceptar los términos";
-    setRErr(e);
-    return Object.keys(e).length===0;
-  };
-
-  const handleAceptarTyC=()=>{
-    setTycOk(true);setShowTyC(false);
-    const e={};
-    if(!rN.trim())e.n="Campo requerido";
-    if(!rE.trim()||!rE.includes("@"))e.e="Email inválido";
-    if(!rT.trim())e.t="Campo requerido";
-    if(!rZ.trim())e.z="Seleccioná una zona";
-    setRErr(e);
-    if(Object.keys(e).length===0)setVista("planes");
+    setRErr(e);return Object.keys(e).length===0;
   };
 
   const handleReg=async()=>{
-    if(!tycOk){setShowTyC(true);return;}
+    if(!tycOk){setShowTyCPro(true);return;}
     if(!validarReg())return;
-    const oficiosStr=rOficiosSelec.length>0?rOficiosSelec.join(", "):CATS[rCatIdx].subs[0].n;
+    const oficiosStr=rOficiosSelec.length>0?rOficiosSelec.join(", "):rCatsSelec.length>0?CATS.find(c=>c.id===rCatsSelec[0])?.subs[0].n||"General":"General";
     try{
       await supabase.from('profesionales').insert([{nombre:rN,email:rE,telefono:rT,zona:rZ,oficio:oficiosStr,verificado:false,estado:'pendiente'}]);
-    }catch(e){}
+    }catch(e){console.error(e);}
     setVista('planes');
   };
 
-  const addPro=()=>{
+  const addPro=async()=>{
     if(!apN.trim()||!apO.trim()||!apZ.trim())return;
-    setPros(p=>[...p,{id:Date.now(),nombre:apN,oficios:[apO],zona:apZ,email:apE,rating:0,trabajos:0,verificado:true,estado:"activo",foto:null}]);
+    try{
+      await supabase.from('profesionales').insert([{nombre:apN,email:apE,telefono:"",zona:apZ,oficio:apO,verificado:true,estado:'activo'}]);
+      setPros(p=>[...p,{id:Date.now(),nombre:apN,oficios:[apO],oficio:apO,zona:apZ,email:apE,rating:0,trabajos:0,verificado:true,estado:"activo",foto:null}]);
+    }catch(e){}
     setApN("");setApO("");setApZ("");setApE("");setShowAddPro(false);
   };
 
+  // Pago con Mercado Pago
+  const pagarConMP=async(plan)=>{
+    setLoadingMP(true);
+    try{
+      const url=await crearPreferencia(plan);
+      if(url) window.open(url,"_blank");
+      else alert("Error al generar el pago. Intentá de nuevo.");
+    }catch(e){alert("Error al conectar con Mercado Pago.");}
+    setLoadingMP(false);
+  };
+
   if(chat)return(<><style>{GS}</style><ChatView pro={chat} onClose={()=>setChat(null)} clienteNombre={cliente?.nombre}/></>);
-  if(showPanel)return(<><style>{GS}</style><PanelPro onClose={()=>setShowPanel(false)}/></>);
+  if(showPanel)return(<><style>{GS}</style><PanelPro pro={cliente} onClose={()=>setShowPanel(false)}/></>);
 
   return(
     <><style>{GS}</style>
     <div style={{minHeight:"100vh",background:"#060d1a",maxWidth:480,margin:"0 auto",color:"#fff"}}>
 
-      <Nav setVista={setVista} noLeidas={noLeidas} clienteData={cliente} onCerrar={()=>setCliente(null)} onIniciar={()=>setShowRegC(true)}/>
+      <Nav setVista={setVista} noLeidas={noLeidas} cliente={cliente} onCerrar={()=>setCliente(null)} onIniciar={()=>setShowRegC(true)}/>
 
       {/* INICIO */}
       {vista==="inicio"&&(
@@ -568,11 +562,18 @@ export default function App(){
             </div>
           </div>
 
-          <div style={{padding:"0 24px 60px"}}>
-            <h2 style={{fontFamily:F.serif,fontSize:24,fontWeight:400,marginBottom:6,color:"#fff"}}>Profesionales top</h2>
-            <p style={{color:"#b0c4d8",fontSize:13,marginBottom:20,fontWeight:300}}>Los mejor calificados esta semana</p>
-            {activos.map(p=>(
-              <div key={p.id} onClick={()=>setVista("perfil")}
+          <div style={{padding:"0 24px 40px"}}>
+            <h2 style={{fontFamily:F.serif,fontSize:24,fontWeight:400,marginBottom:6,color:"#fff"}}>Profesionales verificados</h2>
+            <p style={{color:"#b0c4d8",fontSize:13,marginBottom:20,fontWeight:300}}>Registrados y verificados en Nexo</p>
+            {loadingPros?(
+              <div style={{textAlign:"center",padding:"30px 0",color:"#b0c4d8"}}>Cargando profesionales...</div>
+            ):activos.length===0?(
+              <div style={{textAlign:"center",padding:"30px 0",color:"#b0c4d8"}}>
+                <div style={{fontSize:36,marginBottom:10}}>👷</div>
+                <p style={{fontSize:14}}>Pronto habrá profesionales disponibles.</p>
+              </div>
+            ):activos.map(p=>(
+              <div key={p.id} onClick={()=>{setChat(p);}}
                 style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:"14px 16px",display:"flex",alignItems:"center",gap:14,cursor:"pointer",transition:"all .2s",marginBottom:10}}
                 onMouseEnter={e=>e.currentTarget.style.background="#102540"}
                 onMouseLeave={e=>e.currentTarget.style.background="#0d1f35"}
@@ -580,11 +581,11 @@ export default function App(){
                 <Av foto={p.foto} nombre={p.nombre} size={46}/>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:600,fontSize:15,color:"#fff"}}>{p.nombre} {p.verificado&&<span style={{fontSize:11,color:"#4a8fd4",background:"rgba(74,143,212,0.12)",padding:"2px 7px",borderRadius:20}}>✓</span>}</div>
-                  <div style={{color:"#b0c4d8",fontSize:12,marginTop:2}}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
+                  <div style={{color:"#b0c4d8",fontSize:12,marginTop:2}}>{p.oficio} · {p.zona}</div>
                 </div>
                 <div style={{textAlign:"right"}}>
-                  <div style={{color:"#4a8fd4",fontWeight:600}}>★ {p.rating}</div>
-                  <div style={{color:"#b0c4d8",fontSize:11,marginTop:2}}>{p.trabajos} trabajos</div>
+                  {p.rating>0&&<div style={{color:"#4a8fd4",fontWeight:600}}>★ {p.rating}</div>}
+                  <div style={{color:"#b0c4d8",fontSize:11,marginTop:2}}>💬 Chatear</div>
                 </div>
               </div>
             ))}
@@ -658,7 +659,7 @@ export default function App(){
             </div>
             <div>
               <Lbl>DESCRIBÍ EL TRABAJO</Lbl>
-              <textarea placeholder="Ej: Tengo una pérdida en el baño, urgente..."
+              <textarea placeholder="Describí qué necesitás con el mayor detalle posible..."
                 style={{width:"100%",marginTop:8,background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"14px 16px",borderRadius:10,fontFamily:F.sans,fontSize:14,resize:"none",minHeight:100,lineHeight:1.6}}/>
             </div>
             <div>
@@ -679,54 +680,25 @@ export default function App(){
       {vista==="cotizaciones"&&(
         <div className="page" style={{padding:"32px 24px 60px"}}>
           <Back onClick={()=>setVista("buscar")}/>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-            <span style={{width:8,height:8,borderRadius:"50%",background:"#4ade80",display:"inline-block",animation:"pulse 2s infinite"}}/>
-            <span style={{fontSize:12,color:"#4ade80",fontWeight:500}}>3 profesionales disponibles ahora</span>
-          </div>
-          <h2 style={{fontFamily:F.serif,fontSize:28,fontWeight:400,marginBottom:24,color:"#fff"}}>Cotizaciones</h2>
-          {activos.slice(0,3).map((p,i)=>(
+          <h2 style={{fontFamily:F.serif,fontSize:28,fontWeight:400,marginBottom:8,color:"#fff"}}>Profesionales disponibles</h2>
+          <p style={{color:"#b0c4d8",fontSize:14,marginBottom:24,fontWeight:300}}>Tu pedido fue publicado. Los profesionales te van a contactar en breve.</p>
+          {activos.length===0?(
+            <div style={{textAlign:"center",padding:"40px 0",color:"#b0c4d8"}}>
+              <div style={{fontSize:40,marginBottom:12}}>⏳</div>
+              <p style={{fontSize:14}}>Estamos buscando profesionales en tu zona...</p>
+            </div>
+          ):activos.map(p=>(
             <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:18,marginBottom:12}}>
               <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
                 <Av foto={p.foto} nombre={p.nombre} size={46}/>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:600,fontSize:15,color:"#fff"}}>{p.nombre} {p.verificado&&<span style={{color:"#4a8fd4"}}>✓</span>}</div>
-                  <div style={{color:"#b0c4d8",fontSize:12}}>{(p.oficios||[p.oficio]).join(", ")} · ★ {p.rating}</div>
+                  <div style={{color:"#b0c4d8",fontSize:12}}>{p.oficio} · {p.zona}</div>
                 </div>
-                <div style={{fontFamily:F.serif,fontSize:22,fontWeight:700,color:"#4a8fd4"}}>${[8000,12000,6500][i].toLocaleString()}</div>
               </div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>setVista("perfil")} style={{flex:1,background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:11,borderRadius:10,fontFamily:F.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>Ver perfil</button>
-                <button onClick={()=>setChat(p)} style={{flex:1,background:"rgba(74,143,212,0.08)",border:"1px solid rgba(74,143,212,0.3)",color:"#6cb3f5",padding:11,borderRadius:10,fontFamily:F.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>💬 Chat</button>
-              </div>
+              <button onClick={()=>setChat(p)} style={{width:"100%",background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:12,borderRadius:10,fontFamily:F.sans,fontSize:13,fontWeight:600,cursor:"pointer"}}>💬 Contactar a {p.nombre.split(" ")[0]}</button>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* PERFIL */}
-      {vista==="perfil"&&(
-        <div className="page">
-          <div style={{background:"linear-gradient(180deg,rgba(74,143,212,0.15) 0%,transparent 100%)",padding:"32px 24px 24px"}}>
-            <Back onClick={()=>setVista("cotizaciones")}/>
-            <div style={{display:"flex",alignItems:"center",gap:16}}>
-              <Av foto={activos[0].foto} nombre={activos[0].nombre} size={72}/>
-              <div>
-                <div style={{fontFamily:F.serif,fontSize:24,fontWeight:400,color:"#fff"}}>Carlos M. <span style={{color:"#4a8fd4",fontSize:16}}>✓</span></div>
-                <div style={{color:"#b0c4d8",fontSize:14}}>Electricista · Palermo</div>
-                <div style={{color:"#4a8fd4",fontSize:14,marginTop:4}}>★ 4.9 · 87 trabajos</div>
-              </div>
-            </div>
-          </div>
-          <div style={{padding:"0 24px 60px"}}>
-            <div style={{display:"flex",gap:8,marginBottom:20,marginTop:8,flexWrap:"wrap"}}>
-              {["Instalaciones","Reparaciones","Urgencias 24hs","Matriculado"].map(tag=><span key={tag} style={{fontSize:11,color:"#6cb3f5",background:"rgba(74,143,212,0.1)",padding:"4px 10px",borderRadius:20}}>{tag}</span>)}
-            </div>
-            <p style={{color:"#b0c4d8",fontSize:14,lineHeight:1.7,marginBottom:28,fontWeight:300}}>Electricista matriculado con 12 años de experiencia. Instalaciones domiciliarias, tableros y urgencias. Garantía escrita en todos los trabajos.</p>
-            <div style={{display:"flex",gap:8}}>
-              <Btn style={{flex:2}} onClick={()=>setChat(activos[0])}>💬 Chatear con Carlos</Btn>
-              <button onClick={()=>setShowCalif(true)} style={{flex:1,background:"transparent",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:14,borderRadius:13,fontFamily:F.sans,fontSize:14,cursor:"pointer"}}>★ Calificar</button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -748,7 +720,7 @@ export default function App(){
           </div>
 
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            <div><Lbl>NOMBRE COMPLETO</Lbl><Inp placeholder="Ej: Carlos Martínez" value={rN} onChange={e=>setRN(e.target.value)} err={rErr.n}/></div>
+            <div><Lbl>NOMBRE COMPLETO</Lbl><Inp placeholder="Tu nombre y apellido" value={rN} onChange={e=>setRN(e.target.value)} err={rErr.n}/></div>
             <div><Lbl>EMAIL</Lbl><Inp type="email" placeholder="tu@mail.com" value={rE} onChange={e=>setRE(e.target.value)} err={rErr.e}/></div>
             <div><Lbl>TELÉFONO</Lbl><Inp placeholder="+54 11 1234-5678" value={rT} onChange={e=>setRT(e.target.value)} err={rErr.t}/></div>
             <div>
@@ -760,9 +732,8 @@ export default function App(){
               {rErr.z&&<p style={{color:"#f87171",fontSize:12,marginTop:4}}>{rErr.z}</p>}
             </div>
 
-            {/* Múltiples categorías */}
             <div>
-              <Lbl>CATEGORÍAS (ELEGÍ LAS QUE OFRECÉS)</Lbl>
+              <Lbl>CATEGORÍAS QUE OFRECÉS</Lbl>
               <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:8}}>
                 {CATS.map(c=>(
                   <button key={c.id} onClick={()=>toggleCat(c.id)}
@@ -773,7 +744,6 @@ export default function App(){
               </div>
             </div>
 
-            {/* Oficios de categorías seleccionadas */}
             {rCatsSelec.length>0&&(
               <div>
                 <Lbl>OFICIOS ESPECÍFICOS</Lbl>
@@ -789,13 +759,12 @@ export default function App(){
               </div>
             )}
 
-            {/* TyC */}
             <div>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div onClick={()=>tycOk?setTycOk(false):setShowTyC(true)} style={{width:20,height:20,borderRadius:5,border:`2px solid ${tycOk?"#4a8fd4":"rgba(74,143,212,0.4)"}`,background:tycOk?"#4a8fd4":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+                <div onClick={()=>tycOk?setTycOk(false):setShowTyCPro(true)} style={{width:20,height:20,borderRadius:5,border:`2px solid ${tycOk?"#4a8fd4":"rgba(74,143,212,0.4)"}`,background:tycOk?"#4a8fd4":"transparent",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
                   {tycOk&&<span style={{fontSize:12,color:"#fff"}}>✓</span>}
                 </div>
-                <span style={{fontSize:13,color:"#b0c4d8"}}>Acepto los <button onClick={()=>setShowTyC(true)} style={{background:"none",border:"none",color:"#4a8fd4",cursor:"pointer",fontSize:13,textDecoration:"underline"}}>Términos y Condiciones</button></span>
+                <span style={{fontSize:13,color:"#b0c4d8"}}>Leí y acepto los <button onClick={()=>setShowTyCPro(true)} style={{background:"none",border:"none",color:"#4a8fd4",cursor:"pointer",fontSize:13,textDecoration:"underline"}}>Términos y Condiciones</button></span>
               </div>
               {rErr.tyc&&<p style={{color:"#f87171",fontSize:12,marginTop:4}}>{rErr.tyc}</p>}
             </div>
@@ -809,26 +778,10 @@ export default function App(){
       {vista==="notificaciones"&&(
         <div className="page" style={{padding:"24px 20px 60px"}}>
           <Back onClick={()=>setVista("inicio")}/>
-          <h2 style={{fontFamily:F.serif,fontSize:28,fontWeight:400,marginBottom:4,color:"#fff"}}>Mis pedidos</h2>
-          <p style={{color:"#b0c4d8",fontSize:13,marginBottom:20,fontWeight:300}}>Pedidos nuevos en tu rubro</p>
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {NOTIFS.map(n=>{
-              const post=postulados.includes(n.id);
-              return(
-                <div key={n.id} onClick={()=>!post&&abrirNotif(n)}
-                  style={{background:leidas.includes(n.id)?"#0d1f35":"rgba(74,143,212,0.08)",border:`1px solid ${n.tipo==="urgente"&&!leidas.includes(n.id)?"rgba(248,113,113,0.35)":"rgba(74,143,212,0.15)"}`,borderRadius:14,padding:"16px 18px",cursor:post?"default":"pointer"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-                    <div style={{display:"flex",gap:8}}>
-                      {n.tipo==="urgente"&&!leidas.includes(n.id)&&<span style={{fontSize:10,color:"#f87171",background:"rgba(248,113,113,0.15)",padding:"2px 8px",borderRadius:20,fontWeight:600}}>URGENTE</span>}
-                      {post&&<span style={{fontSize:10,color:"#4ade80",background:"rgba(74,212,120,0.12)",padding:"2px 8px",borderRadius:20,fontWeight:600}}>✓ POSTULADO</span>}
-                    </div>
-                    <span style={{fontSize:12,color:"#b0c4d8"}}>{n.tiempo}</span>
-                  </div>
-                  <div style={{fontWeight:600,fontSize:14,marginBottom:4,color:"#fff"}}>{n.titulo}</div>
-                  <div style={{color:"#b0c4d8",fontSize:13,lineHeight:1.5}}>{n.desc}</div>
-                </div>
-              );
-            })}
+          <h2 style={{fontFamily:F.serif,fontSize:28,fontWeight:400,marginBottom:4,color:"#fff"}}>Notificaciones</h2>
+          <div style={{textAlign:"center",padding:"40px 0",color:"#b0c4d8"}}>
+            <div style={{fontSize:40,marginBottom:12}}>🔔</div>
+            <p style={{fontSize:14}}>No hay notificaciones nuevas.</p>
           </div>
         </div>
       )}
@@ -838,14 +791,14 @@ export default function App(){
         <div className="page" style={{padding:"32px 24px 60px"}}>
           <Back onClick={()=>setVista("inicio")}/>
           <h2 style={{fontFamily:F.serif,fontSize:32,fontWeight:300,marginBottom:6,color:"#fff"}}>Elegí tu plan</h2>
-          <p style={{color:"#b0c4d8",fontSize:14,marginBottom:8,fontWeight:300}}>Planes para profesionales · Clientes gratis</p>
+          <p style={{color:"#b0c4d8",fontSize:14,marginBottom:8,fontWeight:300}}>Solo para profesionales · Clientes siempre gratis</p>
           <div style={{background:"rgba(74,212,120,0.06)",border:"1px solid rgba(74,212,120,0.2)",borderRadius:10,padding:"10px 14px",marginBottom:28,fontSize:13,color:"#4ade80"}}>
-            ✓ Si sos cliente, publicar pedidos en Nexo es siempre gratis.
+            ✓ Publicar pedidos como cliente es siempre gratuito en Nexo.
           </div>
           {[
-            {nombre:"Inicio",precio:"Gratis",sub:"7 días sin costo",dest:false,tag:null,features:["3 contactos por mes","Perfil verificado ✓","Notificaciones de pedidos","Acceso a todas las categorías"]},
-            {nombre:"Profesional",precio:"$2.500",sub:"por mes",dest:true,tag:"MÁS POPULAR",features:["Contactos ilimitados","Badge destacado","Chat con clientes","Soporte prioritario","Estadísticas básicas","Postularse sin límite de zona"]},
-            {nombre:"Empresa",precio:"$18.000",sub:"por mes",dest:false,tag:"PARA EMPRESAS",features:["Todo Profesional","Hasta 5 usuarios del equipo","Primero en búsquedas","Estadísticas avanzadas","Panel de empresa"]},
+            {nombre:"Inicio",precio:0,sub:"7 días sin costo",dest:false,tag:null,features:["3 contactos por mes","Perfil verificado ✓","Notificaciones de pedidos","Acceso a todas las categorías"]},
+            {nombre:"Profesional",precio:2500,sub:"por mes",dest:true,tag:"MÁS POPULAR",features:["Contactos ilimitados","Badge destacado","Chat con clientes","Soporte prioritario","Estadísticas básicas","Sin límite de zona"]},
+            {nombre:"Empresa",precio:18000,sub:"por mes",dest:false,tag:"PARA EMPRESAS",features:["Todo Profesional","Hasta 5 usuarios del equipo","Primero en búsquedas","Estadísticas avanzadas","Panel de empresa"]},
           ].map(p=>(
             <div key={p.nombre} style={{background:p.dest?"linear-gradient(135deg,rgba(74,143,212,0.18),rgba(30,77,130,0.18))":"#0d1f35",border:`1px solid ${p.dest?"#4a8fd4":p.nombre==="Empresa"?"rgba(212,180,74,0.4)":"rgba(74,143,212,0.15)"}`,borderRadius:16,padding:24,position:"relative",boxShadow:p.dest?"0 0 40px rgba(74,143,212,0.15)":"none",marginBottom:16}}>
               {p.tag&&<div style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",background:p.dest?"#4a8fd4":"rgba(212,180,74,0.9)",color:"#fff",fontSize:11,fontWeight:600,padding:"4px 16px",borderRadius:20,whiteSpace:"nowrap"}}>{p.tag}</div>}
@@ -854,18 +807,22 @@ export default function App(){
                   <div style={{fontFamily:F.serif,fontSize:22,color:"#fff"}}>{p.nombre}</div>
                   <div style={{color:"#b0c4d8",fontSize:12,marginTop:2}}>{p.sub}</div>
                 </div>
-                <div style={{fontFamily:F.serif,fontSize:28,fontWeight:600,color:p.dest?"#6cb3f5":"#fff"}}>{p.precio}</div>
+                <div style={{fontFamily:F.serif,fontSize:28,fontWeight:600,color:p.dest?"#6cb3f5":"#fff"}}>{p.precio===0?"Gratis":`$${p.precio.toLocaleString()}`}</div>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
                 {p.features.map(f=><div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"#b0c4d8"}}><span style={{color:p.dest?"#4a8fd4":"#8a9bb0"}}>✓</span> {f}</div>)}
               </div>
-              <button onClick={()=>{
-                if(p.nombre==="Inicio"){setVista("inicio");return;}
-                if(p.nombre==="Empresa"){window.open("https://wa.me/5491161906655?text=Hola!%20Quiero%20info%20sobre%20el%20plan%20Empresa%20de%20Nexo","_blank");return;}
-                window.open("https://www.mercadopago.com.ar","_blank");
-              }} style={{width:"100%",background:p.dest?"linear-gradient(135deg,#4a8fd4,#1e4d82)":p.nombre==="Empresa"?"rgba(212,180,74,0.15)":"rgba(74,143,212,0.08)",border:p.dest?"none":p.nombre==="Empresa"?"1px solid rgba(212,180,74,0.4)":"1px solid rgba(74,143,212,0.3)",color:p.dest?"#fff":p.nombre==="Empresa"?"#fbbf24":"#6cb3f5",padding:14,borderRadius:10,fontFamily:F.sans,fontSize:14,fontWeight:600,cursor:"pointer"}}>
-                {p.nombre==="Inicio"?"Comenzar gratis":p.nombre==="Empresa"?"Contactar por WhatsApp →":"Pagar con Mercado Pago →"}
-              </button>
+              <Btn
+                loading={loadingMP&&p.precio>0}
+                onClick={async()=>{
+                  if(p.precio===0){setVista("inicio");return;}
+                  if(p.nombre==="Empresa"){window.open("https://wa.me/5491161906655?text=Hola!%20Quiero%20info%20sobre%20el%20plan%20Empresa%20de%20Nexo","_blank");return;}
+                  await pagarConMP({nombre:p.nombre,precio:p.precio});
+                }}
+                style={{background:p.dest?"linear-gradient(135deg,#4a8fd4,#1e4d82)":p.nombre==="Empresa"?"rgba(212,180,74,0.15)":"rgba(74,143,212,0.08)",border:p.dest?"none":p.nombre==="Empresa"?"1px solid rgba(212,180,74,0.4)":"1px solid rgba(74,143,212,0.3)",color:p.dest?"#fff":p.nombre==="Empresa"?"#fbbf24":"#6cb3f5"}}
+              >
+                {p.precio===0?"Comenzar gratis":p.nombre==="Empresa"?"Contactar por WhatsApp →":"🔒 Pagar con Mercado Pago"}
+              </Btn>
             </div>
           ))}
         </div>
@@ -882,10 +839,10 @@ export default function App(){
             </div>
             <button onClick={()=>setShowAddPro(true)} style={{background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:"8px 14px",borderRadius:10,fontFamily:F.sans,fontSize:12,fontWeight:600,cursor:"pointer"}}>+ Pro gratis</button>
           </div>
-          <p style={{color:"#b0c4d8",fontSize:13,marginBottom:24,fontWeight:300}}>Gestión interna de Nexo · Solo vos podés ver esto</p>
+          <p style={{color:"#b0c4d8",fontSize:13,marginBottom:24,fontWeight:300}}>Gestión interna · Solo vos podés ver esto</p>
 
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:24}}>
-            {[{val:activos.length,label:"Activos",color:"#4ade80"},{val:pendientes.length,label:"Pendientes",color:"#fbbf24"},{val:PEDIDOS_ADMIN.filter(p=>p.estado==="activo").length,label:"Pedidos",color:"#4a8fd4"},{val:pros.filter(p=>p.estado==="rechazado").length,label:"Rechazados",color:"#f87171"}].map(s=>(
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:24}}>
+            {[{val:pros.filter(p=>p.verificado).length,label:"Activos",color:"#4ade80"},{val:pendientes.length,label:"Pendientes",color:"#fbbf24"},{val:pros.length,label:"Total pros",color:"#4a8fd4"}].map(s=>(
               <div key={s.label} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:12,padding:"12px 8px",textAlign:"center"}}>
                 <div style={{fontFamily:F.serif,fontSize:22,color:s.color}}>{s.val}</div>
                 <div style={{fontSize:10,color:"#fff",marginTop:4}}>{s.label}</div>
@@ -894,8 +851,8 @@ export default function App(){
           </div>
 
           <div style={{display:"flex",gap:6,marginBottom:20,background:"#0d1f35",padding:4,borderRadius:10}}>
-            {[{id:"verificaciones",label:"Verificaciones"},{id:"profesionales",label:"Profesionales"},{id:"pedidos",label:"Pedidos"}].map(t=>(
-              <button key={t.id} onClick={()=>setAdminTab(t.id)} style={{flex:1,padding:"9px 6px",borderRadius:8,border:"none",background:adminTab===t.id?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"transparent",color:adminTab===t.id?"#fff":"#b0c4d8",fontFamily:F.sans,fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>{t.label}</button>
+            {[{id:"verificaciones",label:"Pendientes"},{id:"profesionales",label:"Todos"}].map(t=>(
+              <button key={t.id} onClick={()=>setAdminTab(t.id)} style={{flex:1,padding:"9px 6px",borderRadius:8,border:"none",background:adminTab===t.id?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"transparent",color:adminTab===t.id?"#fff":"#b0c4d8",fontFamily:F.sans,fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.label}</button>
             ))}
           </div>
 
@@ -912,18 +869,16 @@ export default function App(){
                     <Av foto={p.foto} nombre={p.nombre} size={46}/>
                     <div style={{flex:1}}>
                       <div style={{fontWeight:600,fontSize:15,color:"#fff"}}>{p.nombre} <span style={{fontSize:10,color:"#fbbf24",background:"rgba(251,191,36,0.12)",padding:"2px 8px",borderRadius:20}}>PENDIENTE</span></div>
-                      <div style={{color:"#b0c4d8",fontSize:12,marginTop:2}}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
+                      <div style={{color:"#b0c4d8",fontSize:12,marginTop:2}}>{p.oficio} · {p.zona}</div>
                     </div>
                   </div>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14,fontSize:12,color:"#b0c4d8"}}>
                     <div><span style={{color:"#8a9bb0"}}>Email: </span>{p.email}</div>
-                    <div><span style={{color:"#8a9bb0"}}>Tel: </span>{p.tel}</div>
-                    <div><span style={{color:"#8a9bb0"}}>DNI: </span>{p.dni}</div>
-                    <div><span style={{color:"#8a9bb0"}}>Solicitud: </span>{p.fecha}</div>
+                    <div><span style={{color:"#8a9bb0"}}>Tel: </span>{p.telefono}</div>
                   </div>
                   <div style={{marginBottom:12}}>
-                    <Lbl>MENSAJE AL PROFESIONAL</Lbl>
-                    <textarea value={adminMsg[p.id]||""} onChange={e=>setAdminMsg(prev=>({...prev,[p.id]:e.target.value}))} placeholder="Mensaje opcional..."
+                    <Lbl>MENSAJE AL PROFESIONAL (OPCIONAL)</Lbl>
+                    <textarea value={adminMsg[p.id]||""} onChange={e=>setAdminMsg(prev=>({...prev,[p.id]:e.target.value}))} placeholder="Ej: Bienvenido a Nexo! Tu perfil fue verificado."
                       style={{width:"100%",marginTop:8,background:"#060d1a",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"11px 14px",borderRadius:10,fontFamily:F.sans,fontSize:13,resize:"none",minHeight:56}}/>
                   </div>
                   <div style={{display:"flex",gap:8}}>
@@ -937,59 +892,32 @@ export default function App(){
 
           {adminTab==="profesionales"&&(
             <div>
-              <div style={{marginBottom:14}}>
-                <input value={adminSearch} onChange={e=>setAdminSearch(e.target.value)} placeholder="Buscar por nombre u oficio..."
-                  style={{width:"100%",background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"12px 16px",borderRadius:10,fontFamily:F.sans,fontSize:13}}/>
-              </div>
-              {prosFilt.map(p=>(
+              <input value={adminSearch} onChange={e=>setAdminSearch(e.target.value)} placeholder="Buscar por nombre u oficio..."
+                style={{width:"100%",background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"12px 16px",borderRadius:10,fontFamily:F.sans,fontSize:13,marginBottom:14}}/>
+              {prosFilt.length===0?(
+                <div style={{textAlign:"center",padding:"30px 0",color:"#b0c4d8"}}>No hay profesionales registrados aún.</div>
+              ):prosFilt.map(p=>(
                 <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",gap:12}}>
                   <Av foto={p.foto} nombre={p.nombre} size={42}/>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:600,fontSize:14,color:"#fff"}}>{p.nombre}</div>
-                    <div style={{color:"#b0c4d8",fontSize:12}}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
+                    <div style={{color:"#b0c4d8",fontSize:12}}>{p.oficio} · {p.zona}</div>
+                    {p.email&&<div style={{color:"#8a9bb0",fontSize:11,marginTop:2}}>{p.email}</div>}
                   </div>
-                  <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:p.estado==="activo"?"rgba(74,212,120,0.1)":p.estado==="pendiente"?"rgba(251,191,36,0.1)":"rgba(248,113,113,0.1)",color:p.estado==="activo"?"#4ade80":p.estado==="pendiente"?"#fbbf24":"#f87171"}}>{p.estado}</span>
+                  <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:p.verificado?"rgba(74,212,120,0.1)":p.estado==="pendiente"?"rgba(251,191,36,0.1)":"rgba(248,113,113,0.1)",color:p.verificado?"#4ade80":p.estado==="pendiente"?"#fbbf24":"#f87171"}}>{p.verificado?"activo":p.estado||"pendiente"}</span>
                 </div>
               ))}
             </div>
           )}
-
-          {adminTab==="pedidos"&&PEDIDOS_ADMIN.map(p=>(
-            <div key={p.id} style={{background:"#0d1f35",border:"1px solid rgba(74,143,212,0.15)",borderRadius:14,padding:16,marginBottom:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                <div>
-                  <div style={{fontWeight:600,fontSize:14,color:"#fff"}}>{p.cliente}</div>
-                  <div style={{color:"#4a8fd4",fontSize:12,marginTop:2}}>{p.oficio} · {p.zona}</div>
-                </div>
-                <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:p.estado==="activo"?"rgba(74,212,120,0.1)":"rgba(74,143,212,0.1)",color:p.estado==="activo"?"#4ade80":"#4a8fd4"}}>{p.estado}</span>
-              </div>
-              <div style={{color:"#b0c4d8",fontSize:13,marginBottom:6}}>{p.desc}</div>
-              <div style={{color:"#8a9bb0",fontSize:11}}>{p.fecha}</div>
-            </div>
-          ))}
         </div>
       )}
 
       {/* POPUPS */}
       {showPin&&<PinPopup onSuccess={()=>{setAdminOk(true);setShowPin(false);setVista("admin");}} onClose={()=>setShowPin(false)}/>}
-      {showTyC&&<TyC onAccept={handleAceptarTyC} onClose={()=>setShowTyC(false)}/>}
-      {showCalif&&<Calificar nombre="Carlos M." onClose={()=>setShowCalif(false)}/>}
-      {showNotif&&notifAct&&(
-        <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
-          <div className="mod" style={{background:"#0d1f35",borderRadius:20,padding:"28px 24px",maxWidth:400,width:"100%"}}>
-            {notifAct.tipo==="urgente"&&<div style={{background:"rgba(248,113,113,0.15)",border:"1px solid rgba(248,113,113,0.3)",borderRadius:8,padding:"8px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><span>🔴</span><span style={{fontSize:12,color:"#f87171",fontWeight:600}}>PEDIDO URGENTE</span></div>}
-            <h3 style={{fontFamily:F.serif,fontSize:20,color:"#fff",marginBottom:8}}>{notifAct.titulo}</h3>
-            <p style={{color:"#b0c4d8",fontSize:14,lineHeight:1.6,marginBottom:18}}>{notifAct.desc}</p>
-            <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>{setShowNotif(false);setNotifAct(null);}} style={{flex:1,background:"transparent",border:"1px solid rgba(74,143,212,0.15)",color:"#fff",padding:"13px",borderRadius:10,fontFamily:F.sans,fontSize:14,cursor:"pointer"}}>Ignorar</button>
-              <button onClick={postular} style={{flex:2,background:"linear-gradient(135deg,#4a8fd4,#1e4d82)",border:"none",color:"#fff",padding:"13px",borderRadius:10,fontFamily:F.sans,fontSize:14,fontWeight:600,cursor:"pointer"}}>Postularme →</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showTyCPro&&<TyCPro onAccept={()=>{setTycOk(true);setShowTyCPro(false);}} onClose={()=>setShowTyCPro(false)}/>}
+      {showCalif&&<Calificar nombre={califNombre} onClose={()=>setShowCalif(false)}/>}
       {showRegC&&<RegCliente onClose={()=>setShowRegC(false)} onSuccess={onClienteReg}/>}
 
-      {/* POPUP AGREGAR PRO (solo desde admin) */}
       {showAddPro&&(
         <div className="ov" style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.78)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
           <div className="mod" style={{background:"#0d1f35",borderRadius:"20px 20px 0 0",padding:"28px 24px 36px",maxWidth:480,width:"100%",border:"1px solid rgba(74,143,212,0.15)"}}>
@@ -999,22 +927,22 @@ export default function App(){
             </div>
             <p style={{color:"#b0c4d8",fontSize:13,marginBottom:18,fontWeight:300}}>Se activará verificado y sin cargo.</p>
             <div style={{display:"flex",flexDirection:"column",gap:12}}>
-              <div><Lbl>NOMBRE</Lbl><Inp placeholder="Ej: Juan Pérez" value={apN} onChange={e=>setApN(e.target.value)}/></div>
-              <div><Lbl>OFICIO</Lbl><Inp placeholder="Ej: Plomero" value={apO} onChange={e=>setApO(e.target.value)}/></div>
-              <div><Lbl>ZONA</Lbl><Inp placeholder="Ej: Palermo" value={apZ} onChange={e=>setApZ(e.target.value)}/></div>
+              <div><Lbl>NOMBRE</Lbl><Inp placeholder="Nombre y apellido" value={apN} onChange={e=>setApN(e.target.value)}/></div>
+              <div><Lbl>OFICIO</Lbl><Inp placeholder="Ej: Plomero, Electricista" value={apO} onChange={e=>setApO(e.target.value)}/></div>
+              <div><Lbl>ZONA</Lbl><Inp placeholder="Ej: Palermo, CABA" value={apZ} onChange={e=>setApZ(e.target.value)}/></div>
               <div><Lbl>EMAIL (OPCIONAL)</Lbl><Inp placeholder="correo@mail.com" value={apE} onChange={e=>setApE(e.target.value)}/></div>
-              <div style={{background:"rgba(74,212,120,0.06)",border:"1px solid rgba(74,212,120,0.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#4ade80"}}>✓ Se activará directo como verificado y sin cargo</div>
+              <div style={{background:"rgba(74,212,120,0.06)",border:"1px solid rgba(74,212,120,0.2)",borderRadius:10,padding:"10px 14px",fontSize:12,color:"#4ade80"}}>✓ Se activará verificado sin pasar por el proceso de revisión</div>
               <Btn onClick={addPro}>Agregar →</Btn>
             </div>
           </div>
         </div>
       )}
 
-      {/* BOTÓN ADMIN — visible solo en el footer */}
+      {/* FOOTER con botón admin */}
       <div style={{textAlign:"center",padding:"20px 0 30px",borderTop:"1px solid rgba(74,143,212,0.08)"}}>
         <p style={{fontSize:11,color:"rgba(74,143,212,0.3)",marginBottom:8}}>© 2025 Nexo · Argentina</p>
         <button onClick={()=>{if(adminOk)setVista("admin");else setShowPin(true);}} style={{background:"none",border:"1px solid rgba(74,143,212,0.15)",color:"rgba(74,143,212,0.4)",padding:"6px 14px",borderRadius:8,fontFamily:F.sans,fontSize:11,cursor:"pointer"}}>
-          {adminOk?"⚙️ Admin":"🔐 Admin"}
+          {adminOk?"⚙️ Panel admin":"🔐 Admin"}
         </button>
       </div>
 
