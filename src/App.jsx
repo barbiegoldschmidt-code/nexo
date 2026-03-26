@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from './supabase';
 
+const ADMIN_PIN = "4567";
+
 const C = {
   bg:          "#060d1a",
   bgCard:      "#0d1f35",
@@ -53,7 +55,7 @@ const CATEGORIAS = [
   { id:"hogar", nombre:"Hogar & Limpieza", icon:"🏠", color:"rgba(74,143,212,0.12)",
     subs:[{icon:"🧹",n:"Limpieza por hora"},{icon:"👩‍🍳",n:"Empleada doméstica"},{icon:"🪣",n:"Limpieza post obra"},{icon:"🪟",n:"Limpieza de vidrios"},{icon:"🛋️",n:"Limpieza de alfombras"},{icon:"👶",n:"Niñera"},{icon:"👴",n:"Cuidador adultos mayores"},{icon:"🍳",n:"Cocinera a domicilio"},{icon:"👗",n:"Planchado y lavado"}]},
   { id:"construccion", nombre:"Construcción & Refacciones", icon:"🏗️", color:"rgba(180,120,60,0.1)",
-    subs:[{icon:"🧱",n:"Albañil"},{icon:"🪨",n:"Yesero"},{icon:"🏚️",n:"Techadista"},{icon:"💧",n:"Impermeabilizador"},{icon:"🟫",n:"Colocador de pisos"},{icon:"🔲",n:"Colocador de cerámicos"},{icon:"🧩",n:"Durlock / Yeso"},{icon:"🔩",n:"Soldador"},{icon:"⚙️",n:"Herrería & Rejas"},{icon:"🚪",n:"Portones automáticos"}]},
+    subs:[{icon:"🧱",n:"Albañil"},{icon:"🪨",n:"Yesero"},{icon:"🏚️",n:"Techista"},{icon:"💧",n:"Impermeabilizador"},{icon:"🟫",n:"Colocador de pisos"},{icon:"🔲",n:"Colocador de cerámicos"},{icon:"🧩",n:"Durlock / Yeso"},{icon:"🔩",n:"Soldador"},{icon:"⚙️",n:"Herrería & Rejas"},{icon:"🚪",n:"Portones automáticos"}]},
   { id:"instalaciones", nombre:"Instalaciones", icon:"⚡", color:"rgba(255,200,50,0.08)",
     subs:[{icon:"🔧",n:"Plomero"},{icon:"⚡",n:"Electricista"},{icon:"🔥",n:"Gasista matriculado"},{icon:"❄️",n:"Aire acondicionado"},{icon:"🌡️",n:"Calefacción"},{icon:"🚨",n:"Instalador de alarmas"},{icon:"📹",n:"Cámaras de seguridad"},{icon:"📡",n:"Antenas & Internet"},{icon:"🚿",n:"Termotanque"}]},
   { id:"terminaciones", nombre:"Terminaciones & Acabados", icon:"🎨", color:"rgba(180,74,212,0.08)",
@@ -65,7 +67,9 @@ const CATEGORIAS = [
   { id:"profesionales", nombre:"Profesionales Matriculados", icon:"📐", color:"rgba(212,180,74,0.08)",
     subs:[{icon:"📐",n:"Agrimensor"},{icon:"🏛️",n:"Arquitecto"},{icon:"🏗️",n:"Ingeniero civil"},{icon:"⚡",n:"Electricista matriculado"},{icon:"🔥",n:"Técnico en gas mat."},{icon:"🧮",n:"Contador"},{icon:"⚖️",n:"Abogado"},{icon:"📦",n:"Despachante de aduana"},{icon:"🏢",n:"Escribano"},{icon:"🩺",n:"Médico a domicilio"}]},
   { id:"tramites", nombre:"Gestores & Trámites", icon:"📋", color:"rgba(100,200,150,0.08)",
-    subs:[{icon:"🚗",n:"Gestor de autos"},{icon:"🛂",n:"Gestor de ciudadanía"},{icon:"✈️",n:"Gestor de visas"},{icon:"🏠",n:"Gestor inmobiliario"},{icon:"📄",n:"Gestor de herencias"},{icon:"🏛️",n:"Trámites judiciales"},{icon:"💼",n:"Gestor comercial"},{icon:"🌐",n:"Apostillas & legalizaciones"},{icon:"📋",n:"Trámites ANSES / AFIP"},{icon:"🎓",n:"Reconocimiento de títulos"}]},
+    subs:[{icon:"🚗",n:"Gestor de autos"},{icon:"🛂",n:"Gestor de ciudadanía"},{icon:"✈️",n:"Gestor de visas"},{icon:"🏠",n:"Gestor inmobiliario"},{icon:"🏛️",n:"Trámites judiciales"},{icon:"📋",n:"Trámites ANSES / AFIP"},{icon:"🎓",n:"Reconocimiento de títulos"}]},
+  { id:"digital", nombre:"Diseño & Digital", icon:"💻", color:"rgba(130,100,255,0.08)",
+    subs:[{icon:"🎨",n:"Diseñador gráfico"},{icon:"🌐",n:"Diseño web"},{icon:"📱",n:"Diseño de app"},{icon:"📱",n:"Community manager"},{icon:"📸",n:"Fotógrafo profesional"},{icon:"🎬",n:"Editor de video"},{icon:"✍️",n:"Redactor & copywriter"},{icon:"📊",n:"Marketing digital"},{icon:"🤖",n:"Automatizaciones & IA"}]},
   { id:"mascotas", nombre:"Mascotas", icon:"🐾", color:"rgba(212,74,120,0.08)",
     subs:[{icon:"🐾",n:"Paseador de perros"},{icon:"🐶",n:"Peluquero canino"},{icon:"🐱",n:"Veterinario a domicilio"},{icon:"🛁",n:"Baño y peluquería canina"},{icon:"🏠",n:"Guardería de mascotas"},{icon:"🐕",n:"Adiestramiento canino"}]},
   { id:"bienestar", nombre:"Belleza & Bienestar", icon:"✨", color:"rgba(212,74,180,0.08)",
@@ -75,48 +79,40 @@ const CATEGORIAS = [
 ];
 
 const PROFESIONALES = [
-  { id:1, nombre:"Carlos M.", oficio:"Electricista", zona:"Palermo",     rating:4.9, trabajos:87,  verificado:true,  estado:"activo",    foto:null, email:"carlos@mail.com", tel:"+54 11 4444-1111", dni:"28.333.444", fecha:"10/03/2025" },
-  { id:2, nombre:"Ana R.",    oficio:"Pintora",      zona:"Belgrano",    rating:5.0, trabajos:134, verificado:true,  estado:"activo",    foto:null, email:"ana@mail.com",    tel:"+54 11 5555-2222", dni:"32.111.222", fecha:"08/03/2025" },
-  { id:3, nombre:"Marcos T.", oficio:"Plomero",      zona:"Caballito",   rating:4.8, trabajos:62,  verificado:false, estado:"pendiente", foto:null, email:"marcos@mail.com", tel:"+54 11 6666-3333", dni:"35.777.888", fecha:"15/03/2025" },
-  { id:4, nombre:"Laura G.",  oficio:"Limpieza",     zona:"Villa Crespo",rating:4.9, trabajos:210, verificado:false, estado:"pendiente", foto:null, email:"laura@mail.com",  tel:"+54 11 7777-4444", dni:"29.555.666", fecha:"16/03/2025" },
-  { id:5, nombre:"Diego F.",  oficio:"Gasista",      zona:"Flores",      rating:0,   trabajos:0,   verificado:false, estado:"rechazado", foto:null, email:"diego@mail.com",  tel:"+54 11 8888-5555", dni:"40.123.456", fecha:"12/03/2025" },
+  { id:1, nombre:"Carlos M.", oficios:["Electricista"], zona:"Palermo", rating:4.9, trabajos:87, verificado:true, estado:"activo", foto:null, email:"carlos@mail.com", tel:"+54 11 4444-1111", dni:"28.333.444", fecha:"10/03/2025" },
+  { id:2, nombre:"Ana R.",    oficios:["Pintora"],      zona:"Belgrano", rating:5.0, trabajos:134, verificado:true, estado:"activo", foto:null, email:"ana@mail.com", tel:"+54 11 5555-2222", dni:"32.111.222", fecha:"08/03/2025" },
+  { id:3, nombre:"Marcos T.", oficios:["Plomero"],      zona:"Caballito", rating:4.8, trabajos:62, verificado:false, estado:"pendiente", foto:null, email:"marcos@mail.com", tel:"+54 11 6666-3333", dni:"35.777.888", fecha:"15/03/2025" },
+  { id:4, nombre:"Laura G.",  oficios:["Limpieza"],     zona:"Villa Crespo", rating:4.9, trabajos:210, verificado:false, estado:"pendiente", foto:null, email:"laura@mail.com", tel:"+54 11 7777-4444", dni:"29.555.666", fecha:"16/03/2025" },
 ];
 
 const NOTIFICACIONES = [
-  { id:1, tipo:"urgente", titulo:"Nuevo pedido: Electricista en Palermo", desc:"Un vecino necesita revisión del tablero hoy. Presupuesto estimado $8.000", tiempo:"hace 5 min",  rubro:"Electricista" },
-  { id:2, tipo:"normal",  titulo:"Pedido: Instalación de luces LED",       desc:"Departamento en Belgrano. Flexible en horario.",                          tiempo:"hace 1 hora", rubro:"Electricista" },
-  { id:3, tipo:"normal",  titulo:"Pedido: Reparación tomacorriente",        desc:"Casa en Villa Urquiza. 3 tomacorrientes quemados.",                       tiempo:"hace 3 horas",rubro:"Electricista" },
+  { id:1, tipo:"urgente", titulo:"Nuevo pedido: Electricista en Palermo", desc:"Un vecino necesita revisión del tablero hoy. Presupuesto estimado $8.000", tiempo:"hace 5 min", rubro:"Electricista" },
+  { id:2, tipo:"normal",  titulo:"Pedido: Instalación de luces LED", desc:"Departamento en Belgrano. Flexible en horario.", tiempo:"hace 1 hora", rubro:"Electricista" },
+  { id:3, tipo:"normal",  titulo:"Pedido: Reparación tomacorriente", desc:"Casa en Villa Urquiza. 3 tomacorrientes quemados.", tiempo:"hace 3 horas", rubro:"Electricista" },
 ];
 
 const PEDIDOS_ADMIN = [
-  { id:1, cliente:"Martín L.",  oficio:"Plomero",      zona:"Palermo",  desc:"Pérdida en baño urgente",  fecha:"hoy 10:30", estado:"activo"  },
-  { id:2, cliente:"Sofía P.",   oficio:"Electricista", zona:"Belgrano", desc:"Tablero sin luz en cocina", fecha:"hoy 09:15", estado:"activo"  },
-  { id:3, cliente:"Roberto K.", oficio:"Pintor",       zona:"Caballito",desc:"3 ambientes a pintar",      fecha:"ayer",      estado:"cerrado" },
+  { id:1, cliente:"Martín L.", oficio:"Plomero", zona:"Palermo", desc:"Pérdida en baño urgente", fecha:"hoy 10:30", estado:"activo" },
+  { id:2, cliente:"Sofía P.",  oficio:"Electricista", zona:"Belgrano", desc:"Tablero sin luz en cocina", fecha:"hoy 09:15", estado:"activo" },
+  { id:3, cliente:"Roberto K.",oficio:"Pintor", zona:"Caballito", desc:"3 ambientes a pintar", fecha:"ayer", estado:"cerrado" },
 ];
-
-const CHAT_INIT = {
-  1: [
-    { id:1, de:"pro",    texto:"Hola! Vi tu pedido. ¿Para qué día necesitás la revisión del tablero?", hora:"10:32" },
-    { id:2, de:"cliente",texto:"Buenas! Idealmente hoy a la tarde, si podés.",                          hora:"10:35" },
-    { id:3, de:"pro",    texto:"A las 17hs te queda bien? ¿Cuál es la dirección?",                      hora:"10:36" },
-  ],
-  2: [{ id:1, de:"pro", texto:"Hola, te contacto por el trabajo de luces LED.", hora:"09:15" }],
-};
 
 const RESPUESTAS = ["Perfecto, te confirmo enseguida.","Dale, sin problema!","¿Me podés mandar la dirección exacta?","Listo, quedamos así entonces.","Anotado, hasta el miércoles!"];
 
+// ─── Avatar ───
 const Avatar = ({ foto, nombre, size=46, fontSize=18 }) => {
   const iniciales = nombre ? nombre.split(" ").map(n=>n[0]).slice(0,2).join("").toUpperCase() : "?";
   return (
-    <div style={{ width:size, height:size, borderRadius:"50%", background:"rgba(74,143,212,0.15)", border:`2px solid rgba(74,143,212,0.3)`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, overflow:"hidden" }}>
-      {foto ? <img src={foto} alt={nombre} style={{ width:"100%", height:"100%", objectFit:"cover" }}/> : <span style={{ fontSize:fontSize*0.6, color:"#6cb3f5", fontWeight:600 }}>{iniciales}</span>}
+    <div style={{ width:size, height:size, borderRadius:"50%", background:"rgba(74,143,212,0.15)", border:"2px solid rgba(74,143,212,0.3)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, overflow:"hidden" }}>
+      {foto ? <img src={foto} alt={nombre} style={{ width:"100%", height:"100%", objectFit:"cover" }}/> : <span style={{ fontSize:size*0.35, color:"#6cb3f5", fontWeight:600 }}>{iniciales}</span>}
     </div>
   );
 };
 
+// ─── Buttons ───
 const PrimaryBtn = ({ children, onClick, disabled=false, style={} }) => (
   <button onClick={onClick} disabled={disabled}
-    style={{ background:`linear-gradient(135deg,#4a8fd4,#1e4d82)`, border:"none", color:"#ffffff", padding:"16px 24px", borderRadius:13, fontFamily:F.sans, fontSize:15, fontWeight:600, cursor:disabled?"not-allowed":"pointer", width:"100%", boxShadow:"0 8px 32px rgba(74,143,212,0.25)", transition:"all .22s", opacity:disabled?0.5:1, ...style }}
+    style={{ background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:"16px 24px", borderRadius:13, fontFamily:F.sans, fontSize:15, fontWeight:600, cursor:disabled?"not-allowed":"pointer", width:"100%", boxShadow:"0 8px 32px rgba(74,143,212,0.25)", transition:"all .22s", opacity:disabled?0.5:1, ...style }}
     onMouseEnter={e=>{ if(!disabled) e.currentTarget.style.transform="translateY(-2px)"; }}
     onMouseLeave={e=>{ e.currentTarget.style.transform="translateY(0)"; }}
   >{children}</button>
@@ -152,7 +148,7 @@ const Sel = ({ value, onChange, children, style={} }) => (
   >{children}</select>
 );
 
-// ─── Nav recibe clienteData como prop ───
+// ─── Nav ───
 const Nav = ({ setVista, noLeidas, clienteData, onCerrarSesion, onIniciarSesion }) => (
   <nav style={{ position:"sticky", top:0, zIndex:100, background:"rgba(6,13,26,0.92)", backdropFilter:"blur(12px)", borderBottom:"1px solid rgba(74,143,212,0.15)", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px" }}>
     <div onClick={()=>setVista("inicio")} style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
@@ -169,11 +165,37 @@ const Nav = ({ setVista, noLeidas, clienteData, onCerrarSesion, onIniciarSesion 
         : <button onClick={onIniciarSesion} style={{ background:"rgba(74,143,212,0.12)", border:"1px solid rgba(74,143,212,0.3)", color:"#6cb3f5", padding:"7px 10px", borderRadius:8, fontFamily:F.sans, fontSize:12, cursor:"pointer" }}>Iniciar sesión</button>
       }
       <button onClick={()=>setVista("planes")} style={{ background:"transparent", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"7px 10px", borderRadius:8, fontFamily:F.sans, fontSize:12, cursor:"pointer" }}>Planes</button>
-      <button onClick={()=>setVista("admin")} style={{ background:"rgba(74,143,212,0.1)", border:"1px solid rgba(74,143,212,0.15)", color:"#4a8fd4", padding:"7px 10px", borderRadius:8, fontFamily:F.sans, fontSize:13, cursor:"pointer" }}>⚙️</button>
     </div>
   </nav>
 );
 
+// ─── PIN Admin ───
+const PinPopup = ({ onSuccess, onClose }) => {
+  const [pin, setPin] = useState("");
+  const [err, setErr] = useState(false);
+  const check = () => {
+    if (pin === ADMIN_PIN) { onSuccess(); }
+    else { setErr(true); setPin(""); setTimeout(()=>setErr(false), 1500); }
+  };
+  return (
+    <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 24px" }}>
+      <div className="mod" style={{ background:"#0d1f35", borderRadius:20, padding:"36px 28px", maxWidth:320, width:"100%", border:"1px solid rgba(74,143,212,0.3)", textAlign:"center" }}>
+        <div style={{ fontSize:40, marginBottom:16 }}>🔐</div>
+        <h3 style={{ fontFamily:F.serif, fontSize:22, fontWeight:400, color:"#ffffff", marginBottom:8 }}>Panel Admin</h3>
+        <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:24, fontWeight:300 }}>Ingresá tu PIN para continuar</p>
+        <input type="password" maxLength={4} value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&check()} placeholder="• • • •"
+          style={{ width:"100%", background:"#060d1a", border:`1px solid ${err?"#f87171":"rgba(74,143,212,0.3)"}`, color:"#ffffff", padding:"16px", borderRadius:12, fontFamily:F.sans, fontSize:24, textAlign:"center", letterSpacing:8, marginBottom:16, transition:"border .2s" }}/>
+        {err && <p style={{ color:"#f87171", fontSize:13, marginBottom:12 }}>PIN incorrecto</p>}
+        <div style={{ display:"flex", gap:10 }}>
+          <button onClick={onClose} style={{ flex:1, background:"transparent", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:12, borderRadius:10, fontFamily:F.sans, fontSize:14, cursor:"pointer" }}>Cancelar</button>
+          <button onClick={check} style={{ flex:2, background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:12, borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer" }}>Ingresar →</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── TyC ───
 const TyCPopup = ({ onAccept, onClose }) => (
   <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
     <div className="mod" style={{ background:"#0d1f35", borderRadius:"20px 20px 0 0", padding:"28px 24px 36px", maxWidth:480, width:"100%", border:"1px solid rgba(74,143,212,0.15)", maxHeight:"85vh", display:"flex", flexDirection:"column" }}>
@@ -183,11 +205,11 @@ const TyCPopup = ({ onAccept, onClose }) => (
       </div>
       <div style={{ overflowY:"auto", flex:1, paddingRight:4, marginBottom:20 }}>
         {[
-          ["1. Uso de la plataforma","Nexo es una plataforma de conexión entre clientes y profesionales. No somos empleadores ni garantizamos la relación laboral entre las partes."],
-          ["2. Verificación de identidad","Para operar como profesional en Nexo, debés completar el proceso de verificación de identidad y aceptar que nuestro equipo valide tus datos manualmente."],
-          ["3. Responsabilidad","Sos responsable de la calidad y resultados de los trabajos que ofrecés."],
-          ["4. Pagos","Durante el período de lanzamiento, Nexo es gratuito. Los planes se activarán con anticipación por mail."],
-          ["5. Privacidad","Tus datos serán tratados conforme a la Ley 25.326 de Protección de Datos Personales de Argentina."],
+          ["1. Uso","Nexo conecta clientes con profesionales. No somos empleadores ni garantizamos la relación laboral."],
+          ["2. Verificación","Debés completar verificación de identidad para operar como profesional."],
+          ["3. Responsabilidad","Sos responsable de la calidad de tus servicios."],
+          ["4. Pagos","Durante el lanzamiento Nexo es gratuito. Los planes se comunicarán por mail."],
+          ["5. Privacidad","Tus datos se tratan conforme a la Ley 25.326 de Argentina."],
         ].map(([t,c])=>(
           <div key={t} style={{ marginBottom:16 }}>
             <div style={{ fontWeight:600, fontSize:13, color:"#6cb3f5", marginBottom:4 }}>{t}</div>
@@ -203,12 +225,12 @@ const TyCPopup = ({ onAccept, onClose }) => (
   </div>
 );
 
+// ─── Registro Cliente ───
 const RegistroClientePopup = ({ onClose, onSuccess }) => {
   const [nombre, setNombre] = useState("");
   const [email,  setEmail]  = useState("");
   const [tel,    setTel]    = useState("");
   const [err,    setErr]    = useState({});
-
   const validar = () => {
     const e = {};
     if (!nombre.trim()) e.nombre="Campo requerido";
@@ -217,7 +239,6 @@ const RegistroClientePopup = ({ onClose, onSuccess }) => {
     setErr(e);
     return Object.keys(e).length===0;
   };
-
   return (
     <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
       <div className="mod" style={{ background:"#0d1f35", borderRadius:"20px 20px 0 0", padding:"28px 24px 36px", maxWidth:480, width:"100%", border:"1px solid rgba(74,143,212,0.15)" }}>
@@ -225,7 +246,7 @@ const RegistroClientePopup = ({ onClose, onSuccess }) => {
           <h3 style={{ fontFamily:F.serif, fontSize:22, fontWeight:400, color:"#ffffff" }}>Registrate para continuar</h3>
           <button onClick={onClose} style={{ background:"none", border:"none", color:"#8a9bb0", fontSize:22, cursor:"pointer" }}>×</button>
         </div>
-        <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20, fontWeight:300 }}>Necesitamos saber quién sos para que los profesionales puedan contactarte.</p>
+        <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20, fontWeight:300 }}>Necesitamos saber quién sos para conectarte con los profesionales.</p>
         <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
           <div><Lbl>NOMBRE COMPLETO</Lbl><Inp placeholder="Ej: Martín López" value={nombre} onChange={e=>setNombre(e.target.value)} err={err.nombre}/></div>
           <div><Lbl>EMAIL</Lbl><Inp type="email" placeholder="tu@mail.com" value={email} onChange={e=>setEmail(e.target.value)} err={err.email}/></div>
@@ -240,28 +261,27 @@ const RegistroClientePopup = ({ onClose, onSuccess }) => {
   );
 };
 
+// ─── Calificar ───
 const CalificarPopup = ({ nombre, onClose }) => {
-  const [stars,  setStars]   = useState(0);
-  const [hover,  setHover]   = useState(0);
-  const [com,    setCom]     = useState("");
-  const [enviado,setEnviado] = useState(false);
-
-  if (enviado) return (
+  const [stars, setStars]   = useState(0);
+  const [hover, setHover]   = useState(0);
+  const [com,   setCom]     = useState("");
+  const [ok,    setOk]      = useState(false);
+  if (ok) return (
     <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 24px" }}>
       <div className="mod" style={{ background:"#0d1f35", borderRadius:20, padding:"40px 28px", maxWidth:380, width:"100%", textAlign:"center" }}>
         <div style={{ fontSize:52, marginBottom:16 }}>⭐</div>
-        <h3 style={{ fontFamily:F.serif, fontSize:24, marginBottom:8, color:"#ffffff" }}>¡Gracias por calificar!</h3>
-        <p style={{ color:"#b0c4d8", fontSize:14, marginBottom:24, fontWeight:300 }}>Tu opinión ayuda a toda la comunidad Nexo.</p>
+        <h3 style={{ fontFamily:F.serif, fontSize:24, color:"#ffffff", marginBottom:8 }}>¡Gracias por calificar!</h3>
+        <p style={{ color:"#b0c4d8", fontSize:14, marginBottom:24 }}>Tu opinión ayuda a toda la comunidad Nexo.</p>
         <PrimaryBtn onClick={onClose}>Cerrar</PrimaryBtn>
       </div>
     </div>
   );
-
   return (
     <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
       <div className="mod" style={{ background:"#0d1f35", borderRadius:"20px 20px 0 0", padding:"28px 24px 36px", maxWidth:480, width:"100%" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-          <h3 style={{ fontFamily:F.serif, fontSize:22, fontWeight:400, color:"#ffffff" }}>Calificar a {nombre}</h3>
+          <h3 style={{ fontFamily:F.serif, fontSize:22, color:"#ffffff" }}>Calificar a {nombre}</h3>
           <button onClick={onClose} style={{ background:"none", border:"none", color:"#8a9bb0", fontSize:22, cursor:"pointer" }}>×</button>
         </div>
         <div style={{ display:"flex", gap:8, justifyContent:"center", marginBottom:16 }}>
@@ -274,14 +294,15 @@ const CalificarPopup = ({ nombre, onClose }) => {
         <div style={{ marginBottom:20 }}>
           <Lbl>COMENTARIO (OPCIONAL)</Lbl>
           <textarea value={com} onChange={e=>setCom(e.target.value)} placeholder="Contá cómo fue el trabajo..."
-            style={{ width:"100%", marginTop:8, background:"#060d1a", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"13px 16px", borderRadius:10, fontFamily:F.sans, fontSize:14, resize:"none", minHeight:80, lineHeight:1.6 }}/>
+            style={{ width:"100%", marginTop:8, background:"#060d1a", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"13px 16px", borderRadius:10, fontFamily:F.sans, fontSize:14, resize:"none", minHeight:80 }}/>
         </div>
-        <PrimaryBtn onClick={()=>stars>0&&setEnviado(true)} style={{ opacity:stars===0?0.4:1 }}>Enviar calificación</PrimaryBtn>
+        <PrimaryBtn onClick={()=>stars>0&&setOk(true)} style={{ opacity:stars===0?0.4:1 }}>Enviar calificación</PrimaryBtn>
       </div>
     </div>
   );
 };
 
+// ─── Notif Popup ───
 const NotifPopup = ({ notif, onClose, onPostular }) => (
   <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"center", justifyContent:"center", padding:"0 24px" }}>
     <div className="mod" style={{ background:"#0d1f35", borderRadius:20, padding:"28px 24px", maxWidth:400, width:"100%" }}>
@@ -290,8 +311,8 @@ const NotifPopup = ({ notif, onClose, onPostular }) => (
           <span>🔴</span><span style={{ fontSize:12, color:"#f87171", fontWeight:600 }}>PEDIDO URGENTE</span>
         </div>
       )}
-      <h3 style={{ fontFamily:F.serif, fontSize:20, fontWeight:400, marginBottom:8, color:"#ffffff" }}>{notif.titulo}</h3>
-      <p style={{ color:"#b0c4d8", fontSize:14, lineHeight:1.6, marginBottom:18, fontWeight:300 }}>{notif.desc}</p>
+      <h3 style={{ fontFamily:F.serif, fontSize:20, color:"#ffffff", marginBottom:8 }}>{notif.titulo}</h3>
+      <p style={{ color:"#b0c4d8", fontSize:14, lineHeight:1.6, marginBottom:18 }}>{notif.desc}</p>
       <div style={{ display:"flex", gap:10 }}>
         <button onClick={onClose} style={{ flex:1, background:"transparent", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"13px", borderRadius:10, fontFamily:F.sans, fontSize:14, cursor:"pointer" }}>Ignorar</button>
         <button onClick={onPostular} style={{ flex:2, background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:"13px", borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer" }}>Postularme →</button>
@@ -300,16 +321,24 @@ const NotifPopup = ({ notif, onClose, onPostular }) => (
   </div>
 );
 
-const ChatView = ({ pro, initMsgs, onClose }) => {
-  const [msgs,   setMsgs]   = useState(initMsgs||[]);
+// ─── Chat ───
+const ChatView = ({ pro, onClose, clienteNombre }) => {
+  const [msgs,   setMsgs]   = useState([
+    { id:1, de:"pro", texto:`Hola${clienteNombre?" "+clienteNombre.split(" ")[0]:""}! Vi tu pedido. ¿Cuándo necesitás que pase?`, hora:"ahora" },
+  ]);
   const [texto,  setTexto]  = useState("");
+  const [presupuesto, setPres] = useState("");
   const [typing, setTyping] = useState(false);
-  const bottomRef           = useRef(null);
+  const [showPres, setShowPres] = useState(false);
+  const bottomRef = useRef(null);
+
   useEffect(()=>{ bottomRef.current?.scrollIntoView({ behavior:"smooth" }); },[msgs,typing]);
-  const send = () => {
-    if (!texto.trim()) return;
+
+  const send = (txt) => {
+    const t = txt || texto;
+    if (!t.trim()) return;
     const hora = new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
-    setMsgs(p=>[...p,{ id:Date.now(), de:"cliente", texto:texto.trim(), hora }]);
+    setMsgs(p=>[...p,{ id:Date.now(), de:"cliente", texto:t.trim(), hora }]);
     setTexto("");
     setTyping(true);
     setTimeout(()=>{
@@ -317,20 +346,29 @@ const ChatView = ({ pro, initMsgs, onClose }) => {
       setMsgs(p=>[...p,{ id:Date.now()+1, de:"pro", texto:RESPUESTAS[Math.floor(Math.random()*RESPUESTAS.length)], hora:new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}) }]);
     },1800);
   };
+
+  const enviarPresupuesto = () => {
+    if (!presupuesto.trim()) return;
+    send(`💰 Presupuesto: $${presupuesto}`);
+    setPres("");
+    setShowPres(false);
+  };
+
   return (
     <div className="chat" style={{ position:"fixed", inset:0, background:"#060d1a", zIndex:200, display:"flex", flexDirection:"column", maxWidth:480, margin:"0 auto" }}>
       <div style={{ background:"rgba(6,13,26,0.92)", backdropFilter:"blur(12px)", borderBottom:"1px solid rgba(74,143,212,0.15)", padding:"14px 20px", display:"flex", alignItems:"center", gap:14 }}>
         <button onClick={onClose} style={{ background:"none", border:"none", color:"#4a8fd4", fontSize:22, cursor:"pointer" }}>←</button>
-        <Avatar foto={pro.foto} nombre={pro.nombre} size={40} fontSize={16}/>
+        <Avatar foto={pro.foto} nombre={pro.nombre} size={40}/>
         <div style={{ flex:1 }}>
           <div style={{ fontWeight:600, fontSize:15, color:"#ffffff" }}>{pro.nombre} {pro.verificado&&<span style={{fontSize:10,color:"#4a8fd4",background:"rgba(74,143,212,0.12)",padding:"2px 6px",borderRadius:20}}>✓</span>}</div>
-          <div style={{ fontSize:12, color:"#4ade80", marginTop:2 }}>● En línea · {pro.oficio}</div>
+          <div style={{ fontSize:12, color:"#4ade80", marginTop:2 }}>● En línea · {pro.oficios?pro.oficios[0]:pro.oficio}</div>
         </div>
         <div style={{ textAlign:"right" }}>
           <div style={{ fontSize:12, color:"#4a8fd4" }}>★ {pro.rating}</div>
           <div style={{ fontSize:11, color:"#b0c4d8" }}>{pro.trabajos} trabajos</div>
         </div>
       </div>
+
       <div style={{ flex:1, overflowY:"auto", padding:"20px 16px", display:"flex", flexDirection:"column", gap:10 }}>
         {msgs.map(m=>(
           <div key={m.id} style={{ display:"flex", flexDirection:"column", alignItems:m.de==="cliente"?"flex-end":"flex-start" }}>
@@ -345,21 +383,33 @@ const ChatView = ({ pro, initMsgs, onClose }) => {
         )}
         <div ref={bottomRef}/>
       </div>
+
+      {showPres && (
+        <div style={{ background:"#0d1f35", borderTop:"1px solid rgba(74,143,212,0.15)", padding:"12px 16px", display:"flex", gap:10 }}>
+          <input value={presupuesto} onChange={e=>setPres(e.target.value)} placeholder="Monto del presupuesto..."
+            style={{ flex:1, background:"#060d1a", border:"1px solid rgba(74,143,212,0.3)", color:"#ffffff", padding:"10px 14px", borderRadius:10, fontFamily:F.sans, fontSize:14 }}/>
+          <button onClick={enviarPresupuesto} style={{ background:"linear-gradient(135deg,#4ade80,#22c55e)", border:"none", color:"#ffffff", padding:"10px 16px", borderRadius:10, fontFamily:F.sans, fontSize:13, fontWeight:600, cursor:"pointer" }}>Enviar $</button>
+          <button onClick={()=>setShowPres(false)} style={{ background:"none", border:"none", color:"#8a9bb0", fontSize:20, cursor:"pointer" }}>×</button>
+        </div>
+      )}
+
       <div style={{ background:"rgba(6,13,26,0.92)", borderTop:"1px solid rgba(74,143,212,0.15)", padding:"14px 16px", display:"flex", gap:10, alignItems:"flex-end" }}>
+        <button onClick={()=>setShowPres(!showPres)} style={{ width:40, height:40, borderRadius:10, background:"rgba(74,212,120,0.12)", border:"1px solid rgba(74,212,120,0.3)", color:"#4ade80", fontSize:18, cursor:"pointer", flexShrink:0 }}>💰</button>
         <textarea value={texto} onChange={e=>setTexto(e.target.value)} onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); send(); }}} placeholder="Escribí un mensaje..." rows={1}
           style={{ flex:1, background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"12px 16px", borderRadius:12, fontFamily:F.sans, fontSize:14, resize:"none", lineHeight:1.5, maxHeight:100 }}/>
-        <button onClick={send} disabled={!texto.trim()} style={{ width:46, height:46, borderRadius:12, background:texto.trim()?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"rgba(74,143,212,0.1)", border:"none", cursor:texto.trim()?"pointer":"default", fontSize:20, flexShrink:0, color:"#ffffff" }}>➤</button>
+        <button onClick={()=>send()} disabled={!texto.trim()} style={{ width:46, height:46, borderRadius:12, background:texto.trim()?"linear-gradient(135deg,#4a8fd4,#1e4d82)":"rgba(74,143,212,0.1)", border:"none", cursor:texto.trim()?"pointer":"default", fontSize:20, flexShrink:0, color:"#ffffff" }}>➤</button>
       </div>
     </div>
   );
 };
 
+// ─── Panel Profesional ───
 const PanelProfesional = ({ onClose }) => {
   const [tab, setTab] = useState("postulaciones");
   const postulaciones = [
     { id:1, titulo:"Revisión de tablero - Palermo", cliente:"Martín L.", fecha:"hoy 10:30", estado:"pendiente", presupuesto:"$8.000" },
     { id:2, titulo:"Instalación luces LED - Belgrano", cliente:"Sofía P.", fecha:"hoy 09:00", estado:"aceptado", presupuesto:"$12.000" },
-    { id:3, titulo:"Reparación tomacorriente - Villa Urquiza", cliente:"Roberto K.", fecha:"ayer", estado:"finalizado", presupuesto:"$4.500" },
+    { id:3, titulo:"Reparación tomacorriente", cliente:"Roberto K.", fecha:"ayer", estado:"finalizado", presupuesto:"$4.500" },
   ];
   const pedidosDisponibles = [
     { id:4, titulo:"Urgente: corte de luz en PH", zona:"Palermo", presupuesto:"$6.000-$10.000", tiempo:"hace 10 min" },
@@ -372,8 +422,8 @@ const PanelProfesional = ({ onClose }) => {
       <div style={{ background:"rgba(6,13,26,0.92)", backdropFilter:"blur(12px)", borderBottom:"1px solid rgba(74,143,212,0.15)", padding:"14px 20px", display:"flex", alignItems:"center", gap:14 }}>
         <button onClick={onClose} style={{ background:"none", border:"none", color:"#4a8fd4", fontSize:22, cursor:"pointer" }}>←</button>
         <div style={{ flex:1 }}>
-          <div style={{ fontWeight:600, fontSize:16, color:"#ffffff" }}>Mi panel</div>
-          <div style={{ fontSize:12, color:"#4ade80", marginTop:2 }}>● Modo profesional activo</div>
+          <div style={{ fontWeight:600, fontSize:16, color:"#ffffff" }}>Mi panel profesional</div>
+          <div style={{ fontSize:12, color:"#4ade80", marginTop:2 }}>● Activo</div>
         </div>
       </div>
       <div style={{ display:"flex", gap:6, margin:"16px 16px 0", background:"#0d1f35", padding:4, borderRadius:10 }}>
@@ -398,21 +448,27 @@ const PanelProfesional = ({ onClose }) => {
             </div>
           </div>
         ))}
-        {tab==="disponibles" && pedidosDisponibles.map(p=>(
-          <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:14, padding:16, marginBottom:10 }}>
-            <div style={{ fontWeight:600, fontSize:14, color:"#ffffff", marginBottom:6 }}>{p.titulo}</div>
-            <div style={{ fontSize:12, color:"#b0c4d8", marginBottom:10 }}>📍 {p.zona} · {p.tiempo}</div>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              <span style={{ fontSize:13, color:"#4a8fd4", fontWeight:600 }}>{p.presupuesto}</span>
-              <button style={{ background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:"8px 16px", borderRadius:8, fontFamily:F.sans, fontSize:12, fontWeight:600, cursor:"pointer" }}>Postularme →</button>
-            </div>
+        {tab==="disponibles" && (
+          <div>
+            <p style={{ fontSize:13, color:"#b0c4d8", marginBottom:12, fontWeight:300 }}>Podés postularte a cualquier pedido, sin importar la zona</p>
+            {pedidosDisponibles.map(p=>(
+              <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:14, padding:16, marginBottom:10 }}>
+                <div style={{ fontWeight:600, fontSize:14, color:"#ffffff", marginBottom:6 }}>{p.titulo}</div>
+                <div style={{ fontSize:12, color:"#b0c4d8", marginBottom:10 }}>📍 {p.zona} · {p.tiempo}</div>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  <span style={{ fontSize:13, color:"#4a8fd4", fontWeight:600 }}>{p.presupuesto}</span>
+                  <button style={{ background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:"8px 16px", borderRadius:8, fontFamily:F.sans, fontSize:12, fontWeight:600, cursor:"pointer" }}>Postularme →</button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
 };
 
+// ─── APP ───
 export default function App() {
   const [vista,       setVista]      = useState("inicio");
   const [catAbierta,  setCatAbierta] = useState(null);
@@ -429,6 +485,8 @@ export default function App() {
   const [apOficio,    setApOficio]   = useState("");
   const [apZona,      setApZona]     = useState("");
   const [apEmail,     setApEmail]    = useState("");
+  const [showPin,     setShowPin]    = useState(false);
+  const [adminOk,     setAdminOk]    = useState(false);
 
   const [leidas,      setLeidas]     = useState([]);
   const [postulados,  setPostulados] = useState([]);
@@ -446,13 +504,14 @@ export default function App() {
   const [chat,        setChat]       = useState(null);
   const [showPanel,   setShowPanel]  = useState(false);
 
-  const [rNombre, setRNombre] = useState("");
-  const [rEmail,  setREmail]  = useState("");
-  const [rTel,    setRTel]    = useState("");
-  const [rZona,   setRZona]   = useState("");
-  const [rCat,    setRCat]    = useState(0);
-  const [rFotoUrl,setRFotoUrl]= useState(null);
-  const [rErr,    setRErr]    = useState({});
+  const [rNombre,  setRNombre]  = useState("");
+  const [rEmail,   setREmail]   = useState("");
+  const [rTel,     setRTel]     = useState("");
+  const [rZona,    setRZona]    = useState("");
+  const [rCat,     setRCat]     = useState(0);
+  const [rOficios, setROficios] = useState([]);
+  const [rFotoUrl, setRFotoUrl] = useState(null);
+  const [rErr,     setRErr]     = useState({});
 
   const activos    = pros.filter(p=>p.estado==="activo");
   const pendientes = pros.filter(p=>p.estado==="pendiente");
@@ -463,7 +522,7 @@ export default function App() {
     : CATEGORIAS;
 
   const prosFiltrados = adminSearch.trim()
-    ? pros.filter(p=>p.nombre.toLowerCase().includes(adminSearch.toLowerCase())||p.oficio.toLowerCase().includes(adminSearch.toLowerCase()))
+    ? pros.filter(p=>p.nombre.toLowerCase().includes(adminSearch.toLowerCase())||(p.oficios||[p.oficio]).join(" ").toLowerCase().includes(adminSearch.toLowerCase()))
     : pros;
 
   const elegirOficio = nombre => { setOficio(nombre); setVista("buscar"); setCatAbierta(null); };
@@ -474,7 +533,7 @@ export default function App() {
   };
 
   const onClienteRegistrado = async data => {
-    await supabase.from('clientes').insert([{ nombre:data.nombre, email:data.email, telefono:data.telefono }]);
+    await supabase.from('clientes').insert([{ nombre:data.nombre, email:data.email, telefono:data.tel }]);
     setClienteData(data);
     setShowRegCliente(false);
     if (pendingNav) { setVista(pendingNav); setPendingNav(null); }
@@ -485,9 +544,10 @@ export default function App() {
   const verificarPro = id => setPros(p=>p.map(x=>x.id===id?{...x,verificado:true,estado:"activo"}:x));
   const rechazarPro  = id => setPros(p=>p.map(x=>x.id===id?{...x,verificado:false,estado:"rechazado"}:x));
 
-  const handleFoto = e => {
-    const file = e.target.files[0];
-    if (file) setRFotoUrl(URL.createObjectURL(file));
+  const handleFoto = e => { const f=e.target.files[0]; if(f) setRFotoUrl(URL.createObjectURL(f)); };
+
+  const toggleOficio = oficio => {
+    setROficios(prev => prev.includes(oficio) ? prev.filter(o=>o!==oficio) : [...prev, oficio]);
   };
 
   const validarRegistro = () => {
@@ -517,7 +577,8 @@ export default function App() {
     if (!validarRegistro()) return;
     const { error } = await supabase.from('profesionales').insert([{
       nombre: rNombre, email: rEmail, telefono: rTel, zona: rZona,
-      oficio: CATEGORIAS[rCat].subs[0].n, verificado: false, estado: 'pendiente'
+      oficio: rOficios.length>0 ? rOficios.join(", ") : CATEGORIAS[rCat].subs[0].n,
+      verificado: false, estado: 'pendiente'
     }]);
     if (error) { alert('Error al registrar. Intentá de nuevo.'); return; }
     setVista('planes');
@@ -525,25 +586,24 @@ export default function App() {
 
   const handleAddPro = () => {
     if (!apNombre.trim()||!apOficio.trim()||!apZona.trim()) return;
-    setPros(p=>[...p,{ id:Date.now(), nombre:apNombre, oficio:apOficio, zona:apZona, email:apEmail, rating:0, trabajos:0, verificado:true, estado:"activo", foto:null }]);
+    setPros(p=>[...p,{ id:Date.now(), nombre:apNombre, oficios:[apOficio], zona:apZona, email:apEmail, rating:0, trabajos:0, verificado:true, estado:"activo", foto:null }]);
     setApNombre(""); setApOficio(""); setApZona(""); setApEmail("");
     setShowAddPro(false);
   };
 
-  if (chat) return (<><style>{GS}</style><ChatView pro={chat} initMsgs={CHAT_INIT[chat.id]||[]} onClose={()=>setChat(null)}/></>);
+  const abrirAdmin = () => {
+    if (adminOk) setVista("admin");
+    else setShowPin(true);
+  };
+
+  if (chat) return (<><style>{GS}</style><ChatView pro={chat} onClose={()=>setChat(null)} clienteNombre={clienteData?.nombre}/></>);
   if (showPanel) return (<><style>{GS}</style><PanelProfesional onClose={()=>setShowPanel(false)}/></>);
 
   return (
     <><style>{GS}</style>
     <div style={{ minHeight:"100vh", background:"#060d1a", maxWidth:480, margin:"0 auto", color:"#ffffff" }}>
 
-      <Nav
-        setVista={setVista}
-        noLeidas={noLeidas}
-        clienteData={clienteData}
-        onCerrarSesion={()=>setClienteData(null)}
-        onIniciarSesion={()=>setShowRegCliente(true)}
-      />
+      <Nav setVista={setVista} noLeidas={noLeidas} clienteData={clienteData} onCerrarSesion={()=>setClienteData(null)} onIniciarSesion={()=>setShowRegCliente(true)}/>
 
       {/* INICIO */}
       {vista==="inicio" && (
@@ -585,7 +645,7 @@ export default function App() {
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
               <div>
                 <h2 style={{ fontFamily:F.serif, fontSize:24, fontWeight:400, color:"#ffffff" }}>¿Qué necesitás?</h2>
-                <p style={{ color:"#b0c4d8", fontSize:13, marginTop:4, fontWeight:300 }}>11 categorías · 80+ oficios</p>
+                <p style={{ color:"#b0c4d8", fontSize:13, marginTop:4, fontWeight:300 }}>12 categorías · 90+ oficios</p>
               </div>
               <button onClick={()=>setVista("categorias")} style={{ background:"none", border:"1px solid rgba(74,143,212,0.15)", color:"#4a8fd4", padding:"7px 14px", borderRadius:8, fontSize:13, cursor:"pointer", fontFamily:F.sans }}>Ver todas →</button>
             </div>
@@ -597,7 +657,7 @@ export default function App() {
                   onMouseLeave={e=>{ e.currentTarget.style.background="#0d1f35"; e.currentTarget.style.transform="translateY(0)"; }}
                 >
                   <span style={{ fontSize:24 }}>{cat.icon}</span>
-                  <span style={{ fontSize:10, color:"#ffffff", fontWeight:400, textAlign:"center", lineHeight:1.3 }}>{cat.nombre.split("&")[0].trim()}</span>
+                  <span style={{ fontSize:10, color:"#ffffff", textAlign:"center", lineHeight:1.3 }}>{cat.nombre.split("&")[0].trim()}</span>
                 </button>
               ))}
             </div>
@@ -612,10 +672,10 @@ export default function App() {
                 onMouseEnter={e=>e.currentTarget.style.background="#102540"}
                 onMouseLeave={e=>e.currentTarget.style.background="#0d1f35"}
               >
-                <Avatar foto={p.foto} nombre={p.nombre} size={46} fontSize={18}/>
+                <Avatar foto={p.foto} nombre={p.nombre} size={46}/>
                 <div style={{ flex:1 }}>
                   <div style={{ fontWeight:600, fontSize:15, color:"#ffffff" }}>{p.nombre} {p.verificado&&<span style={{fontSize:11,color:"#4a8fd4",background:"rgba(74,143,212,0.12)",padding:"2px 7px",borderRadius:20}}>✓</span>}</div>
-                  <div style={{ color:"#b0c4d8", fontSize:12, marginTop:2 }}>{p.oficio} · {p.zona}</div>
+                  <div style={{ color:"#b0c4d8", fontSize:12, marginTop:2 }}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
                 </div>
                 <div style={{ textAlign:"right" }}>
                   <div style={{ color:"#4a8fd4", fontWeight:600 }}>★ {p.rating}</div>
@@ -632,7 +692,7 @@ export default function App() {
         <div className="page" style={{ padding:"24px 20px 60px" }}>
           <BackBtn onClick={()=>setVista("inicio")}/>
           <h2 style={{ fontFamily:F.serif, fontSize:28, fontWeight:400, marginBottom:4, color:"#ffffff" }}>Todos los oficios</h2>
-          <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20, fontWeight:300 }}>11 categorías · 80+ profesiones</p>
+          <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20 }}>12 categorías · 90+ profesiones</p>
           <div style={{ position:"relative", marginBottom:22 }}>
             <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", color:"#8a9bb0" }}>🔍</span>
             <input value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Buscar oficio..."
@@ -678,7 +738,7 @@ export default function App() {
           {clienteData && (
             <div style={{ background:"rgba(74,212,120,0.08)", border:"1px solid rgba(74,212,120,0.3)", borderRadius:10, padding:"10px 14px", marginBottom:20, display:"flex", alignItems:"center", gap:8 }}>
               <span style={{color:"#4ade80"}}>✓</span>
-              <span style={{ fontSize:13, color:"#4ade80" }}>Hola, {clienteData.nombre.split(" ")[0]}! Tu pedido quedará registrado a tu nombre.</span>
+              <span style={{ fontSize:13, color:"#4ade80" }}>Hola, {clienteData.nombre.split(" ")[0]}! Tu pedido quedará registrado.</span>
             </div>
           )}
           <h2 style={{ fontFamily:F.serif, fontSize:28, fontWeight:400, marginBottom:6, color:"#ffffff" }}>{oficio||"Publicar pedido"}</h2>
@@ -686,7 +746,7 @@ export default function App() {
           <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
             <div>
               <Lbl>SERVICIO</Lbl>
-              <div onClick={()=>setVista("categorias")} style={{ marginTop:8, background:"#0d1f35", border:"1px solid #4a8fd4", borderRadius:10, padding:"14px 16px", color:"#6cb3f5", fontSize:15, fontWeight:500, cursor:"pointer" }}>
+              <div onClick={()=>setVista("categorias")} style={{ marginTop:8, background:"#0d1f35", border:"1px solid #4a8fd4", borderRadius:10, padding:"14px 16px", color:"#6cb3f5", fontSize:15, cursor:"pointer" }}>
                 {oficio} <span style={{ color:"#b0c4d8", fontWeight:300, fontSize:13 }}>· cambiar</span>
               </div>
             </div>
@@ -727,10 +787,10 @@ export default function App() {
           {activos.slice(0,3).map((p,i)=>(
             <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:14, padding:18, marginBottom:12 }}>
               <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
-                <Avatar foto={p.foto} nombre={p.nombre} size={46} fontSize={18}/>
+                <Avatar foto={p.foto} nombre={p.nombre} size={46}/>
                 <div style={{ flex:1 }}>
                   <div style={{ fontWeight:600, fontSize:15, color:"#ffffff" }}>{p.nombre} {p.verificado&&<span style={{color:"#4a8fd4"}}>✓</span>}</div>
-                  <div style={{ color:"#b0c4d8", fontSize:12 }}>{p.oficio} · ★ {p.rating}</div>
+                  <div style={{ color:"#b0c4d8", fontSize:12 }}>{(p.oficios||[p.oficio]).join(", ")} · ★ {p.rating}</div>
                 </div>
                 <div style={{ fontFamily:F.serif, fontSize:22, fontWeight:700, color:"#4a8fd4" }}>${[8000,12000,6500][i].toLocaleString()}</div>
               </div>
@@ -776,7 +836,7 @@ export default function App() {
       {vista==="registro-pro" && (
         <div className="page" style={{ padding:"32px 24px 60px" }}>
           <BackBtn onClick={()=>setVista("inicio")}/>
-          <h2 style={{ fontFamily:F.serif, fontSize:30, fontWeight:300, marginBottom:8, color:"#ffffff" }}>Sumate como<br/><em style={{color:"#6cb3f5",fontStyle:"italic",fontWeight:300}}>profesional</em></h2>
+          <h2 style={{ fontFamily:F.serif, fontSize:30, fontWeight:300, marginBottom:8, color:"#ffffff" }}>Sumate como<br/><em style={{color:"#6cb3f5",fontStyle:"italic"}}>profesional</em></h2>
           <p style={{ color:"#b0c4d8", fontSize:14, marginBottom:24, fontWeight:300 }}>Empezá gratis. Recibí pedidos en tu zona.</p>
           {tycOk && (
             <div style={{ background:"rgba(74,212,120,0.08)", border:"1px solid rgba(74,212,120,0.3)", borderRadius:10, padding:"10px 14px", marginBottom:20, display:"flex", alignItems:"center", gap:8 }}>
@@ -811,17 +871,24 @@ export default function App() {
               </Sel>
               {rErr.zona && <p style={{ color:"#f87171", fontSize:12, marginTop:4 }}>{rErr.zona}</p>}
             </div>
+            {/* Selección múltiple de oficios */}
             <div>
-              <Lbl>CATEGORÍA</Lbl>
-              <Sel value={rCat} onChange={e=>setRCat(Number(e.target.value))}>
+              <Lbl>CATEGORÍA PRINCIPAL</Lbl>
+              <Sel value={rCat} onChange={e=>{ setRCat(Number(e.target.value)); setROficios([]); }}>
                 {CATEGORIAS.map((c,i)=><option key={c.id} value={i}>{c.icon} {c.nombre}</option>)}
               </Sel>
             </div>
             <div>
-              <Lbl>OFICIO PRINCIPAL</Lbl>
-              <Sel value="" onChange={()=>{}}>
-                {CATEGORIAS[rCat].subs.map(s=><option key={s.n} value={s.n}>{s.icon} {s.n}</option>)}
-              </Sel>
+              <Lbl>OFICIOS (PODÉS ELEGIR VARIOS)</Lbl>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginTop:8 }}>
+                {CATEGORIAS[rCat].subs.map(s=>(
+                  <button key={s.n} onClick={()=>toggleOficio(s.n)}
+                    style={{ padding:"7px 12px", borderRadius:20, border:`1px solid ${rOficios.includes(s.n)?"#4a8fd4":"rgba(74,143,212,0.2)"}`, background:rOficios.includes(s.n)?"rgba(74,143,212,0.2)":"transparent", color:rOficios.includes(s.n)?"#6cb3f5":"#b0c4d8", fontSize:12, cursor:"pointer", transition:"all .2s", fontFamily:F.sans }}>
+                    {s.icon} {s.n}
+                  </button>
+                ))}
+              </div>
+              {rOficios.length>0 && <p style={{ fontSize:12, color:"#4ade80", marginTop:8 }}>✓ {rOficios.length} oficio{rOficios.length>1?"s":""} seleccionado{rOficios.length>1?"s":""}</p>}
             </div>
             <PrimaryBtn onClick={handleRegistro} style={{ marginTop:4, opacity:tycOk?1:0.7 }}>
               {tycOk?"Ver planes →":"Aceptar T&C para continuar"}
@@ -841,7 +908,7 @@ export default function App() {
               const postulado=postulados.includes(n.id);
               return (
                 <div key={n.id} onClick={()=>!postulado&&abrirNotif(n)}
-                  style={{ background:leidas.includes(n.id)?"#0d1f35":"rgba(74,143,212,0.08)", border:`1px solid ${n.tipo==="urgente"&&!leidas.includes(n.id)?"rgba(248,113,113,0.35)":leidas.includes(n.id)?"rgba(74,143,212,0.15)":"rgba(74,143,212,0.3)"}`, borderRadius:14, padding:"16px 18px", cursor:postulado?"default":"pointer" }}>
+                  style={{ background:leidas.includes(n.id)?"#0d1f35":"rgba(74,143,212,0.08)", border:`1px solid ${n.tipo==="urgente"&&!leidas.includes(n.id)?"rgba(248,113,113,0.35)":"rgba(74,143,212,0.15)"}`, borderRadius:14, padding:"16px 18px", cursor:postulado?"default":"pointer" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
                     <div style={{ display:"flex", gap:8 }}>
                       {n.tipo==="urgente"&&!leidas.includes(n.id)&&<span style={{ fontSize:10, color:"#f87171", background:"rgba(248,113,113,0.15)", padding:"2px 8px", borderRadius:20, fontWeight:600 }}>URGENTE</span>}
@@ -863,17 +930,17 @@ export default function App() {
         <div className="page" style={{ padding:"32px 24px 60px" }}>
           <BackBtn onClick={()=>setVista("inicio")}/>
           <h2 style={{ fontFamily:F.serif, fontSize:32, fontWeight:300, marginBottom:6, color:"#ffffff" }}>Elegí tu plan</h2>
-          <p style={{ color:"#b0c4d8", fontSize:14, marginBottom:36, fontWeight:300 }}>Todos los planes incluyen verificación de identidad ✓</p>
+          <p style={{ color:"#b0c4d8", fontSize:14, marginBottom:36, fontWeight:300 }}>Todos incluyen verificación de identidad ✓</p>
           {[
-            { nombre:"Inicio",      precio:"Gratis",   sub:"7 días sin costo",  dest:false, tag:null,            features:["3 contactos por mes","Perfil con verificación ✓","Badge verificado","Notificaciones de pedidos"] },
-            { nombre:"Profesional", precio:"$2.500",   sub:"por mes",           dest:true,  tag:"MÁS POPULAR",   features:["Contactos ilimitados","Perfil verificado ✓","Badge destacado","Chat con clientes","Soporte prioritario","Estadísticas básicas"] },
-            { nombre:"Empresa",     precio:"$18.000",  sub:"por mes",           dest:false, tag:"PARA EMPRESAS",  features:["Todo Profesional","Hasta 5 usuarios del equipo","Primero en búsquedas","Estadísticas avanzadas","Gestión de agenda","Panel de empresa"] },
+            { nombre:"Inicio",      precio:"Gratis",  sub:"7 días sin costo", dest:false, tag:null, features:["3 contactos por mes","Perfil verificado ✓","Notificaciones de pedidos"] },
+            { nombre:"Profesional", precio:"$2.500",  sub:"por mes",          dest:true,  tag:"MÁS POPULAR", features:["Contactos ilimitados","Badge destacado","Chat con clientes","Soporte prioritario","Estadísticas básicas"] },
+            { nombre:"Empresa",     precio:"$18.000", sub:"por mes",          dest:false, tag:"PARA EMPRESAS", features:["Todo Profesional","Hasta 5 usuarios","Primero en búsquedas","Estadísticas avanzadas","Panel de empresa"] },
           ].map(p=>(
             <div key={p.nombre} style={{ background:p.dest?"linear-gradient(135deg,rgba(74,143,212,0.18),rgba(30,77,130,0.18))":"#0d1f35", border:`1px solid ${p.dest?"#4a8fd4":p.nombre==="Empresa"?"rgba(212,180,74,0.4)":"rgba(74,143,212,0.15)"}`, borderRadius:16, padding:24, position:"relative", boxShadow:p.dest?"0 0 40px rgba(74,143,212,0.15)":"none", marginBottom:16 }}>
               {p.tag && <div style={{ position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", background:p.dest?"#4a8fd4":"rgba(212,180,74,0.9)", color:"#ffffff", fontSize:11, fontWeight:600, padding:"4px 16px", borderRadius:20, whiteSpace:"nowrap" }}>{p.tag}</div>}
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:16 }}>
                 <div>
-                  <div style={{ fontFamily:F.serif, fontSize:22, fontWeight:400, color:"#ffffff" }}>{p.nombre}</div>
+                  <div style={{ fontFamily:F.serif, fontSize:22, color:"#ffffff" }}>{p.nombre}</div>
                   <div style={{ color:"#b0c4d8", fontSize:12, marginTop:2 }}>{p.sub}</div>
                 </div>
                 <div style={{ fontFamily:F.serif, fontSize:28, fontWeight:600, color:p.dest?"#6cb3f5":"#ffffff" }}>{p.precio}</div>
@@ -885,7 +952,7 @@ export default function App() {
                 onClick={()=>{
                   if (p.nombre==="Inicio") { setVista("inicio"); return; }
                   if (p.nombre==="Empresa") { window.open("https://wa.me/5491161906655?text=Hola!%20Quiero%20info%20sobre%20el%20plan%20Empresa%20de%20Nexo","_blank"); return; }
-                  window.open(`https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=NEXO_PLAN_${p.precio.replace("$","").replace(".","")}`,"_blank");
+                  window.open("https://www.mercadopago.com.ar","_blank");
                 }}
                 style={{ width:"100%", background:p.dest?"linear-gradient(135deg,#4a8fd4,#1e4d82)":p.nombre==="Empresa"?"rgba(212,180,74,0.15)":"rgba(74,143,212,0.08)", border:p.dest?"none":p.nombre==="Empresa"?"1px solid rgba(212,180,74,0.4)":"1px solid rgba(74,143,212,0.3)", color:p.dest?"#ffffff":p.nombre==="Empresa"?"#fbbf24":"#6cb3f5", padding:14, borderRadius:10, fontFamily:F.sans, fontSize:14, fontWeight:600, cursor:"pointer" }}>
                 {p.nombre==="Inicio"?"Comenzar gratis":p.nombre==="Empresa"?"Contactar por WhatsApp →":"Pagar con Mercado Pago →"}
@@ -895,8 +962,8 @@ export default function App() {
         </div>
       )}
 
-      {/* ADMIN */}
-      {vista==="admin" && (
+      {/* ADMIN — protegido con PIN */}
+      {vista==="admin" && adminOk && (
         <div className="page" style={{ padding:"24px 20px 60px" }}>
           <BackBtn onClick={()=>setVista("inicio")}/>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
@@ -906,7 +973,8 @@ export default function App() {
             </div>
             <button onClick={()=>setShowAddPro(true)} style={{ background:"linear-gradient(135deg,#4a8fd4,#1e4d82)", border:"none", color:"#ffffff", padding:"8px 14px", borderRadius:10, fontFamily:F.sans, fontSize:12, fontWeight:600, cursor:"pointer" }}>+ Agregar pro</button>
           </div>
-          <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:24, fontWeight:300 }}>Gestión de verificaciones, pedidos y profesionales</p>
+          <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:24, fontWeight:300 }}>Gestión interna de Nexo</p>
+
           <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:24 }}>
             {[
               { val:activos.length, label:"Activos", color:"#4ade80" },
@@ -915,11 +983,12 @@ export default function App() {
               { val:pros.filter(p=>p.estado==="rechazado").length, label:"Rechazados", color:"#f87171" },
             ].map(s=>(
               <div key={s.label} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:12, padding:"12px 8px", textAlign:"center" }}>
-                <div style={{ fontFamily:F.serif, fontSize:22, fontWeight:400, color:s.color }}>{s.val}</div>
+                <div style={{ fontFamily:F.serif, fontSize:22, color:s.color }}>{s.val}</div>
                 <div style={{ fontSize:10, color:"#ffffff", marginTop:4 }}>{s.label}</div>
               </div>
             ))}
           </div>
+
           <div style={{ display:"flex", gap:6, marginBottom:20, background:"#0d1f35", padding:4, borderRadius:10 }}>
             {[{id:"verificaciones",label:"Verificaciones"},{id:"profesionales",label:"Profesionales"},{id:"pedidos",label:"Pedidos"}].map(tab=>(
               <button key={tab.id} onClick={()=>setAdminTab(tab.id)}
@@ -939,10 +1008,10 @@ export default function App() {
               ) : pendientes.map(p=>(
                 <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(251,191,36,0.2)", borderRadius:14, padding:18, marginBottom:12 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
-                    <Avatar foto={p.foto} nombre={p.nombre} size={46} fontSize={18}/>
+                    <Avatar foto={p.foto} nombre={p.nombre} size={46}/>
                     <div style={{ flex:1 }}>
                       <div style={{ fontWeight:600, fontSize:15, color:"#ffffff" }}>{p.nombre} <span style={{ fontSize:10, color:"#fbbf24", background:"rgba(251,191,36,0.12)", padding:"2px 8px", borderRadius:20 }}>PENDIENTE</span></div>
-                      <div style={{ color:"#b0c4d8", fontSize:12, marginTop:2 }}>{p.oficio} · {p.zona}</div>
+                      <div style={{ color:"#b0c4d8", fontSize:12, marginTop:2 }}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
                     </div>
                   </div>
                   <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14, fontSize:12, color:"#b0c4d8" }}>
@@ -969,14 +1038,14 @@ export default function App() {
             <div>
               <div style={{ position:"relative", marginBottom:14 }}>
                 <input value={adminSearch} onChange={e=>setAdminSearch(e.target.value)} placeholder="Buscar por nombre u oficio..."
-                  style={{ width:"100%", background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"12px 12px 12px 16px", borderRadius:10, fontFamily:F.sans, fontSize:13 }}/>
+                  style={{ width:"100%", background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", color:"#ffffff", padding:"12px 16px", borderRadius:10, fontFamily:F.sans, fontSize:13 }}/>
               </div>
               {prosFiltrados.map(p=>(
                 <div key={p.id} style={{ background:"#0d1f35", border:"1px solid rgba(74,143,212,0.15)", borderRadius:14, padding:"14px 16px", marginBottom:10, display:"flex", alignItems:"center", gap:12 }}>
-                  <Avatar foto={p.foto} nombre={p.nombre} size={42} fontSize={16}/>
+                  <Avatar foto={p.foto} nombre={p.nombre} size={42}/>
                   <div style={{ flex:1 }}>
                     <div style={{ fontWeight:600, fontSize:14, color:"#ffffff" }}>{p.nombre}</div>
-                    <div style={{ color:"#b0c4d8", fontSize:12 }}>{p.oficio} · {p.zona}</div>
+                    <div style={{ color:"#b0c4d8", fontSize:12 }}>{(p.oficios||[p.oficio]).join(", ")} · {p.zona}</div>
                   </div>
                   <span style={{ fontSize:11, padding:"3px 10px", borderRadius:20, fontWeight:600, background:p.estado==="activo"?"rgba(74,212,120,0.1)":p.estado==="pendiente"?"rgba(251,191,36,0.1)":"rgba(248,113,113,0.1)", color:p.estado==="activo"?"#4ade80":p.estado==="pendiente"?"#fbbf24":"#f87171" }}>{p.estado}</span>
                 </div>
@@ -1005,20 +1074,21 @@ export default function App() {
       )}
 
       {/* POPUPS */}
+      {showPin && <PinPopup onSuccess={()=>{ setAdminOk(true); setShowPin(false); setVista("admin"); }} onClose={()=>setShowPin(false)}/>}
       {showTyC && <TyCPopup onAccept={handleAceptarTyC} onClose={()=>setShowTyC(false)}/>}
       {showCalif && <CalificarPopup nombre="Carlos M." onClose={()=>setShowCalif(false)}/>}
       {showNotif && notifActiva && <NotifPopup notif={notifActiva} onClose={()=>{ setShowNotif(false); setNotifActiva(null); }} onPostular={postular}/>}
       {showRegCliente && <RegistroClientePopup onClose={()=>setShowRegCliente(false)} onSuccess={onClienteRegistrado}/>}
 
-      {/* POPUP AGREGAR PRO */}
+      {/* POPUP AGREGAR PRO (solo desde admin) */}
       {showAddPro && (
         <div className="ov" style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.78)", zIndex:999, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
           <div className="mod" style={{ background:"#0d1f35", borderRadius:"20px 20px 0 0", padding:"28px 24px 36px", maxWidth:480, width:"100%", border:"1px solid rgba(74,143,212,0.15)" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-              <h3 style={{ fontFamily:F.serif, fontSize:22, fontWeight:400, color:"#ffffff" }}>Agregar profesional</h3>
+              <h3 style={{ fontFamily:F.serif, fontSize:22, color:"#ffffff" }}>Agregar profesional</h3>
               <button onClick={()=>setShowAddPro(false)} style={{ background:"none", border:"none", color:"#8a9bb0", fontSize:22, cursor:"pointer" }}>×</button>
             </div>
-            <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20, fontWeight:300 }}>Este profesional quedará activo y verificado sin costo.</p>
+            <p style={{ color:"#b0c4d8", fontSize:13, marginBottom:20, fontWeight:300 }}>Se activará verificado y sin cargo.</p>
             <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
               <div><Lbl>NOMBRE</Lbl><Inp placeholder="Ej: Juan Pérez" value={apNombre} onChange={e=>setApNombre(e.target.value)}/></div>
               <div><Lbl>OFICIO</Lbl><Inp placeholder="Ej: Plomero" value={apOficio} onChange={e=>setApOficio(e.target.value)}/></div>
@@ -1030,6 +1100,13 @@ export default function App() {
               <PrimaryBtn onClick={handleAddPro}>Agregar profesional →</PrimaryBtn>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Botón admin oculto — solo visible tocando 5 veces el logo */}
+      {vista==="inicio" && (
+        <div style={{ position:"fixed", bottom:20, right:20, opacity:0.01 }}>
+          <button onClick={abrirAdmin} style={{ width:40, height:40, borderRadius:"50%", background:"transparent", border:"none", cursor:"pointer" }}>⚙</button>
         </div>
       )}
 
