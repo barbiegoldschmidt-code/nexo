@@ -1,0 +1,53 @@
+// ─── Mercado Pago Integration ───
+// Credenciales TEST — reemplazar por producción al lanzar
+const MP_PUBLIC_KEY = "TEST-a3ac7364-c717-4592-b7da-df36efd37dd8";
+const MP_ACCESS_TOKEN = "TEST-7948816179237261-032116-53e92afe62436a508df3f3375d8fef76-73894109";
+
+// Crear preferencia de pago
+export const crearPreferencia = async (plan) => {
+  try {
+    const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${MP_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        items: [
+          {
+            title: `Nexo - Plan ${plan.nombre}`,
+            description: `Suscripción mensual al plan ${plan.nombre} de Nexo`,
+            quantity: 1,
+            currency_id: "ARS",
+            unit_price: plan.precio,
+          },
+        ],
+        back_urls: {
+          success: "https://nexo-iota-three.vercel.app/?pago=ok",
+          failure: "https://nexo-iota-three.vercel.app/?pago=error",
+          pending: "https://nexo-iota-three.vercel.app/?pago=pendiente",
+        },
+        auto_return: "approved",
+        statement_descriptor: "NEXO APP",
+        external_reference: `NEXO_PLAN_${plan.nombre.toUpperCase()}`,
+      }),
+    });
+
+    const data = await res.json();
+    
+    if (data.init_point) {
+      // Producción → data.init_point
+      // Sandbox/test → data.sandbox_init_point
+      return data.sandbox_init_point || data.init_point;
+    }
+    return null;
+  } catch (err) {
+    console.error("Error MP:", err);
+    return null;
+  }
+};
+
+export const PLANES_MP = [
+  { nombre: "Profesional", precio: 2500 },
+  { nombre: "Empresa",     precio: 18000 },
+];
