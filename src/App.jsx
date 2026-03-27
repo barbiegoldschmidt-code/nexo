@@ -582,8 +582,9 @@ export default function App(){
     if(!validarReg())return;
     const oficiosStr=rOficiosSelec.length>0?rOficiosSelec.join(", "):rCatsSelec.length>0?CATS.find(c=>c.id===rCatsSelec[0])?.subs[0].n||"General":"General";
     try{
-      await supabase.from('profesionales_nexo').insert([{nombre:rN,email:rE,telefono:rT,zona:rZ,oficio:oficiosStr,verificado:false,estado:'pendiente'}]);
-    }catch(e){}
+      const {error} = await supabase.from('profesionales_nexo').insert([{nombre:rN,email:rE,telefono:rT,zona:rZ,oficio:oficiosStr,verificado:false}]);
+      if(error){ alert('Error Supabase: ' + error.message); return; }
+    }catch(e){ alert('Error: ' + e.message); return; }
     setVista('planes');
   };
 
