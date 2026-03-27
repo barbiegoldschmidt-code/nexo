@@ -629,7 +629,7 @@ export default function App(){
   if(chat)return(<><style>{GS}</style><ChatView pro={chat} pedidoId={pedidoActual?.id} clienteNombre={cliente?.nombre} onClose={()=>setChat(null)}/></>);
   if(showPanel)return(<><style>{GS}</style><PanelPro proData={proPanel} onClose={()=>setShowPanel(false)}/></>);
 
-  const pendientes=todosLosPros.filter(p=>!p.verificado&&p.estado==="pendiente");
+  const pendientes=todosLosPros.filter(p=>!p.verificado);
 
   return(
     <><style>{GS}</style>
