@@ -1,4 +1,5 @@
 import { enviarEmailBienvenidaPro, enviarEmailAprobacion, enviarEmailBienvenidaCliente } from './resend.js';
+import { notificarNuevoPedido } from './onesignal.js';
 import { useState, useRef, useEffect } from "react";
 import { supabase } from './supabase';
 const crearPreferencia = async (plan) => {
@@ -532,6 +533,7 @@ export default function App(){
 
       if(error) throw error;
       setPedidoActual(data);
+      await notificarNuevoPedido(oficio, zona, urgencia===0);
       setVista("cotizaciones");
       // Cargar cotizaciones del pedido
       cargarCotizaciones(data.id);
