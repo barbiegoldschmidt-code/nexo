@@ -1,6 +1,21 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from './supabase';
-import { crearPreferencia } from './mercadopago.js';
+const crearPreferencia = async (plan) => {
+  const MP_ACCESS_TOKEN = "TEST-7948816179237261-032116-53e92afe62436a508df3f3375d8fef76-73894109";
+  try {
+    const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${MP_ACCESS_TOKEN}` },
+      body: JSON.stringify({
+        items: [{ title: `Nexo - Plan ${plan.nombre}`, quantity: 1, currency_id: "ARS", unit_price: plan.precio }],
+        back_urls: { success: "https://nexo-iota-three.vercel.app/?pago=ok", failure: "https://nexo-iota-three.vercel.app/?pago=error" },
+        auto_return: "approved",
+      }),
+    });
+    const data = await res.json();
+    return data.sandbox_init_point || data.init_point;
+  } catch(e) { return null; }
+};
 
 const ADMIN_PIN = "4567";
 
