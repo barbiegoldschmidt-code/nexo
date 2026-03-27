@@ -493,7 +493,7 @@ export default function App(){
   useEffect(()=>{
     const cargar=async()=>{
       try{
-        const {data}=await supabase.from('profesionales').select('*').eq('verificado',true).order('created_at',{ascending:false});
+        const {data}=await supabase.from('profesionales_nexo').select('*').eq('verificado',true).order('created_at',{ascending:false});
         if(data) setPros(data.map(p=>({...p,foto:null})));
       }catch(e){}
       setLoadingPros(false);
@@ -582,7 +582,7 @@ export default function App(){
     if(!validarReg())return;
     const oficiosStr=rOficiosSelec.length>0?rOficiosSelec.join(", "):rCatsSelec.length>0?CATS.find(c=>c.id===rCatsSelec[0])?.subs[0].n||"General":"General";
     try{
-      await supabase.from('profesionales').insert([{nombre:rN,email:rE,telefono:rT,zona:rZ,oficio:oficiosStr,verificado:false,estado:'pendiente'}]);
+      await supabase.from('profesionales_nexo').insert([{nombre:rN,email:rE,telefono:rT,zona:rZ,oficio:oficiosStr,verificado:false,estado:'pendiente'}]);
     }catch(e){}
     setVista('planes');
   };
@@ -590,7 +590,7 @@ export default function App(){
   const addPro=async()=>{
     if(!apN.trim()||!apO.trim()||!apZ.trim())return;
     try{
-      const {data}=await supabase.from('profesionales').insert([{nombre:apN,email:apE,telefono:"",zona:apZ,oficio:apO,verificado:true,estado:'activo'}]).select().single();
+      const {data}=await supabase.from('profesionales_nexo').insert([{nombre:apN,email:apE,telefono:"",zona:apZ,oficio:apO,verificado:true,estado:'activo'}]).select().single();
       if(data) setPros(p=>[...p,{...data,foto:null}]);
     }catch(e){}
     setApN("");setApO("");setApZ("");setApE("");setShowAddPro(false);
@@ -598,7 +598,7 @@ export default function App(){
 
   const cargarAdmin=async()=>{
     try{
-      const {data:p}=await supabase.from('profesionales').select('*').order('created_at',{ascending:false});
+      const {data:p}=await supabase.from('profesionales_nexo').select('*').order('created_at',{ascending:false});
       if(p) setTodosLosPros(p.map(x=>({...x,foto:null})));
       const {data:ped}=await supabase.from('pedidos').select('*').order('created_at',{ascending:false});
       if(ped) setTodosLosPedidos(ped);
@@ -606,12 +606,12 @@ export default function App(){
   };
 
   const verificarPro=async id=>{
-    try{await supabase.from('profesionales').update({verificado:true,estado:'activo'}).eq('id',id);}catch(e){}
+    try{await supabase.from('profesionales_nexo').update({verificado:true,estado:'activo'}).eq('id',id);}catch(e){}
     setTodosLosPros(p=>p.map(x=>x.id===id?{...x,verificado:true,estado:'activo'}:x));
   };
 
   const rechazarPro=async id=>{
-    try{await supabase.from('profesionales').update({verificado:false,estado:'rechazado'}).eq('id',id);}catch(e){}
+    try{await supabase.from('profesionales_nexo').update({verificado:false,estado:'rechazado'}).eq('id',id);}catch(e){}
     setTodosLosPros(p=>p.map(x=>x.id===id?{...x,verificado:false,estado:'rechazado'}:x));
   };
 
