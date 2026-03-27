@@ -306,7 +306,7 @@ const PanelPro=({proData,onClose})=>{
 
   const cargarPedidos=async()=>{
     try{
-      const {data}=await supabase.from('pedidos').select('*').eq('estado','activo').order('created_at',{ascending:false});
+      const {data}=await supabase.from('pedidos_nexo').select('*').eq('estado','activo').order('created_at',{ascending:false});
       if(data) setPedidos(data);
     }catch(e){}
     setLoading(false);
@@ -519,7 +519,7 @@ export default function App(){
     if(!zona){alert("Seleccioná tu zona");return;}
     setPublicandoPedido(true);
     try{
-      const {data,error}=await supabase.from('pedidos').insert([{
+      const {data,error}=await supabase.from('pedidos_nexo').insert([{
         cliente: cliente?.nombre||"Anónimo",
         email: cliente?.email||"",
         tipo_oficio: oficio,
@@ -601,7 +601,7 @@ export default function App(){
     try{
       const {data:p}=await supabase.from('profesionales_nexo').select('*').order('created_at',{ascending:false});
       if(p) setTodosLosPros(p.map(x=>({...x,foto:null})));
-      const {data:ped}=await supabase.from('pedidos').select('*').order('created_at',{ascending:false});
+      const {data:ped}=await supabase.from('pedidos_nexo').select('*').order('created_at',{ascending:false});
       if(ped) setTodosLosPedidos(ped);
     }catch(e){}
   };
