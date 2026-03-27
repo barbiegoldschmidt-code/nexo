@@ -1,3 +1,4 @@
+import { enviarEmailBienvenidaPro, enviarEmailAprobacion, enviarEmailBienvenidaCliente } from './resend.js';
 import { useState, useRef, useEffect } from "react";
 import { supabase } from './supabase';
 const crearPreferencia = async (plan) => {
@@ -508,7 +509,7 @@ export default function App(){
   const irComoCliente=dest=>{if(!cliente){setPendNav(dest);setShowRegC(true);}else setVista(dest);};
 
   const onClienteReg=async data=>{
-    try{await supabase.from('clientes').insert([{nombre:data.nombre,email:data.email,telefono:data.tel}]);}catch(e){}
+    try{await supabase.from('clientes').insert([{nombre:data.nombre,email:data.email,telefono:data.tel}]);await enviarEmailBienvenidaCliente(data.nombre,data.email);}catch(e){}
     setCliente(data);setShowRegC(false);
     if(pendNav){setVista(pendNav);setPendNav(null);}
   };
@@ -607,6 +608,7 @@ export default function App(){
 
   const verificarPro=async id=>{
     try{await supabase.from('profesionales_nexo').update({verificado:true}).eq('id',id);}catch(e){}
+const pro=todosLosPros.find(x=>x.id===id);if(pro?.email)await enviarEmailAprobacion(pro.nombre,pro.email);
     setTodosLosPros(p=>p.map(x=>x.id===id?{...x,verificado:true}:x));
   };
 
