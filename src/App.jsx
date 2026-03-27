@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from './supabase';
-import { crearPreferencia } from './mercadopago';
+import { crearPreferencia } from './mercadopago.js';
 
 const ADMIN_PIN = "4567";
 
