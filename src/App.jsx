@@ -527,7 +527,6 @@ export default function App(){
         zona: zona,
         urgente: urgencia===0,
         estado: 'activo',
-        terminos_aceptados: true
       }]).select().single();
 
       if(error) throw error;
