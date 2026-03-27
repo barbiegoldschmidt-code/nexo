@@ -607,13 +607,13 @@ export default function App(){
   };
 
   const verificarPro=async id=>{
-    try{await supabase.from('profesionales_nexo').update({verificado:true,estado:'activo'}).eq('id',id);}catch(e){}
+    try{await supabase.from('profesionales_nexo').update({verificado:true}).eq('id',id);}catch(e){}
     setTodosLosPros(p=>p.map(x=>x.id===id?{...x,verificado:true,estado:'activo'}:x));
   };
 
   const rechazarPro=async id=>{
     try{await supabase.from('profesionales_nexo').update({verificado:false,estado:'rechazado'}).eq('id',id);}catch(e){}
-    setTodosLosPros(p=>p.map(x=>x.id===id?{...x,verificado:false,estado:'rechazado'}:x));
+    setTodosLosPros(p=>p.map(x=>x.id===id?{...x,verificado:false}:x));
   };
 
   const pagarConMP=async(plan)=>{
